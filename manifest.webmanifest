@@ -1,7 +1,7 @@
 {
   "name": "HowsDaWeather",
   "short_name": "HowsDaWeather",
-  "description": "Plan your day. Have a laugh. Mostly stay dry. A fun UK weather app.",
+  "description": "Postcode-precise UK weather forecast - terrain-aware, 5 national forecast centres, verified against real rain gauges. Free, no ads, no tracking.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

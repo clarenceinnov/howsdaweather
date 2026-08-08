@@ -4,8 +4,41 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<title>HowsDaWeather</title>
-<meta name="description" content="Plan your day. Have a laugh. Mostly stay dry. A fun UK weather app.">
+<title>HowsDaWeather - Postcode-Precise UK Weather Forecast</title>
+<meta name="description" content="Free UK weather forecast for your exact postcode. Terrain-aware (valleys, frost hollows), 156 forecasts from 5 national weather centres incl. the Met Office, checked against real rain gauges. No ads, no tracking.">
+<link rel="canonical" href="https://howsdaweather.netlify.app/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="HowsDaWeather">
+<meta property="og:title" content="HowsDaWeather - Postcode-Precise UK Weather Forecast">
+<meta property="og:description" content="A free UK weather app that forecasts for your full postcode, reads the terrain around your exact spot, blends 156 forecasts from 5 national weather centres, and checks itself against real rain gauges. Plus a Word for the Day.">
+<meta property="og:url" content="https://howsdaweather.netlify.app/">
+<meta property="og:image" content="https://howsdaweather.netlify.app/icon-512.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="HowsDaWeather - Postcode-Precise UK Weather Forecast">
+<meta name="twitter:description" content="Free, postcode-precise, terrain-aware UK weather - 5 national forecast centres, verified against real rain gauges. No ads, no tracking.">
+<meta name="twitter:image" content="https://howsdaweather.netlify.app/icon-512.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "HowsDaWeather",
+  "url": "https://howsdaweather.netlify.app/",
+  "description": "Free, postcode-precise UK weather forecast. Terrain-aware (valleys, frost hollows, hilltops), built from 156 ensemble forecasts across 5 national weather centres including the Met Office model, and verified against real Environment Agency and SEPA rain gauges.",
+  "applicationCategory": "Weather",
+  "operatingSystem": "Any",
+  "browserRequirements": "Requires JavaScript",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "GBP" },
+  "featureList": [
+    "Forecast pinned to your full UK postcode (about 100 m)",
+    "Terrain-aware: frost-hollow nights, wind shelter and funnelling, valley fog",
+    "156-member ensemble from ECMWF, Met Office, ICON, GEFS and GEM, weighted by proven skill",
+    "Rain percentages that mean rain you would notice (0.5 mm+), with expected amounts",
+    "Confidence verified against real rain gauges (Environment Agency and SEPA)",
+    "Word for the Day and 20 customisable British activity cards",
+    "Free, no ads, no accounts, no tracking - runs entirely in your browser"
+  ]
+}
+</script>
 <meta name="theme-color" content="#2b6cd6">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -115,6 +148,8 @@
   .heroconf{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:15px;padding-top:14px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--muted)}
   .terraline{margin-top:9px;font-size:12.5px;color:var(--muted)}
   .terraline b{color:var(--text);font-weight:600}
+  .difflink{margin-top:10px;background:none;border:none;padding:0;font-family:inherit;font-size:12.5px;color:var(--sky);cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;text-align:left}
+  .difflink:hover{color:var(--text)}
   .confwhy{flex-basis:100%;font-size:12px;color:var(--dim);line-height:1.4}
   .heromain{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-top:12px}
   .heronow{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
@@ -261,7 +296,7 @@
       <span class="logo" aria-hidden="true">
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#70c4ff"/><stop offset="1" stop-color="#2b6cd6"/></linearGradient><clipPath id="lb"><rect width="100" height="100" rx="24"/></clipPath></defs><g clip-path="url(#lb)"><rect width="100" height="100" fill="url(#lsky)"/><g stroke="#ffc94b" stroke-width="6" stroke-linecap="round"><line x1="10" y1="31" x2="-1" y2="31"/><line x1="13.96" y1="18.46" x2="4.94" y2="12.19"/><line x1="22.76" y1="10.98" x2="18.14" y2="0.97"/><line x1="33.76" y1="9" x2="34.64" y2="-2"/><line x1="44.1" y1="12.74" x2="50.15" y2="3.61"/></g><circle cx="32" cy="31" r="19" fill="#ffc94b"/><circle cx="28" cy="27" r="10" fill="#ffe08c"/><g fill="#d6e6f8" transform="translate(0,2.6)"><circle cx="57" cy="58" r="25"/><circle cx="38" cy="65" r="16"/><circle cx="77" cy="61" r="18"/><circle cx="50" cy="49" r="16"/><rect x="33" y="60" width="52" height="20" rx="10"/></g><g fill="#fff"><circle cx="57" cy="58" r="25"/><circle cx="38" cy="65" r="16"/><circle cx="77" cy="61" r="18"/><circle cx="50" cy="49" r="16"/><rect x="33" y="60" width="52" height="20" rx="10"/></g><circle cx="53" cy="60" r="3" fill="#243a66"/><circle cx="68" cy="60" r="3" fill="#243a66"/><path d="M52.5 62 Q60.5 70 68.5 62" fill="none" stroke="#243a66" stroke-width="2.6" stroke-linecap="round"/></g></svg>
       </span>
-      <div><h1>Hows<span class="da">Da</span>Weather</h1><div class="tag">Plan your day. Have a laugh. Mostly stay dry.</div></div>
+      <div><h1>Hows<span class="da">Da</span>Weather</h1><div class="tag">Postcode-precise UK forecasts. Plan your day. Mostly stay dry.</div></div>
     </div>
     <div class="controls">
       <button class="btn placesbtn" id="placesBtn" title="Search or change location">
@@ -290,6 +325,7 @@
     </div>
     <div class="heroconf"><span>Today's forecast confidence</span><span class="pill" id="heroConf">-</span><span class="confwhy" id="heroConfWhy"></span></div>
     <div class="terraline" id="terraline" hidden></div>
+    <button class="difflink" id="diffBtn">&#10024; What makes this forecast different?</button>
   </div>
 
   <div class="weeklbl">Next 7 days - tap a day to plan it</div>
@@ -361,6 +397,27 @@
         <div class="relmeta" id="relMeta"></div>
         <ul class="rellist" id="relList"></ul>
         <button class="btn relgot" id="relGot">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="diffModal" hidden>
+    <div class="modal" role="dialog" aria-label="What makes this forecast different">
+      <div class="modal-head">
+        <h3>What makes this forecast different</h3>
+        <button class="modal-close" id="diffClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="relmeta" id="diffNow"></div>
+        <ul class="rellist">
+          <li><b>Your postcode, not your nearest city.</b> Search a full postcode (or tap Locate me) and the forecast is pinned to about 100 m - in the hills, the next street can be 100 m higher and get different weather.</li>
+          <li><b>It knows your terrain.</b> The land around your exact spot is profiled in 1, 2 and 5 km rings: valley floors get frost-hollow nights and sheltered or funnelled wind, exposed tops read gustier, and a clear calm damp night in a valley raises a fog heads-up.</li>
+          <li><b>Five national forecast centres, not one.</b> Every rain figure blends ~156 forecasts from ECMWF, the Met Office, ICON, the US GEFS and the Canadian GEM - each weighted by decades of published skill.</li>
+          <li><b>Rain means rain.</b> The percentage is the chance of rain you would actually notice (0.5 mm+), never a 0.1 mm technicality. Hold any part of the day to see expected millimetres.</li>
+          <li><b>It checks itself against reality.</b> Recent forecasts are scored against real Environment Agency and SEPA rain gauges near you; if the models have been wrong here lately, confidence is marked down and says so.</li>
+          <li><b>Honest by rule.</b> Icons can never contradict the number beside them, and where the data cannot support a claim, the app stays quiet rather than guessing.</li>
+        </ul>
+        <button class="btn relgot" id="diffGot">Nice - back to the weather</button>
       </div>
     </div>
   </div>
@@ -1734,7 +1791,8 @@ const RELEASES=[
      'Valley spots get the frost-hollow treatment: on clear, calm nights the night temperature is nudged colder, because cold air genuinely drains downhill and pools at the bottom. Cloudy or windy nights are left alone - the effect only happens when conditions allow it.',
      'Wind gets the same respect: sheltered when it blows across your valley, funnelled a touch stronger when it blows straight along it, and read higher if you are on an exposed top. And on a clear, calm, damp night in a valley, you get a heads-up that fog may pool.',
      'For this to work the app needs to know exactly where you are - and search takes full postcodes (like "LL55 4TY"), pinning you to within about 100 metres. In the hills, the next street can be a hundred metres higher, so it matters.',
-     'Honesty corner: gentle lowland hollows are too subtle for this method, so there we say nothing rather than guess. When your spot is recognised, a small note under the forecast tells you what is being adjusted and why.'
+     'Honesty corner: gentle lowland hollows are too subtle for this method, so there we say nothing rather than guess. When your spot is recognised, a small note under the forecast tells you what is being adjusted and why.',
+     'And if you ever wonder why this app reads differently from the big-name ones, tap the new "What makes this forecast different?" link under the confidence line - it shows exactly which mechanisms are working for your spot right now.'
    ]},
   {v:'1.6', date:'27 Jul 2026', title:'Windier, wiser, and no more "Steady" downpours',
    notes:[
@@ -1801,6 +1859,32 @@ $('relClose').onclick=closeRelease;
 $('relGot').onclick=closeRelease;
 $('relModal').addEventListener('click',e=>{if(e.target===$('relModal'))closeRelease();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('relModal').hidden)closeRelease();});
+
+// ---- "What makes this different" - the app's unique mechanisms, in one popup ----
+// The intro line is LIVE: it states what is actually in play for the currently loaded location
+// (member count, how many real rain gauges the check found, terrain class), so the claims are
+// demonstrated rather than asserted.
+function openDiff(){
+  const el=$('diffNow');
+  if(el){
+    let bits=[];
+    if(curData){
+      if(curData.detail&&curData.detail.ensemble)bits.push(curData.detail.memberCount+' forecasts blended');
+      const g=(curData.srcSkill&&curData.srcSkill.gauges)||(curData.skill&&curData.skill.gauges);
+      const src=(curData.srcSkill&&curData.srcSkill.src)||(curData.skill&&curData.skill.src);
+      if(g)bits.push('checked against '+g+' real rain gauges ('+(src||'').replace(' rain gauges','')+')');
+      if(curData.terrain&&curData.terrain.cls!=='flat'){const n={deep:'deep-valley',valley:'valley',hollow:'sheltered-hollow',exposed:'exposed-hilltop'}[curData.terrain.cls];bits.push(n+' terrain factored in');}
+    }
+    el.textContent=bits.length?('Live right now for '+(curData.place||'this spot')+': '+bits.join(' · ')+'.'):'Load a place and this line will show what is in play for it.';
+  }
+  $('diffModal').hidden=false;
+}
+function closeDiff(){ $('diffModal').hidden=true; }
+$('diffBtn').onclick=openDiff;
+$('diffClose').onclick=closeDiff;
+$('diffGot').onclick=closeDiff;
+$('diffModal').addEventListener('click',e=>{if(e.target===$('diffModal'))closeDiff();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('diffModal').hidden)closeDiff();});
 
 // ---- boot ----
 // Open where you left off (your remembered primary). Only auto-locate on a genuine first
