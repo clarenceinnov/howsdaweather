@@ -1,0 +1,1812 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>HowsDaWeather</title>
+<meta name="description" content="Plan your day. Have a laugh. Mostly stay dry. A fun UK weather app.">
+<meta name="theme-color" content="#2b6cd6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HowsDaWeather">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  @font-face{font-family:'Fredoka';src:url('fredoka-600.woff2') format('woff2');font-weight:600;font-display:swap}
+  @font-face{font-family:'Fredoka';src:url('fredoka-500.woff2') format('woff2');font-weight:500;font-display:swap}
+  :root{
+    --bg:#0a1120; --card:rgba(255,255,255,.05); --card2:rgba(255,255,255,.085);
+    --line:rgba(255,255,255,.11); --text:#eaf1fb; --muted:#9db0ca; --dim:#6d80a0;
+    --sky:#5db4ff; --sky2:#2b74e0; --sun:#ffca4b;
+    --accent:#5db4ff; --good:#3ddc97; --warn:#fcb64a; --bad:#f77b7b;
+    --radius:18px; --shadow:0 12px 30px rgba(0,0,0,.4);
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --brand:'Fredoka',var(--font);
+  }
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{font-family:var(--font);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(760px 380px at 12% -12%, rgba(255,190,90,.12), transparent 58%),
+      radial-gradient(1100px 720px at 82% -10%, #1a2f54 0%, #0f1d38 44%, var(--bg) 100%);
+    background-attachment:fixed}
+  .wrap{max-width:920px;margin:0 auto;padding:20px 18px 60px}
+  @supports(padding:max(0px)){.wrap{padding-top:max(20px,env(safe-area-inset-top));padding-left:max(18px,env(safe-area-inset-left));padding-right:max(18px,env(safe-area-inset-right))}}
+
+  .liveflag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.3px;color:#052616;background:linear-gradient(90deg,var(--good),#12b981);padding:5px 11px;border-radius:999px}
+  .dot-live{width:7px;height:7px;border-radius:50%;background:#052616;animation:pulse 1.6s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(5,38,22,.5)}70%{box-shadow:0 0 0 6px rgba(5,38,22,0)}100%{box-shadow:0 0 0 0 rgba(5,38,22,0)}}
+
+  header.top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin:8px 0 16px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:12px;min-width:0}
+  .logo{width:44px;height:44px;border-radius:13px;overflow:hidden;box-shadow:var(--shadow);flex:none}
+  .logo svg{display:block;width:44px;height:44px}
+  .brand h1{font-family:var(--brand);font-size:23px;margin:0;font-weight:600;letter-spacing:.2px;line-height:1}
+  .brand h1 .da{color:var(--sun)}
+  .brand .tag{font-size:12px;color:var(--muted);margin-top:3px}
+  .controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .searchwrap{position:relative}
+  #search{width:250px;max-width:58vw;background:var(--card);border:1px solid var(--line);color:var(--text);padding:11px 14px;border-radius:12px;font-size:15px;outline:none;font-family:inherit}
+  #search:focus{border-color:var(--sky)}
+  .results{position:absolute;top:48px;left:0;right:0;background:#0e1a33;border:1px solid var(--line);border-radius:12px;overflow:hidden;z-index:30;box-shadow:var(--shadow);display:none;max-height:320px;overflow-y:auto}
+  .results.show{display:block}
+  .results div{padding:11px 14px;font-size:14px;cursor:pointer;display:flex;justify-content:space-between;gap:10px}
+  .results div .sub{color:var(--dim);font-size:12px;text-align:right;flex:none}
+  .results div:hover,.results div.hi{background:var(--card2)}
+  .btn{display:inline-flex;align-items:center;gap:7px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--text);padding:11px 13px;border-radius:12px;font-size:13px;font-weight:600;white-space:nowrap;font-family:inherit}
+  .btn:hover{background:var(--card2)}
+  .placesbtn{max-width:230px}
+  .placesbtn #placesBtnLabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+
+  /* Places popup */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(4,8,18,.66);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:56px 16px 16px}
+  .modal-backdrop[hidden]{display:none}
+  .modal{background:#0e1a33;border:1px solid var(--line);border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.55);width:100%;max-width:440px;max-height:82vh;display:flex;flex-direction:column;overflow:hidden}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line)}
+  .modal-head h3{margin:0;font-family:var(--brand);font-size:18px;font-weight:600}
+  .modal-close{cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--text);width:32px;height:32px;border-radius:9px;font-size:20px;line-height:1;font-family:inherit;flex:none}
+  .modal-close:hover{background:var(--card2)}
+  .modal-body{padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:15px}
+  .modal-actions{display:flex;gap:9px;flex-wrap:wrap}
+  .modal .searchwrap{position:relative}
+  .modal #search{width:100%;max-width:none}
+  .modal .results{position:static;top:auto;margin-top:8px;box-shadow:none;max-height:280px}
+  .modal-saved .savedlbl{display:block;margin-bottom:9px}
+  .results .rrow{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .rinfo{display:flex;align-items:baseline;gap:8px;min-width:0;flex:1;cursor:pointer}
+  .rinfo .rn{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none;max-width:62%}
+  .rinfo .ra{color:var(--dim);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rsave{flex:none;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--text);padding:5px 10px;border-radius:999px;font-size:11.5px;font-weight:700;font-family:inherit}
+  .rsave:hover{background:var(--card2)}
+  .rsave.on{background:rgba(61,220,151,.14);border-color:rgba(61,220,151,.4);color:#9beecb}
+  .relmeta{font-size:11.5px;color:var(--dim);font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+  .rellist{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px}
+  .rellist li{font-size:13.5px;line-height:1.5;color:var(--text)}
+  .relgot{align-self:flex-start;background:linear-gradient(90deg,var(--sky),var(--sky2));border-color:transparent;color:#fff;margin-top:2px;padding:11px 18px}
+  @media(max-width:600px){.modal-backdrop{padding:40px 10px 10px}}
+
+  .savedrow{display:flex;align-items:center;gap:10px;margin:2px 0 16px;flex-wrap:wrap}
+  .savedlbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px}
+  .saved{display:flex;gap:8px;flex-wrap:wrap}
+  .schip{display:inline-flex;align-items:center;gap:9px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--text);padding:8px 12px;border-radius:999px;font-size:13px;font-weight:600}
+  .schip:hover{background:var(--card2)}
+  .schip.active{background:linear-gradient(90deg,var(--sky),var(--sky2));border-color:transparent;color:#fff}
+  .schip .x{opacity:.55;font-weight:700;line-height:1;font-size:15px}
+  .schip .x:hover{opacity:1}
+  .emptysaved{font-size:13px;color:var(--dim)}
+  .geonote{font-size:12.5px;color:var(--muted);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 13px;margin:-4px 0 18px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+  .geonote .cl{cursor:pointer;color:var(--dim);font-weight:700}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+  .card h2{font-size:12px;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);margin:0 0 14px;font-weight:700}
+  .herohead{padding:20px 22px}
+  .placerow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .place{font-size:14px;color:var(--muted);font-weight:600;min-width:0}
+  .cur{display:inline-block;font-size:11px;color:#9beecb;background:rgba(61,220,151,.14);border:1px solid rgba(61,220,151,.35);padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;font-weight:600}
+  .savetoggle{cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--text);padding:7px 12px;border-radius:999px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-family:inherit;flex:none}
+  .savetoggle:hover{background:var(--card2)}
+  .savetoggle.on{background:rgba(61,220,151,.14);border-color:rgba(61,220,151,.4);color:#9beecb}
+
+  /* hero: big current temperature */
+  .nowtag{display:inline-flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#9beecb;margin-top:9px}
+  .livedot{width:7px;height:7px;border-radius:50%;background:#3ddc97;animation:pulse 1.6s infinite}
+  .heroconf{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:15px;padding-top:14px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--muted)}
+  .terraline{margin-top:9px;font-size:12.5px;color:var(--muted)}
+  .terraline b{color:var(--text);font-weight:600}
+  .confwhy{flex-basis:100%;font-size:12px;color:var(--dim);line-height:1.4}
+  .heromain{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-top:12px}
+  .heronow{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .hero-temp{font-family:var(--brand);font-size:70px;font-weight:600;line-height:.9;letter-spacing:-2px}
+  .hero-side{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .hero-cond{font-family:var(--brand);font-size:21px;font-weight:600;line-height:1.1}
+  .hero-feels{font-size:13.5px;color:var(--muted);line-height:1.4}
+  .wordday{text-align:right;min-width:0}
+  .wdl{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted);font-weight:700}
+  .wdw{font-family:var(--brand);font-size:48px;font-weight:600;line-height:1;letter-spacing:-.5px;margin-top:3px;white-space:nowrap}
+  .pill{display:inline-block;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:700}
+
+  /* 7-day strip */
+  .weeklbl{font-size:12px;text-transform:uppercase;letter-spacing:1.6px;color:var(--muted);font-weight:700;margin:22px 2px 8px}
+  .week{display:grid;grid-template-columns:repeat(7,1fr);gap:9px;padding:2px 2px 10px}
+  .week::-webkit-scrollbar{height:6px}
+  .week::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+  .wday{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center;cursor:pointer;box-shadow:var(--shadow);min-width:0}
+  .wday:hover{background:var(--card2)}
+  .wday.sel{border-color:var(--sky);box-shadow:0 0 0 1px var(--sky) inset}
+  .wday .wd{font-size:12.5px;font-weight:700;color:var(--text)}
+  .wday .wdd{font-size:10.5px;color:var(--dim);font-weight:600}
+  .wday .wi{height:32px;display:grid;place-items:center;margin:5px 0 3px}
+  .wday .wt{font-family:var(--brand);font-size:16px;font-weight:600}
+  .wday .wt small{color:var(--dim);font-weight:500;font-size:12px}
+  .wday .wr{font-size:11.5px;margin-top:4px;font-weight:700}
+  .wday .wc{display:flex;align-items:center;justify-content:center;gap:4px;font-size:10px;color:var(--dim);margin-top:5px;font-weight:600}
+  .wday .wc i{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .wl{display:none}
+
+  /* selected-day summary + confidence */
+  .daysum{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:16px 2px 2px;flex-wrap:wrap}
+  .daysum .dh{font-family:var(--brand);font-size:19px;font-weight:600;line-height:1.25;flex:1 1 auto;min-width:0}
+  .daysum .dh b{color:var(--sun);font-weight:600}
+
+  /* advisories */
+  .advisories{display:flex;flex-direction:column;gap:8px;margin:12px 0 2px}
+  .advisories:empty{display:none;margin:0}
+  .adv{display:flex;gap:11px;align-items:flex-start;border-radius:13px;padding:11px 13px;border:1px solid}
+  .adv.bad{background:rgba(247,123,123,.10);border-color:rgba(247,123,123,.42)}
+  .adv.warn{background:rgba(252,182,74,.10);border-color:rgba(252,182,74,.4)}
+  .adv.official{background:rgba(93,180,255,.10);border-color:rgba(93,180,255,.44)}
+  .adv .aic{font-size:20px;line-height:1;flex:none;margin-top:1px}
+  .adv .abody{min-width:0}
+  .adv .at{font-size:13.5px;font-weight:700;margin:0 0 2px}
+  .adv .ax{font-size:12.5px;color:var(--muted);line-height:1.45}
+  .adv .src{font-size:11px;color:var(--dim);margin-top:3px;font-weight:600}
+
+  .periods{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0 6px}
+  .period{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:14px 8px;text-align:center;box-shadow:var(--shadow)}
+  .period .plbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700}
+  .period .pic{margin:8px auto 4px;height:38px;display:grid;place-items:center}
+  .period .ptemp{font-family:var(--brand);font-size:23px;font-weight:600;line-height:1}
+  .period .prain{font-size:13px;margin-top:6px;font-weight:700}
+  .period .pverd{font-size:12px;color:var(--muted);margin-top:2px}
+
+  .sec{font-size:12px;text-transform:uppercase;letter-spacing:1.6px;color:var(--muted);font-weight:700;margin:24px 2px 12px}
+  .sechead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .mini{cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--text);padding:6px 12px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:none;font-family:inherit}
+  .mini:hover{background:var(--card2)}
+  .actpanel{display:flex;flex-wrap:wrap;gap:8px;margin:-2px 0 14px}
+  .actpanel[hidden]{display:none}
+  .actchip{cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--text);padding:8px 12px;border-radius:999px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:7px;font-family:inherit}
+  .actchip:hover{background:var(--card2)}
+  .actchip.on{background:linear-gradient(90deg,var(--sky),var(--sky2));border-color:transparent;color:#fff}
+  .actchip .em{font-size:15px}
+
+  .decisions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .dc{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:15px;display:flex;gap:13px;align-items:flex-start;box-shadow:var(--shadow)}
+  .dc .ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;flex:none;background:rgba(255,255,255,.06);font-size:22px;line-height:1}
+  .dc .h{font-size:14px;font-weight:700;margin:0 0 3px} .dc .verdict{font-size:14px;margin:0 0 5px;font-weight:600} .dc .meta{font-size:12.5px;color:var(--muted);line-height:1.45}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .nowcast .tl{display:flex;gap:6px;align-items:flex-end;height:96px;margin-top:6px}
+  .nowcast .slot{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0}
+  .nowcast .col{width:100%;background:rgba(255,255,255,.06);border-radius:7px 7px 4px 4px;height:66px;display:flex;align-items:flex-end;overflow:hidden}
+  .nowcast .fill{width:100%;border-radius:6px 6px 0 0;transition:height .45s}
+  .nowcast .t{font-size:11px;color:var(--dim)} .nowcast .lede{font-size:14px;margin:2px 0 12px;color:var(--muted)}
+  .nowcast .pv{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;font-weight:600}
+  .drybar{display:flex;align-items:center;justify-content:center;height:96px;color:#9beecb;font-weight:600;font-size:14px;background:rgba(61,220,151,.06);border:1px dashed rgba(61,220,151,.28);border-radius:12px;text-align:center;padding:0 16px}
+  .agree{font-size:13px;color:var(--text);margin:-2px 0 14px;padding:10px 12px;background:var(--card2);border-radius:11px;line-height:1.45}
+  .models{display:flex;flex-direction:column;gap:10px}
+  .m{display:grid;grid-template-columns:118px 1fr 58px;align-items:center;gap:12px}
+  .m .nm{font-size:13px;color:var(--muted);font-weight:600} .m .val{font-size:13px;text-align:right;font-variant-numeric:tabular-nums}
+  .synth{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .synth .big{font-family:var(--brand);font-size:24px;font-weight:600} .synth .sub{font-size:12px;color:var(--muted)}
+  .foot{margin-top:26px;font-size:12px;color:var(--dim);line-height:1.6;border-top:1px solid var(--line);padding-top:16px}
+  .foot .ios{color:var(--muted)}
+
+  /* ---- responsive: readable down to 320px ---- */
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  @media(max-width:600px){
+    .wrap{padding-left:14px;padding-right:14px}
+    header.top{gap:12px}
+    .controls{width:100%}
+    .searchwrap{flex:1 1 160px}
+    .hero-temp{font-size:60px}
+    .heromain{gap:10px}
+    .wordday{text-align:left;width:100%;border-top:1px solid var(--line);padding-top:12px}
+    .wdw{font-size:40px;white-space:normal}
+    .herohead{padding:18px 16px}
+    .card{padding:16px}
+    .decisions{grid-template-columns:1fr}
+    /* 7-day becomes a compact vertical list on phones: all 7 visible, no scroll */
+    .week{display:flex;flex-direction:column;gap:6px;overflow:visible;padding:2px 0 4px}
+    .wday{display:flex;align-items:center;gap:11px;width:auto;padding:9px 13px;text-align:left;border-radius:12px}
+    .wdate{min-width:52px;display:flex;flex-direction:column;line-height:1.15}
+    .wday .wd{font-size:13px} .wday .wdd{font-size:11px}
+    .wday .wi{height:auto;margin:0;display:block} .wday .wi svg{width:26px;height:26px;display:block}
+    .wday .wt{font-size:16px;min-width:64px} .wday .wt small{font-size:12.5px}
+    .wday .wr{margin:0 0 0 auto;font-size:13px} .wday .wc{margin:0;font-size:13px}
+    .wl{display:inline;color:var(--dim);font-weight:600}
+  }
+  @media(max-width:380px){
+    .brand h1{font-size:21px}
+    .brand .tag{display:none}
+    #search{width:100%;max-width:none}
+    .hero-temp{font-size:52px}
+    .hero-cond{font-size:19px}
+    .wdw{font-size:34px}
+    .periods{gap:7px}
+    .period{padding:12px 4px}
+    .period .ptemp{font-size:20px}
+    .period .plbl{font-size:9.5px;letter-spacing:.4px}
+    .period .prain{font-size:11.5px}
+    .period .pverd{font-size:11px}
+    .period .pic{height:32px}
+    .wday{padding:8px 11px;gap:9px}
+    .wday .wt{min-width:58px}
+    .m{grid-template-columns:82px 1fr 50px;gap:8px}
+    .m .nm{font-size:11.5px}
+    .dc{padding:13px;gap:11px}
+    .btn{padding:10px 11px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="margin-bottom:14px"><span class="liveflag"><span class="dot-live"></span>Live UK forecasts, no server</span></div>
+
+  <header class="top">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#70c4ff"/><stop offset="1" stop-color="#2b6cd6"/></linearGradient><clipPath id="lb"><rect width="100" height="100" rx="24"/></clipPath></defs><g clip-path="url(#lb)"><rect width="100" height="100" fill="url(#lsky)"/><g stroke="#ffc94b" stroke-width="6" stroke-linecap="round"><line x1="10" y1="31" x2="-1" y2="31"/><line x1="13.96" y1="18.46" x2="4.94" y2="12.19"/><line x1="22.76" y1="10.98" x2="18.14" y2="0.97"/><line x1="33.76" y1="9" x2="34.64" y2="-2"/><line x1="44.1" y1="12.74" x2="50.15" y2="3.61"/></g><circle cx="32" cy="31" r="19" fill="#ffc94b"/><circle cx="28" cy="27" r="10" fill="#ffe08c"/><g fill="#d6e6f8" transform="translate(0,2.6)"><circle cx="57" cy="58" r="25"/><circle cx="38" cy="65" r="16"/><circle cx="77" cy="61" r="18"/><circle cx="50" cy="49" r="16"/><rect x="33" y="60" width="52" height="20" rx="10"/></g><g fill="#fff"><circle cx="57" cy="58" r="25"/><circle cx="38" cy="65" r="16"/><circle cx="77" cy="61" r="18"/><circle cx="50" cy="49" r="16"/><rect x="33" y="60" width="52" height="20" rx="10"/></g><circle cx="53" cy="60" r="3" fill="#243a66"/><circle cx="68" cy="60" r="3" fill="#243a66"/><path d="M52.5 62 Q60.5 70 68.5 62" fill="none" stroke="#243a66" stroke-width="2.6" stroke-linecap="round"/></g></svg>
+      </span>
+      <div><h1>Hows<span class="da">Da</span>Weather</h1><div class="tag">Plan your day. Have a laugh. Mostly stay dry.</div></div>
+    </div>
+    <div class="controls">
+      <button class="btn placesbtn" id="placesBtn" title="Search or change location">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 21s-6.4-5.6-6.4-10.4A6.4 6.4 0 0 1 12 4.2a6.4 6.4 0 0 1 6.4 6.4C18.4 15.4 12 21 12 21z" stroke="#bfe0ff" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="10.4" r="2.2" stroke="#bfe0ff" stroke-width="1.7"/></svg>
+        <span id="placesBtnLabel">Places</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="#9db0ca" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="btn" id="install" hidden>Install</button>
+    </div>
+  </header>
+
+  <div class="geonote" id="geonote" style="display:none"><span id="geomsg"></span><span class="cl" id="geoclose">Dismiss</span></div>
+
+  <div class="card herohead">
+    <div class="placerow"><div class="place" id="place" title="Change location">Loading...</div></div>
+    <div class="nowtag"><span class="livedot"></span>Live &middot; conditions right now</div>
+    <div class="heromain">
+      <div class="heronow">
+        <div class="hero-temp" id="herotemp">--&deg;</div>
+        <div class="hero-side">
+          <div class="hero-cond" id="herocond"></div>
+          <div class="hero-feels" id="herofeels"></div>
+        </div>
+      </div>
+      <div class="wordday"><div class="wdl">Word for the day</div><div class="wdw" id="wordday">-</div></div>
+    </div>
+    <div class="heroconf"><span>Today's forecast confidence</span><span class="pill" id="heroConf">-</span><span class="confwhy" id="heroConfWhy"></span></div>
+    <div class="terraline" id="terraline" hidden></div>
+  </div>
+
+  <div class="weeklbl">Next 7 days - tap a day to plan it</div>
+  <div class="week" id="week"></div>
+
+  <div class="daysum"><div class="dh" id="dayhead"></div><span class="pill" id="confpill"></span></div>
+  <div class="advisories" id="advisories"></div>
+  <div class="periods" id="periods"></div>
+
+  <div class="sec sechead"><span>Can I... ?</span><button class="mini" id="customise">Customise</button></div>
+  <div class="actpanel" id="actpanel" hidden></div>
+  <div class="decisions" id="decisions"></div>
+
+  <div class="sec">The detail (today)</div>
+  <div class="grid">
+    <div class="card nowcast">
+      <h2>Nowcast - next 6 hours (rain chance)</h2>
+      <div class="lede" id="nowlede"></div>
+      <div class="tl" id="timeline"></div>
+    </div>
+    <div class="card">
+      <h2>Model agreement - rainfall today</h2>
+      <div class="agree" id="agree"></div>
+      <div class="models" id="models"></div>
+      <div class="synth">
+        <div><div class="big" id="synthval"></div><div class="sub">Synthesis</div></div>
+        <div style="text-align:right"><span class="pill" id="synthpill"></span><div class="sub" id="synthspread" style="margin-top:6px"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <strong>For fun, and free.</strong> Each part of the day shows the chance of <em>proper</em> rain - the share of a ~156-member ensemble (five forecasting centres: ECMWF, ICON, the US GEFS, the Canadian GEM and the UK Met Office's own MOGREPS, via Open-Meteo) whose total for that window reaches 0.5 mm, the point at which you would actually notice it. It deliberately does not headline the chance of a 0.1 mm trace: on a sunny day a lone drizzly member could push that to 25% and read like a downpour, when four-fifths of the forecasts are bone dry. Hover a period to see the expected amount in mm. <strong>Not every source is equal.</strong> The five centres do not forecast equally well, so we do not count them equally: each is weighted by decades of published verification, with ECMWF and the Met Office carrying the most and GFS the least. We also quietly score each centre against the local rain gauges over the past week or two and nudge the weights a touch toward whichever has been closest to reality near you - but only gently, and only when there have been enough real rain events to judge, because at one spot over a fortnight the sources mostly agree and a thin sample is far too easy to over-read. So the published ranking does the heavy lifting; the local check only ever leans on it. <strong>Confidence</strong> combines three things: how strongly the members agree, how far ahead the day is (forecast skill genuinely decays with range, so a unanimous six-day-out call is capped well below a unanimous one for today), and how steady the forecast has been across the last few model runs - if it has been flip-flopping between runs, we say so now rather than letting it surprise you tomorrow. Agreement is judged on rain you would actually notice (0.5 mm), not on a trace, so the figure does not swing about on drizzle. <strong>Track record:</strong> confidence is also checked against reality. Everything else here is forecasts marking their own homework, so we fetch what the model <em>predicted</em> for the last ten days or so and compare it against what actually fell, using real tipping-bucket rain gauges - the Environment Agency network in England and SEPA in Scotland. If the models have been getting rain wrong at your spot lately, confidence is marked down. We take the median across several nearby gauges and never trust a lone one: gauges do break, and a single reading with no neighbours to check it against is indistinguishable from a fault. Scoring only counts rain the models got right or missed, never the free marks for correctly calling a dry day, so a dry spell cannot quietly inflate the figure. Where there are no gauges (Wales, Northern Ireland, and outside the UK) this term is simply left out. It is honest but coarse - a few days at one place is a nudge, not a proof, so it is capped to a few points either way and the lead-time factors still reflect published rain/no-rain skill decay. Treat confidence as an honest guide, not a guarantee. "Feels like" is the apparent temperature, factoring humidity and wind, so hot-and-muggy days read honestly. Wind, snow and heat advisories are derived from the forecast, not official Met Office warnings. Flood alerts come from the Environment Agency (England only). Temperature is corrected to your exact spot using a 90 m elevation model. <strong>Terrain:</strong> beyond plain altitude, the app reads the SHAPE of the land around your exact spot (twenty-four elevation samples in rings at 1, 2 and 5 km - the near ring catches narrow valleys like Hebden Bridge or the Ironbridge gorge whose walls sit within a kilometre) and classifies it - valley floor, deep glen, sheltered hollow, exposed top, or flat. If you are in a valley, clear calm nights are nudged colder (cold air genuinely drains into valley bottoms - the frost-hollow effect), gusts are read lower for wind blowing across the valley and a touch higher for wind funnelled along it, and a clear, calm, damp night raises a valley-fog advisory. An exposed top reads gusts higher. These are bounded, physics-based estimates gated on the conditions that make each effect real - and where the land is gentle or ambiguous (a broad lowland hollow, a hillside) the app deliberately makes no claim rather than an invented one. Search works with full postcodes too (e.g. "LL55 4TY"), pinning the forecast to within about 100 m - which matters in the hills, where the next street can be 100 m higher. Runs entirely in your browser - no server, no accounts, no tracking. Places via postcodes.io and OpenStreetMap. <span id="srcline"></span><br>
+    <span class="ios">On iPhone, tap Share then "Add to Home Screen" to install. On Android, use the Install button or your browser menu.</span> Not for safety-critical decisions - always check official <a href="https://www.metoffice.gov.uk/weather/warnings-and-advice/uk-warnings" style="color:var(--muted)">Met Office warnings</a> and <a href="https://check-for-flooding.service.gov.uk" style="color:var(--muted)">flood alerts</a>.
+  </div>
+
+  <!-- Places popup: search, save and switch location; keeps the main page clean -->
+  <div class="modal-backdrop" id="placesModal" hidden>
+    <div class="modal" role="dialog" aria-label="Choose a place">
+      <div class="modal-head">
+        <h3>Places</h3>
+        <button class="modal-close" id="placesClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="searchwrap">
+          <input id="search" autocomplete="off" spellcheck="false" placeholder="Search a UK city, area or postcode...">
+          <div class="results" id="results"></div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn" id="geo" title="Use my actual location">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3.2" stroke="#bfe0ff" stroke-width="1.7"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="#bfe0ff" stroke-width="1.7" stroke-linecap="round"/></svg>
+            Locate me
+          </button>
+          <button class="savetoggle" id="savetoggle"></button>
+        </div>
+        <div class="modal-saved"><span class="savedlbl">Saved places</span><div class="saved" id="saved"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Release notes: pops once after an update, dismissible, gone after 24h -->
+  <div class="modal-backdrop" id="relModal" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="relTitle">What's new</h3>
+        <button class="modal-close" id="relClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="relmeta" id="relMeta"></div>
+        <ul class="rellist" id="relList"></ul>
+        <button class="btn relgot" id="relGot">Got it</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const pad2=n=>String(n).padStart(2,'0');
+const hourOf=t=>parseInt(t.slice(11,13),10);
+const dayOf=t=>t.slice(0,10);
+const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):'';
+const mph=kmh=>Math.round((kmh||0)/1.609);
+const TIMELBL=["Now","+1h","+2h","+3h","+4h","+5h","+6h"];
+const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+async function fetchJSON(u,ms){const ctrl=new AbortController();const to=setTimeout(()=>ctrl.abort(),ms||12000);try{const r=await fetch(u,{signal:ctrl.signal});if(!r.ok)throw new Error('HTTP '+r.status);return await r.json();}finally{clearTimeout(to);}}
+
+const WICONS={
+  sunny:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.4" fill="#ffd67a"/><g stroke="#ffd67a" stroke-width="1.9" stroke-linecap="round"><path d="M12 2.4v2.8M12 18.8v2.8M2.4 12h2.8M18.8 12h2.8M4.9 4.9l2 2M17.1 17.1l2 2M19.1 4.9l-2 2M4.9 19.1l2-2"/></g></svg>',
+  partly:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="8.5" cy="8" r="3.3" fill="#ffd67a"/><path d="M7 17.5a3.5 3.5 0 0 1 .4-7A4.7 4.7 0 0 1 16.3 12.2a3 3 0 0 1-.3 5.3H7z" fill="#c9d6e8"/></svg>',
+  cloudy:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M7 17.5a3.7 3.7 0 0 1 .3-7.3A5 5 0 0 1 17 11.8a3.2 3.2 0 0 1-.4 5.7H7z" fill="#b9c6da"/></svg>',
+  fog:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M7 13.5a3.5 3.5 0 0 1 .3-7A4.8 4.8 0 0 1 16.7 8.7a3 3 0 0 1-.4 5.3H7z" fill="#b9c6da"/><g stroke="#9db0ca" stroke-width="1.8" stroke-linecap="round"><path d="M5 18h14M7 20.6h11"/></g></svg>',
+  showers:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M7 14.5a3.6 3.6 0 0 1 .4-7.2A4.8 4.8 0 0 1 16.6 9.6a3.1 3.1 0 0 1-.4 5H7z" fill="#aebfd6"/><g stroke="#4aa8ff" stroke-width="1.9" stroke-linecap="round"><path d="M9 17.5l-1 2.4M14 17.5l-1 2.4"/></g></svg>',
+  wet:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M7 13.5a3.6 3.6 0 0 1 .4-7.2A4.8 4.8 0 0 1 16.6 8.6a3.1 3.1 0 0 1-.4 5H7z" fill="#8fa4c2"/><g stroke="#4aa8ff" stroke-width="1.9" stroke-linecap="round"><path d="M8 16.5l-1.2 2.6M12 16.5l-1.2 2.6M16 16.5l-1.2 2.6"/></g></svg>',
+  snow:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M7 13.5a3.6 3.6 0 0 1 .4-7.2A4.8 4.8 0 0 1 16.6 8.6a3.1 3.1 0 0 1-.4 5H7z" fill="#cdd9ec"/><g fill="#eaf3ff"><circle cx="8.5" cy="18" r="1.3"/><circle cx="13" cy="19.6" r="1.3"/><circle cx="16.5" cy="17.6" r="1.3"/></g></svg>',
+  thunder:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M7 13a3.6 3.6 0 0 1 .4-7.2A4.8 4.8 0 0 1 16.6 8.1a3.1 3.1 0 0 1-.4 5H7z" fill="#8fa4c2"/><path d="M12.5 12l-3 4.2h2.2l-1 3.3 3.4-4.6h-2.3z" fill="#ffd67a"/></svg>',
+  // Wind, three magnitudes - the classic streak-with-a-curl, getting longer, thicker and more
+  // urgent in colour from a light breeze to a gale.
+  breezy:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><g stroke="#a9c6e2" stroke-width="1.7" stroke-linecap="round" fill="none"><path d="M3 8.5h9a2 2 0 1 0-2-2"/><path d="M3 13.5h6a1.8 1.8 0 1 1-1.7 2.6"/></g></svg>',
+  windy:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><g stroke="#6fa8dc" stroke-width="1.95" stroke-linecap="round" fill="none"><path d="M2 7.5h12a2.3 2.3 0 1 0-2.3-2.3"/><path d="M2 12.5h16a2.5 2.5 0 1 1-2.5 2.5"/><path d="M2 17.5h9a2 2 0 1 0-2 2"/></g></svg>',
+  gale:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><g stroke="#ffab5e" stroke-width="2.2" stroke-linecap="round" fill="none"><path d="M2 7h13a2.5 2.5 0 1 0-2.5-2.5"/><path d="M2 12h17a2.7 2.7 0 1 1-2.7 2.7"/><path d="M2 17h11a2.3 2.3 0 1 0-2.3 2.3"/></g></svg>',
+  // Heat, two magnitudes: a warm sun, then a hot red sun with shimmer waves.
+  hot:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9.5" r="4" fill="#ffb04a"/><g stroke="#ffb04a" stroke-width="1.7" stroke-linecap="round"><path d="M12 1.4v2.2M3.4 9.5H1.2M22.8 9.5h-2.2M5.2 3l1.6 1.6M18.8 3l-1.6 1.6"/></g><g stroke="#ff8a3d" stroke-width="1.6" stroke-linecap="round" fill="none"><path d="M6.5 18c1.5-1.1 3.6-1.1 5.5 0s4 1.1 5.5 0"/><path d="M6.5 21.1c1.5-1.1 3.6-1.1 5.5 0s4 1.1 5.5 0"/></g></svg>',
+  scorch:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="4.6" fill="#ff7245"/><g stroke="#ff7245" stroke-width="1.9" stroke-linecap="round"><path d="M12 0.8v2.6M2.8 9H0.4M23.6 9H21M4.3 2.3l1.8 1.8M19.7 2.3l-1.8 1.8"/></g><g stroke="#ff5630" stroke-width="1.8" stroke-linecap="round" fill="none"><path d="M6 18.6c1.6-1.2 3.7-1.2 5.7 0s4.1 1.2 5.7 0"/><path d="M6 21.7c1.6-1.2 3.7-1.2 5.7 0s4.1 1.2 5.7 0"/></g></svg>',
+  // Cold: a six-point ice crystal, distinct from snow (which is a cloud + flakes).
+  frost:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><g stroke="#8fd3ff" stroke-width="1.7" stroke-linecap="round"><path d="M12 2.5v19M3.8 7.25l16.4 9.5M20.2 7.25l-16.4 9.5"/><g stroke-width="1.5"><path d="M12 6.2l2.3-2.3M12 6.2l-2.3-2.3M12 17.8l2.3 2.3M12 17.8l-2.3 2.3M6.6 9.3l-2.9.4M6.6 9.3l.4-2.9M17.4 14.7l2.9-.4M17.4 14.7l-.4 2.9M6.6 14.7l-.4 2.9M6.6 14.7l-2.9-.4M17.4 9.3l.4-2.9M17.4 9.3l2.9.4"/></g></g></svg>',
+  // Heavy snow / blizzard: snow cloud, more flakes, plus wind streaks.
+  blizzard:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M7 12a3.5 3.5 0 0 1 .4-7A4.7 4.7 0 0 1 16.5 7.1a3 3 0 0 1-.4 4.9H7z" fill="#cdd9ec"/><g fill="#eaf3ff"><circle cx="7.5" cy="16.4" r="1.2"/><circle cx="11" cy="18.8" r="1.2"/><circle cx="14.6" cy="16.2" r="1.2"/><circle cx="17.6" cy="18.6" r="1.1"/></g><g stroke="#aebccf" stroke-width="1.5" stroke-linecap="round"><path d="M3.5 20.8h7.5M12.5 22.4h6.5"/></g></svg>',
+  // Light fog / mist: horizontal haze, no cloud, lighter than the dense fog icon.
+  mist:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><g stroke="#aebccf" stroke-width="1.7" stroke-linecap="round"><path d="M4 8h13M6 11.6h14M4 15.2h12M7 18.8h11"/></g></svg>'
+};
+// Representative sky icon for a window (daytime hours, or one period).
+// The RAIN part of the icon is driven by `wetProb` - the very same meaningful-rain % (chance of
+// >=0.5mm) we now PRINT next to it - so the icon can never contradict the number. (It used to key
+// off the trace % or a single model's weather_code, which is how a sunny day beside "25% rain"
+// happened.) Weather codes only supply what a rain % cannot: thunder, snow, fog. `anyProb` (chance
+// of even a 0.1mm spit) is used solely as a floor: we do not paint a cloudless sun when a spit is a
+// genuine possibility, even if the chance of proper rain is tiny.
+// The icon is chosen by DOMINANCE - the single most telling condition for the window - across every
+// weather type, each with magnitudes where it matters:
+//   thunder > heavy snow(blizzard)/snow > gale > heavy rain(wet) > showers > strong wind(windy) >
+//   extreme heat(scorch) > dense fog > hard frost > (light rain risk -> partly) > light fog(mist) >
+//   [clear sky: warm -> hot, else sunny] > breeze(on a dull sky) > partly/cloudy by cloud cover.
+// Rain% drives the rain icons (so icon and printed % never disagree); gust mph drives wind;
+// feels-like high/low drive heat and frost; snowfall + wind split snow into snow vs blizzard; the
+// count of foggy hours splits fog into mist vs dense fog. Safety-critical and higher-intensity
+// conditions win, so a dry heatwave, a hard frost or a gale each get their own face instead of a
+// generic sun. Thresholds mirror assessHazards so the icon, the advisories and the word agree.
+const WIND_GALE=45, WIND_STRONG=33, WIND_BREEZY_ICON=28;
+const HEAT_SCORCH=31, HEAT_WARM=27, FROST_FEELS=-2, FROST_DAYMAX=4;
+function skyIcon(codes,clouds,wetProb,snowCm,anyProb,gustMph,feelsHi,feelsLo){
+  codes=(codes||[]).filter(v=>v!=null); clouds=(clouds||[]).filter(v=>v!=null);
+  const p=wetProb||0, any=anyProb==null?p:anyProb, g=gustMph||0;
+  const fh=(feelsHi==null?null:feelsHi), fl=(feelsLo==null?null:feelsLo);
+  if(codes.some(c=>c>=95)) return 'thunder';
+  if((snowCm||0)>0 || codes.some(c=>(c>=71&&c<=77)||c===85||c===86))
+    return ((snowCm||0)>=3 || g>=WIND_STRONG) ? 'blizzard' : 'snow'; // heavy or wind-driven -> blizzard
+  if(g>=WIND_GALE) return 'gale';  // a gale dominates even heavy rain - it is the dangerous story
+  if(p>=70) return 'wet';
+  if(p>=25) return 'showers';
+  if(g>=WIND_STRONG) return 'windy'; // properly windy and not raining much -> wind is the headline
+  if(fh!=null && fh>=HEAT_SCORCH) return 'scorch'; // a scorcher is the story on any dry day
+  const fogN=codes.filter(c=>c===45||c===48).length, fogFrac=codes.length?fogN/codes.length:0;
+  if(fogFrac>=0.5 && fogN>=3) return 'fog';        // dense/persistent fog
+  if(fl!=null && fl<=FROST_FEELS && (fh==null||fh<=FROST_DAYMAX)) return 'frost'; // a day that stays freezing
+  if(p>=10) return 'partly';       // a real chance of proper rain - never a cloudless sun
+  if(fogFrac>=0.25 && fogN>=2) return 'mist';      // patchy/light fog
+  const mc=clouds.length?clouds.reduce((a,b)=>a+b,0)/clouds.length:50;
+  if(mc<25) return (fh!=null&&fh>=HEAT_WARM)?'hot':(any>=40?'partly':'sunny'); // clear + warm -> hot sun
+  if(g>=WIND_BREEZY_ICON) return 'breezy';    // breezy AND not clear-sunny -> show the breeze
+  if(mc<60) return 'partly';
+  return 'cloudy';
+}
+
+const MODELS=[
+  {id:'ecmwf_ifs025',label:'ECMWF IFS',weight:.28},
+  {id:'ukmo_seamless',label:'Met Office UKMO',weight:.26},
+  {id:'icon_seamless',label:'ICON',weight:.22},
+  {id:'gem_seamless',label:'GEM',weight:.14},
+  {id:'gfs_seamless',label:'GFS',weight:.10}
+];
+const PERIODS=[{key:'morning',label:'Morning',s:6,e:12},{key:'afternoon',label:'Afternoon',s:12,e:18},{key:'evening',label:'Evening',s:18,e:24}];
+const DAYS=7;
+
+// ---- fetch ----
+async function fetchDeterministic(lat,lon){
+  const ids=MODELS.map(m=>m.id).join(',');
+  const url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
+    '&hourly=temperature_2m,precipitation&models='+ids+'&minutely_15=precipitation&forecast_days=2&timezone=auto';
+  const j=await fetchJSON(url);
+  const perModel={};
+  for(const m of MODELS) perModel[m.id]={temp:j.hourly['temperature_2m_'+m.id]||[],precip:j.hourly['precipitation_'+m.id]||[]};
+  return {time:j.hourly.time,perModel,minutely:j.minutely_15||null,utcOffsetSeconds:j.utc_offset_seconds||0};
+}
+async function fetchRich(lat,lon){
+  const url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
+    '&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,wind_gusts_10m,weather_code,cloud_cover,precipitation,precipitation_probability'+
+    '&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,snowfall_sum,uv_index_max'+
+    '&forecast_days='+DAYS+'&timezone=auto';
+  const j=await fetchJSON(url);
+  return {time:j.hourly.time,hourly:j.hourly,daily:j.daily,utcOffsetSeconds:j.utc_offset_seconds||0,elevation:j.elevation};
+}
+// What the SAME model said for these same hours 1/2/3 runs ago. This one call does two jobs:
+//   FORWARD (the next 7 days) - how much this forecast has been churning between runs.
+//   BACKWARD (past_days=3)    - what the model FORECAST for days that have since happened, which
+//                               is an archive of its own past predictions. Pair that with real
+//                               rain gauges and you can score the model against reality without
+//                               storing a thing. past_days costs no extra request; it is the same
+//                               call, and it comes back in well under a second.
+async function fetchPrevRuns(lat,lon){
+  const url='https://previous-runs-api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
+    '&hourly=precipitation,precipitation_previous_day1,precipitation_previous_day2,precipitation_previous_day3'+
+    '&past_days='+VERIFY_DAYS+'&forecast_days='+DAYS+'&timezone=auto';
+  const j=await fetchJSON(url,15000);
+  return {time:j.hourly.time,hourly:j.hourly};
+}
+// Per-SOURCE past forecasts: what EACH centre's own model predicted (day-1 lead) for the last two
+// weeks. Paired with the rain gauges, this lets us score each centre against reality locally. The
+// previous-runs API uses the deterministic/"seamless" id per centre (and needs `ncep`->gfs mapped
+// separately, but here we ask by the seamless ids directly). Verified: models= returns one
+// precipitation_previous_day1_<id> array per source.
+const SOURCE_RUN_MODELS=[['ecmwf_ifs025','ecmwf'],['ukmo_seamless','ukmo'],['icon_seamless','icon'],['gfs_seamless','gfs'],['gem_seamless','gem']];
+const SOURCE_PAST_DAYS=14;
+async function fetchSourceRuns(lat,lon){
+  const ids=SOURCE_RUN_MODELS.map(m=>m[0]).join(',');
+  const url='https://previous-runs-api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
+    '&hourly=precipitation_previous_day1&past_days='+SOURCE_PAST_DAYS+'&forecast_days=0&models='+ids+'&timezone=GMT';
+  const j=await fetchJSON(url,15000);
+  const H=j.hourly; if(!H||!H.time)return null;
+  const off=(j.utc_offset_seconds||0);
+  // per centre: daily total (local day) of its day-1 forecast
+  const out={};
+  for(const [id,centre] of SOURCE_RUN_MODELS){
+    const arr=H['precipitation_previous_day1_'+id]; if(!arr)continue;
+    const byDate={};
+    for(let i=0;i<H.time.length;i++){const d=H.time[i].slice(0,10);if(arr[i]!=null)byDate[d]=(byDate[d]||0)+arr[i];}
+    out[centre]=byDate;
+  }
+  return Object.keys(out).length?out:null;
+}
+// Five independent forecasting centres, not two. Adding the UK Met Office's own ensemble
+// (MOGREPS, ukmo_global_ensemble_20km, 17 members), the US GEFS (gfs025, 30) and the Canadian
+// GEM (gem_global, 20) takes the pool from 89 to ~156 members for ~+170ms and ~+22KB. More
+// members = a better-sampled probability (less Monte-Carlo noise on the %); more independent
+// centres = genuine modelling diversity, and crucially the Met Office now gets a vote, which
+// directly narrows the "but it differs from the Met Office" gap. Verified live: all five return
+// members for UK points (ukmo_seamless and icon_d2 do NOT, so they are deliberately excluded).
+const ENSEMBLE_MODELS='ecmwf_ifs025,icon_seamless,gfs025,gem_global,ukmo_global_ensemble_20km';
+// Which forecasting centre a member belongs to, detected from its key. NOTE Open-Meteo labels the
+// GEFS members `ncep_gefs025` even though we asked for `gfs025`, so match on real substrings, not
+// the requested id. Returns one of the CENTRE keys below, or null if unrecognised.
+function centreOf(key){
+  if(/ecmwf/.test(key))return'ecmwf';
+  if(/ukmo/.test(key))return'ukmo';
+  if(/icon/.test(key))return'icon';
+  if(/gem/.test(key))return'gem';
+  if(/gefs|ncep|gfs/.test(key))return'gfs';
+  return null;
+}
+async function fetchEnsemble(lat,lon){
+  const url='https://ensemble-api.open-meteo.com/v1/ensemble?latitude='+lat+'&longitude='+lon+
+    '&hourly=precipitation&models='+ENSEMBLE_MODELS+'&forecast_days='+DAYS+'&timezone=auto';
+  const j=await fetchJSON(url);
+  const keys=Object.keys(j.hourly).filter(k=>/member\d/.test(k));
+  const members=keys.map(k=>j.hourly[k]);
+  const centres=keys.map(centreOf);            // parallel array: which centre each member is from
+  return {time:j.hourly.time,members,centres,utcOffsetSeconds:j.utc_offset_seconds||0};
+}
+async function fetchFloods(lat,lon){
+  // Environment Agency real-time flood warnings (England, OGL, CORS-open). Non-fatal.
+  try{
+    const j=await fetchJSON('https://environment.data.gov.uk/flood-monitoring/id/floods?lat='+lat.toFixed(3)+'&long='+lon.toFixed(3)+'&dist=30',8000);
+    const items=(j.items||[]).filter(it=>it&&it.severityLevel&&it.severityLevel<=3);
+    items.sort((a,b)=>a.severityLevel-b.severityLevel);
+    const seen=new Set(),out=[];
+    for(const it of items){const id=it.floodAreaID||it.description;if(seen.has(id))continue;seen.add(id);
+      out.push({level:it.severityLevel,severity:it.severity||'Flood alert',desc:it.description||'',area:(it.floodArea&&it.floodArea.county)||it.eaAreaName||''});}
+    return out.slice(0,4);
+  }catch(e){return [];}
+}
+
+// ---- Observed rainfall: the only part of this app that checks the models against reality ----
+// Everything else here is forecasts grading their own homework. These are real tipping-bucket rain
+// gauges: the Environment Agency network (England, ~900 gauges, 15-min) and SEPA (Scotland,
+// hourly). Both free, open-licensed and CORS-open, so a browser-only app can read them directly.
+//
+// QUALITY CONTROL IS NOT OPTIONAL, and this is not a theoretical worry. Measured live on
+// 2026-07-16: of 37 English gauges sampled across four regions, 36 read dry and one (Plymouth
+// 49171) reported 15.52 mm inside a SINGLE 15-minute bucket - a 62 mm/hr rate - with all 82 of its
+// own other buckets dry and its nearest neighbour 5 km away reading zero. That is a broken gauge,
+// not rain, and it was the only observation all day that contradicted the model. Believing a lone
+// gauge would have told Plymouth it was hammering down.
+// So: take the MEDIAN across several gauges, never the mean and never a single one. The median is
+// immune to one gauge screaming, which is precisely the failure mode these networks have. This is
+// also the argument against a private sensor: one device has no neighbours, so when it lies there
+// is nothing to catch it.
+// 10-day window: enough past days that the gauge check actually catches some rain to score (a
+// 3-day window in a dry spell had nothing), while EA 15-min readings over 10 days (~960 rows/gauge)
+// still fit one call. Feeds BOTH the confidence track record and the per-source skill comparison.
+const VERIFY_DAYS=10, MIN_GAUGES=3, GAUGE_KM=25, GAUGE_N=5;
+function medianOf(a){if(!a.length)return null;const s=a.slice().sort((x,y)=>x-y);const m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function kmApart(aLat,aLon,bLat,bLon){return 111*Math.hypot(aLat-bLat,(aLon-bLon)*Math.cos(aLat*Math.PI/180));}
+// Bucket an observation into the same LOCAL day the forecast is keyed on, so the two line up.
+function localDay(iso,offSec){const t=Date.parse(iso);return isFinite(t)?new Date(t+offSec*1000).toISOString().slice(0,10):null;}
+// Per gauge, total each local day; then take the median across gauges for that day.
+function foldGauges(series,off,days,src){
+  const want=new Set(days);
+  const perGauge=series.map(rows=>{
+    const by={};
+    for(const r of rows){const t=r[0],v=r[1];
+      if(t==null||typeof v!=='number'||!isFinite(v)||v<0)continue;
+      const d=localDay(t,off); if(d&&want.has(d)) by[d]=(by[d]||0)+v;}
+    return by;
+  });
+  const byDate={};
+  for(const d of days){
+    const vals=perGauge.map(by=>by[d]).filter(v=>v!=null);
+    byDate[d]=vals.length>=MIN_GAUGES?medianOf(vals):null;   // too few gauges = no claim
+  }
+  return Object.keys(byDate).some(d=>byDate[d]!=null)?{byDate,gauges:perGauge.length,src}:null;
+}
+async function eaObserved(lat,lon,off,days){
+  const st=await fetchJSON('https://environment.data.gov.uk/flood-monitoring/id/stations?parameter=rainfall&lat='+
+    lat.toFixed(4)+'&long='+lon.toFixed(4)+'&dist='+GAUGE_KM,12000);
+  const all=(st.items||[]).filter(g=>g&&g.lat!=null&&g.long!=null);
+  if(all.length<MIN_GAUGES)return null;
+  const near=all.map(g=>({g,d:kmApart(lat,lon,g.lat,g.long)})).sort((a,b)=>a.d-b.d).slice(0,GAUGE_N).map(o=>o.g);
+  const series=await Promise.all(near.map(g=>{
+    const id=g.notation||(g['@id']||'').split('/').pop();
+    return fetchJSON('https://environment.data.gov.uk/flood-monitoring/id/stations/'+id+'/readings?startdate='+
+      days[0]+'&enddate='+days[days.length-1]+'&_sorted&_limit=1500',14000)
+      .then(r=>(r.items||[]).map(x=>[x.dateTime,x.value])).catch(()=>null);
+  }));
+  return foldGauges(series.filter(Boolean),off,days,'Environment Agency rain gauges');
+}
+function sepaTime(s){const m=/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/.exec(s||'');return m?m[3]+'-'+m[2]+'-'+m[1]+'T'+m[4]+':'+m[5]+':00Z':null;}
+async function sepaObserved(lat,lon,off,days){
+  const all=await fetchJSON('https://www2.sepa.org.uk/rainfall/api/Stations',12000);
+  if(!Array.isArray(all))return null;
+  const near=all.map(x=>({x,d:kmApart(lat,lon,+x.station_latitude,+x.station_longitude)}))
+    .filter(o=>isFinite(o.d)&&o.d<=GAUGE_KM).sort((a,b)=>a.d-b.d).slice(0,GAUGE_N);
+  if(near.length<MIN_GAUGES)return null;
+  const series=await Promise.all(near.map(o=>
+    fetchJSON('https://www2.sepa.org.uk/rainfall/api/Hourly/'+o.x.station_no+'?all=true',12000)
+      .then(r=>Array.isArray(r)?r.map(v=>[sepaTime(v.Timestamp),+v.Value]):null).catch(()=>null)));
+  return foldGauges(series.filter(Boolean),off,days,'SEPA rain gauges');
+}
+// The border is not a latitude line, so try the likelier network first and fall back to the other.
+// (SEPA answers in ~250ms; the EA station lookup is ~7s and returns nothing north of the border.)
+async function fetchObserved(lat,lon,off,days){
+  const order=lat>=55?[sepaObserved,eaObserved]:[eaObserved,sepaObserved];
+  for(const fn of order){try{const r=await fn(lat,lon,off,days);if(r)return r;}catch(e){}}
+  return null; // Wales and NI have no equivalent open network we could find - degrade quietly
+}
+
+// ---- Terrain profile: does this exact spot sit in a valley, a bowl, or on an exposed top? ----
+// A forecast interpolated to your coordinate (with elevation-corrected temperature, which the app
+// already has) still cannot know the SHAPE of the land around you. A valley floor at 120m behaves
+// differently from a plain at 120m: on clear, calm nights cold air drains downhill and pools in the
+// bottom (frost hollows), wind is sheltered crosswise but funnelled along the valley, and fog
+// pools. That is a function of the bowl around the point, not the point's own height.
+// So we sample the 90m elevation model in two rings around the exact location (8 bearings at 2km +
+// 8 at 5km, ONE Open-Meteo elevation call, verified CORS-open) and classify the shape. Thresholds
+// were calibrated on real profiles: Glencoe floor reads -357m vs its surroundings with 75% of the
+// ring higher; Llanberis -173m/81%; Bath's bowl -90m/88%; Shaftesbury's hilltop +104m with nothing
+// higher; Cambridge dead flat. Honest limits, measured not guessed: broad lowland frost hollows
+// (Benson: -7m at 2km) are BELOW what this method can distinguish from flat, so we stay quiet
+// there; and a hillside/mixed profile gets NO adjustments rather than half-invented ones.
+// Terrain never changes, so profiles cache in localStorage forever.
+const TERRKEY='howsdaweather_terrain_v2'; // v2: three rings (1/2/5km) - discard old 2-ring profiles
+function terrRing(lat,lon,km,n){const out=[];for(let i=0;i<n;i++){const b=2*Math.PI*i/n;out.push([lat+km/111.32*Math.cos(b), lon+km/(111.32*Math.cos(lat*Math.PI/180))*Math.sin(b)]);}return out;}
+function classifyTerrain(own,r1,r2,r5){
+  const dep1=own-medianOf(r1), dep2=own-medianOf(r2), dep5=own-medianOf(r5);
+  const all=r1.concat(r2).concat(r5);
+  const fracHigher=all.filter(v=>v>own+20).length/all.length;
+  const worst=Math.min(dep1,dep2,dep5);
+  // valley axis: the opposing bearing pair with the LOWEST ground is the direction the valley runs
+  let axisDeg=null,axisMin=Infinity;
+  for(let i=0;i<4;i++){const m=(r5[i]+r5[i+4])/2;if(m<axisMin){axisMin=m;axisDeg=i*45;}}
+  let cls='flat';
+  // Three rings, not two: the 1km ring catches NARROW valleys whose walls sit inside the 2km ring
+  // (measured: Hebden Bridge reads -119m at 1km, Ironbridge gorge -96m), and it is the sharpest
+  // hillside detector - a valley bottom must be low NEAR you first. A fell-side shoulder that sits
+  // +33m above its 1km ring but far below the distant tops is NOT a valley bottom (cold air drains
+  // away from it, not into it), so the valley family requires dep1<=15 and it gets no claims.
+  if(dep2>=50&&dep5>=50&&fracHigher<=0.15) cls='exposed';
+  else if(dep1<=15&&worst<=-120&&fracHigher>=0.6) cls='deep';
+  else if(dep1<=15&&worst<=-45&&fracHigher>=0.5) cls='valley';
+  else if(dep1<=15&&dep2<=-12&&dep5<=-12&&fracHigher>=0.35) cls='hollow';
+  return {cls,own:Math.round(own),dep1:Math.round(dep1),dep2:Math.round(dep2),dep5:Math.round(dep5),fracHigher:Math.round(fracHigher*100),axisDeg};
+}
+function terrCacheGet(lat,lon){
+  try{const m=JSON.parse(localStorage.getItem(TERRKEY))||{};const v=m[lat.toFixed(3)+','+lon.toFixed(3)];return v||null;}catch(e){return null;}
+}
+function terrCachePut(lat,lon,prof){
+  try{
+    const m=JSON.parse(localStorage.getItem(TERRKEY))||{};
+    m[lat.toFixed(3)+','+lon.toFixed(3)]={...prof,t:Date.now()};
+    const keys=Object.keys(m);
+    if(keys.length>30){keys.sort((a,b)=>(m[a].t||0)-(m[b].t||0));for(const k of keys.slice(0,keys.length-30))delete m[k];}
+    localStorage.setItem(TERRKEY,JSON.stringify(m));
+  }catch(e){}
+}
+async function fetchTerrain(lat,lon){
+  const cached=terrCacheGet(lat,lon); if(cached)return cached;
+  const pts=[[lat,lon]].concat(terrRing(lat,lon,1,8)).concat(terrRing(lat,lon,2,8)).concat(terrRing(lat,lon,5,8));
+  const j=await fetchJSON('https://api.open-meteo.com/v1/elevation?latitude='+pts.map(p=>p[0].toFixed(4)).join(',')+'&longitude='+pts.map(p=>p[1].toFixed(4)).join(','),12000);
+  const e=j&&j.elevation; if(!e||e.length<25)return null;
+  const prof=classifyTerrain(e[0],e.slice(1,9),e.slice(9,17),e.slice(17,25));
+  terrCachePut(lat,lon,prof);
+  return prof;
+}
+// Per-day weather adjustments from the terrain shape. Everything here is bounded, gated on the
+// conditions that make the physics apply, and honest about magnitude:
+//  - COLD POOLING: only on nights that are actually clear AND calm (that is when drainage flows
+//    happen); potential -1/-2/-3.5 degC for hollow/valley/deep, scaled by how clear and calm.
+//  - WIND: crosswise wind is sheltered (x0.92/x0.8/x0.7), wind blowing ALONG the valley axis is
+//    funnelled a touch (up to x1.1); an exposed top reads gusts higher (x1.18). Capped.
+//  - VALLEY FOG: clear + calm + very humid night in a valley -> flag for an advisory.
+function terrainDayAdj(terr,windDirDeg,nightCloud,nightGustMph,nightRHmax){
+  if(!terr||terr.cls==='flat')return null;
+  if(terr.cls==='exposed')return {windFactor:1.18,tminDelta:0,fog:false};
+  const pool={hollow:1,valley:2,deep:3.5}[terr.cls]||0;
+  const clear=nightCloud==null?0:(nightCloud<30?1:nightCloud<60?0.5:0);
+  const calm=nightGustMph==null?0:(nightGustMph<10?1:nightGustMph<16?0.5:0);
+  const tminDelta=-(Math.round(pool*clear*calm*10)/10);
+  let windFactor=1;
+  if(windDirDeg!=null&&terr.axisDeg!=null){
+    const diff=Math.abs(((windDirDeg-terr.axisDeg)%180+180)%180); const along=Math.min(diff,180-diff)<35;
+    windFactor=along?({hollow:1,valley:1.05,deep:1.1}[terr.cls]):({hollow:0.92,valley:0.8,deep:0.7}[terr.cls]);
+  }
+  const fog=(clear>0&&calm>0&&nightRHmax!=null&&nightRHmax>=90);
+  return {windFactor,tminDelta,fog};
+}
+
+// ---- synthesis helpers ----
+function weightedMean(valById){let ws=0,acc=0;for(const m of MODELS){const v=valById[m.id];if(v!=null&&!Number.isNaN(v)){acc+=v*m.weight;ws+=m.weight;}}return ws?acc/ws:null;}
+function perModelAmount(data,idxs){const out={};for(const m of MODELS){const pr=idxs.map(i=>data.perModel[m.id].precip[i]).filter(v=>v!=null);out[m.id]=pr.length?Math.round(pr.reduce((a,b)=>a+b,0)*10)/10:0;}return out;}
+function rainProb(members,idxs,thresh){if(!members||!members.length||!idxs.length)return 0;let wet=0;for(const arr of members){let hit=false;for(const i of idxs){const v=arr[i];if(v!=null&&v>=thresh){hit=true;break;}}if(hit)wet++;}return Math.round(100*wet/members.length);}
+// Share of members whose TOTAL over the window reaches `mm`. Two thresholds matter, and they are
+// not the same question at all:
+//   ANY  (0.1mm) - "might I feel a spot?"     WET (0.5mm) - "will I actually get wet?"
+// Measured on real data, a day can read 26% ANY but only 1% WET: a 26% chance of spits, with the
+// members strongly agreeing it will not properly rain. Judging agreement on the trace threshold
+// therefore scores that day as uncertain when in truth the models agree - which is exactly how a
+// confidence figure ends up swinging on drizzle noise. So WET drives confidence and the verdicts.
+const WET_MM=0.5, ANY_MM=0.1;
+// ---- Source (centre) weighting ----
+// Not all forecasting centres are equally reliable, and the user is right that they can disagree a
+// lot. Rather than count all 156 ensemble members equally, we weight each CENTRE by how good it has
+// proven to be. The base weights come from DECADES of published verification (WMO/ECMWF exchange
+// scores), which is far more robust than anything a browser could measure: ECMWF is consistently
+// the most skilful global model, with the Met Office and ICON close behind, then GEM and GFS. These
+// are relative - only the ratios matter (they get normalised).
+const CENTRE_SKILL={ecmwf:1.30, ukmo:1.15, icon:1.10, gem:0.85, gfs:0.80};
+// Build a per-member weight so each CENTRE contributes its skill weight in total, split evenly
+// across that centre's members (so a centre is not just louder because it happens to have more
+// members). `nudge` (optional) is a per-centre multiplier from measured LOCAL skill - see
+// sourceSkill(); it is bounded and gated so a thin local sample can only tweak, never dominate.
+function memberWeights(centres,nudge){
+  if(!centres)return null;
+  const n={}; for(const c of centres){ if(c) n[c]=(n[c]||0)+1; }
+  return centres.map(c=>{
+    if(!c||!n[c])return 1;
+    const base=(CENTRE_SKILL[c]||1)*((nudge&&nudge[c])||1);
+    return base/n[c];
+  });
+}
+// Weighted share of members whose window TOTAL reaches `mm`. Falls back to a plain count when no
+// weights are supplied (first paint, or the deterministic fallback), so behaviour is unchanged there.
+function rainProbTotal(members,idxs,mm,weights){
+  if(!members||!members.length||!idxs.length)return 0;
+  let wetW=0,allW=0;
+  for(let k=0;k<members.length;k++){
+    const w=weights?weights[k]:1; allW+=w;
+    let tot=0; const arr=members[k]; for(const i of idxs){const v=arr[i];if(v!=null)tot+=v;}
+    if(tot>=mm)wetW+=w;
+  }
+  return allW?Math.round(100*wetW/allW):0;
+}
+// ---- Forecast confidence ----
+// The old version was simply "how one-sided is the ensemble about rain" (max(p,100-p)). That is
+// NOT trustworthiness: a unanimous 6-days-out ensemble scored 97%, and then the whole scenario
+// could flip the next day - which is exactly what makes a confidence figure worthless.
+// Confidence now multiplies two independent things:
+//   1. AGREEMENT - how one-sided the 89 members are (0 = a 50/50 split, 1 = unanimous).
+//   2. LEAD-TIME RELIABILITY - forecast skill decays with range, so a unanimous day-6 ensemble
+//      is still far less trustworthy than a unanimous day-0 one.
+// So only near-term calls can score high, and long-range ones are honestly capped (a day-6
+// forecast tops out ~75%, not 97%). The lead factors below are indicative of published NWP
+// rain/no-rain skill decay, not a verification of this app's own history.
+// 3. RUN-TO-RUN STABILITY - has this day's call held steady across the last few model runs?
+//    Measured live from Open-Meteo's previous-runs API. This is the missing ingredient behind
+//    "it said 90% and changed overnight": a forecast that has been flip-flopping between runs is
+//    not trustworthy today, however tidily the members happen to line up right now. Now we can
+//    say so up front instead of discovering it tomorrow.
+// 4. TRACK RECORD - and has the model actually been RIGHT here lately, judged against real rain
+//    gauges? See trackRecord() below. Points 1-3 are all still the forecasts assessing
+//    themselves; this is the only term grounded in what really fell out of the sky.
+const LEAD_RELIABILITY=[0.95,0.88,0.80,0.72,0.64,0.56,0.50]; // days 0..6 ahead
+function confidenceFromProb(p,leadDay,stab,skill){
+  const d=Math.max(0,Math.min(LEAD_RELIABILITY.length-1,leadDay||0));
+  const agreement=Math.abs(p-50)/50;                       // 0..1, raw ensemble one-sidedness
+  const s=(stab==null?1:stab);                             // 0.66..1, run-to-run steadiness
+  const k=(skill&&skill.mult)||1;                          // 0.85..1.02, measured local track record
+  const value=Math.min(97,Math.round(50+50*agreement*LEAD_RELIABILITY[d]*s*k));
+  let color,word,level;
+  if(value>=85){level='high';color='var(--good)';word='High';}
+  else if(value>=72){level='mod';color='var(--accent)';word='Good';}
+  else if(value>=60){level='low';color='var(--warn)';word='Moderate';}
+  else{level='vlow';color='var(--bad)';word='Low';}
+  const agreeTxt=agreement>=0.7?'Forecasts strongly agree':agreement>=0.35?'Forecasts mostly agree':'Forecasts are split';
+  const leadTxt=d===0?'for today':d===1?'for tomorrow':d+' days ahead';
+  let why=agreeTxt+', '+leadTxt;
+  if(s<0.92) why+=' - but this has been changing between runs';
+  else if(d>0&&stab!=null) why+=', and steady across recent runs';
+  if(skill&&skill.txt) why+='. '+skill.txt;
+  return {value,color,word,level,p,agreement:Math.round(agreement*100),lead:d,stability:Math.round(s*100),skill:skill||null,why};
+}
+// ---- Track record: has the model actually been right HERE lately? ----
+// This is the reality check, and it only works without a server because BOTH halves of the
+// comparison are fetchable on demand: previous-runs with past_days is an archive of what the model
+// forecast for days that have since happened, and the gauges are an archive of what actually fell.
+// Nothing is stored, nothing accumulates - we just ask both sources what they remember.
+//
+// Scored with the Critical Success Index: hits / (hits + misses + false alarms). Correct DRY calls
+// are deliberately NOT counted, and that choice is doing a lot of work. In a dry spell the model
+// and the gauges agree "no rain" every single time; counting those would hand back a fake 100%
+// score and silently inflate confidence for free - the same trick as forecasting "no rain" in the
+// Sahara and boasting about 99% accuracy. CSI only credits getting RAIN right, which is the hard
+// part. With too little rain about to score, we say nothing rather than invent a number.
+function trackRecord(prev,obs){
+  if(!prev||!prev.hourly||!prev.time||!obs||!obs.byDate)return null;
+  const leads=['precipitation_previous_day1','precipitation_previous_day2','precipitation_previous_day3'];
+  let hits=0,misses=0,fa=0,pairs=0;
+  for(const date of Object.keys(obs.byDate)){
+    const o=obs.byDate[date]; if(o==null)continue;
+    const idx=[]; for(let i=0;i<prev.time.length;i++) if(prev.time[i].slice(0,10)===date) idx.push(i);
+    if(idx.length<20)continue;                              // need a whole day to compare totals
+    const obsWet=o>=WET_MM;
+    for(const key of leads){
+      const a=prev.hourly[key]; if(!a)continue;
+      let tot=0,seen=false;
+      for(const i of idx){if(a[i]!=null){tot+=a[i];seen=true;}}
+      if(!seen)continue;
+      const fcWet=tot>=WET_MM; pairs++;
+      if(fcWet&&obsWet)hits++; else if(!fcWet&&obsWet)misses++; else if(fcWet&&!obsWet)fa++;
+    }
+  }
+  const events=hits+misses+fa;
+  const base={pairs,events,hits,misses,fa,gauges:obs.gauges,src:obs.src};
+  if(events<3) return {...base,csi:null,mult:1,txt:null};   // nothing to grade - stay silent
+  const csi=hits/events;
+  // Deliberately asymmetric and tightly bounded. A few recent days is weak evidence of skill but
+  // decent evidence of a problem, so trust is earned slowly (+2% at best) and lost faster (-15%).
+  // Bounding it also protects the entire point of this rebuild: a jumpy term computed off a small
+  // sample would put confidence straight back to swinging around overnight - the exact complaint
+  // this is meant to fix. It nudges; it never takes over.
+  // No trailing full stop - callers add their own, and `why` is also used bare as a tooltip.
+  let mult,txt;
+  if(csi>=0.7){mult=1.02;txt='Checked against local rain gauges: the models have called rain right here lately';}
+  else if(csi>=0.4){mult=1.00;txt=null;}
+  else if(csi>=0.2){mult=0.92;txt='Checked against local rain gauges: the models have been patchy on rain here lately';}
+  else{mult=0.85;txt='Checked against local rain gauges: the models have been getting rain wrong here lately';}
+  return {...base,csi:Math.round(csi*100),mult,txt};
+}
+// PER-SOURCE local skill -> a gentle nudge to each centre's weight. This is the "assess each source
+// against the real weather and weigh the reliable ones more" idea, done HONESTLY. Two hard truths
+// shape it: (1) at one spot over two weeks, rain events are few and the centres mostly AGREE
+// (measured: 5 sources forecast 3-4 wet days out of 14, nearly identical) - so there is little
+// signal to re-rank them; (2) chasing that thin signal would overfit. So the published skill
+// ranking (CENTRE_SKILL) stays the backbone, and this only tilts a centre relative to the pack,
+// gated on enough real rain events and bounded to +/-12%. When there is nothing to learn (the usual
+// case), every nudge is 1.0 and the weights are the robust published ones.
+const SRC_MIN_EVENTS=4;         // distinct rain DAYS needed before we re-rank anything
+function sourceSkill(srcRuns,obs){
+  if(!srcRuns||!obs||!obs.byDate)return null;
+  const dates=Object.keys(obs.byDate).filter(d=>obs.byDate[d]!=null);
+  // Count DISTINCT rain days (obs wet, or any source forecast wet), NOT events summed across the
+  // five sources - that would 5x-inflate the count and let a single rainy day trip the gate, which
+  // is precisely the one-event overfitting we must avoid.
+  const rainDays=new Set();
+  for(const d of dates){
+    let wet=obs.byDate[d]>=WET_MM;
+    for(const [id,centre] of SOURCE_RUN_MODELS){const fc=srcRuns[centre];if(fc&&fc[d]!=null&&fc[d]>=WET_MM)wet=true;}
+    if(wet)rainDays.add(d);
+  }
+  const per={};
+  for(const [id,centre] of SOURCE_RUN_MODELS){
+    const fc=srcRuns[centre]; if(!fc)continue;
+    let hits=0,misses=0,fa=0;
+    for(const d of dates){
+      if(fc[d]==null)continue;
+      const obsWet=obs.byDate[d]>=WET_MM, fcWet=fc[d]>=WET_MM;
+      if(fcWet&&obsWet)hits++; else if(!fcWet&&obsWet)misses++; else if(fcWet&&!obsWet)fa++;
+    }
+    const ev=hits+misses+fa;
+    per[centre]={hits,misses,fa,ev,csi:ev?hits/ev:null};
+  }
+  const events=rainDays.size;
+  const scored=Object.keys(per).filter(c=>per[c].csi!=null && per[c].ev>=2); // a source needs >=2 of its own events to be ranked
+  if(events<SRC_MIN_EVENTS || scored.length<2){
+    return {nudge:null,detail:per,events,applied:false,src:obs.src,gauges:obs.gauges};
+  }
+  const mean=scored.reduce((a,c)=>a+per[c].csi,0)/scored.length;
+  const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+  const nudge={};
+  for(const c of scored) nudge[c]=clamp(1+0.4*(per[c].csi-mean),0.88,1.12); // gentle, bounded tilt
+  // best / worst local performer, for an honest one-liner
+  const rank=scored.slice().sort((a,b)=>per[b].csi-per[a].csi);
+  return {nudge,detail:per,events,applied:true,best:rank[0],worst:rank[rank.length-1],src:obs.src,gauges:obs.gauges};
+}
+const CENTRE_LABEL={ecmwf:'ECMWF',ukmo:'Met Office',icon:'ICON',gem:'GEM',gfs:'GFS'};
+// p = chance of ANY rain (the number we print), wet = chance of rain you would actually notice.
+// The word is graded on `wet`, so a day with a 26% chance of a spit but only 1% chance of real
+// rain reads "Odd spot" rather than "Showery" - same number, honest meaning.
+function rainVerdict(p,wet){
+  const w=(wet==null?p:wet);
+  if(p<15)return{word:'Dry',color:'var(--good)',icon:'sunny'};
+  if(w<10)return{word:'Odd spot',color:'var(--good)',icon:'partly'};
+  if(w<25)return{word:'Odd shower',color:'var(--accent)',icon:'partly'};
+  if(w<45)return{word:'Showery',color:'var(--warn)',icon:'showers'};
+  if(w<70)return{word:'Wet spells',color:'var(--warn)',icon:'showers'};
+  return{word:'Wet',color:'var(--bad)',icon:'wet'};
+}
+// Probabilistic phrasing helpers - weather is never certain, so the copy should not be either.
+function chancePhrase(p){ // p is the chance of proper rain (>=0.5mm) - bands on the wet scale
+  if(p<10)return'staying dry';
+  if(p<22)return'probably dry';
+  if(p<35)return'mostly dry, the odd shower about';
+  if(p<50)return'a bit hit-and-miss, showers likely at times';
+  if(p<68)return'often wet';
+  return'wet, and probably persistently so';
+}
+// Plain-language expected amount for a period, from the ensemble's own member totals. Directly
+// answers "what does the chance actually amount to": the median is the typical member, the 90th
+// the realistic worst case. On a dry day this reads "under 0.5mm - a spot at most", which is the
+// honest counterpart to a single-figure chance.
+function amtHint(p){
+  const a=p.amt; if(!a)return p.peak+'% chance of rain (>=0.5mm).';
+  const r=v=>v>=1?Math.round(v)+'mm':v>=0.1?v.toFixed(1)+'mm':'nil';
+  if(a.p90<0.2)return 'Bone dry - members show no real rain.';
+  if(a.med<0.5)return 'A spot at most - typically under 0.5mm, up to about '+r(a.p90)+' if a shower catches you.';
+  return 'Around '+r(a.med)+' expected, up to about '+r(a.p90)+' in the wetter forecasts.';
+}
+// "Word for the day": one punchy, decent, funny word summarising the day.
+// Buckets, highest priority first: storm > snow/ice > extreme heat > gale > heavy rain >
+// showers > strong wind > muggy > fog > bitter cold > glorious > lovely > crisp > dull > mixed.
+// A synonym is picked deterministically from the date, so it is stable per day but varies day to day.
+function wordForDay(d){
+  const h=d.hazards||{}, feels=d.feelsMax, t=d.tmax, rain=d.pWet, sum=d.precipSum||0, gust=d.gustMph||0, coldMin=d.feelsMin;
+  const C={bad:'var(--bad)',warn:'var(--warn)',sky:'var(--sky)',good:'var(--good)',sun:'var(--sun)',ice:'#8fd3ff',mix:'var(--accent)',mystery:'#c3b5ff'};
+  const seed=parseInt(String(d.date).replace(/-/g,''),10)||0;
+  const pick=(arr,col)=>({word:arr[seed%arr.length],color:col});
+  if(h.thunder) return pick(['STORMY','THUNDERY','ELECTRIC','RUMBLING'],C.bad);
+  if(h.snow||h.ice){ if(h.ice||d.tmin<=0) return pick(['FROZEN','ICY','BALTIC','ARCTIC'],C.ice); return pick(['SNOWY','WINTRY','WHITE-OUT'],C.ice); }
+  if(feels>=32||t>=30) return pick(['SCORCHED','SCORCHIO','ROASTING','SWELTERING','MELTING'],C.bad);
+  if(gust>=45) return pick(['BATTERED','WILD','HOWLING'],C.bad);
+  // Genuine coin-flip on PROPER rain - own the uncertainty with a laugh. `rain` is now the chance
+  // of meaningful rain (>=0.5mm), so this fires on real doubt about getting wet, not on trace spits:
+  // a bone-dry Bath that used to read "MYSTERY" off a 45% trace figure now sails past this.
+  if(rain>40 && rain<62) return pick(['???','IDK','MYSTERY','DUNNO','TOSS-UP','WILDCARD','CHANCY','WHO KNOWS'],C.mystery);
+  if(rain>=70||sum>=8) return pick(['SOAKED','DRENCHED','WASHOUT','BIBLICAL'],C.sky);
+  if(rain>=45||sum>=3) return pick(['DRIZZLY','SPLASHY','DAMP','SPITTING'],C.sky);
+  // Showery band (chance of proper rain ~26-40%, e.g. a wet morning that clears). This used to be
+  // a GAP: too low for the mystery/drizzly buckets, and the day icon is 'showers', which the
+  // sunny/partly/cloudy fallbacks below do not handle - so these days fell through to "STEADY",
+  // which read completely wrong for a morning of rain. Now they get a proper showery word.
+  if(rain>=26) return pick(['SHOWERY','HIT-AND-MISS','ON-OFF','CATCHY','BRISK'],C.sky);
+  if(gust>=32) return pick(['BLUSTERY','GUSTY','BLOWY'],C.warn);
+  if(h.heat==='danger') return pick(['MUGGY','CLAMMY','STICKY'],C.warn);
+  if(h.fog) return pick(['MURKY','FOGGY','MISTY'],C.warn);
+  if(coldMin<=-2) return pick(['BITTER','BALTIC','PARKY','FREEZING'],C.ice);
+  const bright=d.icon==='sunny'||d.icon==='partly'||d.icon==='hot'||d.icon==='scorch';
+  if(rain<18 && t>=22 && bright) return pick(['GLORIOUS','CRACKING','STUNNER','LUSH','A BEAUT'],C.sun);
+  if(rain<22 && t>=16 && bright) return pick(['LOVELY','GRAND','PLEASANT','DECENT','TIDY'],C.good);
+  if(rain<26 && t<=10 && bright) return pick(['CRISP','FRESH','BRIGHT','NIPPY'],C.sky);
+  // Safety net: whatever the exact numbers, a distinctive-condition icon must never read "settled".
+  if(d.icon==='wet'||d.icon==='showers') return pick(['SHOWERY','HIT-AND-MISS','ON-OFF','CATCHY'],C.sky);
+  if(d.icon==='gale') return pick(['BATTERED','WILD','HOWLING'],C.bad);
+  if(d.icon==='windy') return pick(['BLUSTERY','GUSTY','BLOWY'],C.warn);
+  if(d.icon==='breezy') return pick(['BREEZY','FRESH','BRISK','BLOWY'],C.sky);
+  if(d.icon==='scorch') return pick(['SCORCHED','ROASTING','MELTING','BLAZING'],C.bad);
+  if(d.icon==='hot') return pick(['BALMY','TOASTY','WARM','BASKING'],C.sun);
+  if(d.icon==='frost') return pick(['FROSTY','ICY','NIPPY','FROZEN'],C.ice);
+  if(d.icon==='blizzard') return pick(['BLIZZARD','WHITE-OUT','SNOWED-IN'],C.ice);
+  if(d.icon==='mist') return pick(['MISTY','HAZY','MURKY'],C.warn);
+  if(d.icon==='cloudy') return pick(['GREY','DULL','DREICH','CLAGGY','MEH'],C.warn);
+  if(d.icon==='partly') return pick(['MIXED','PATCHY','CHANGEABLE','SO-SO'],C.mix);
+  return pick(['MILD','SETTLED','STEADY','FINE'],C.good);
+}
+function findNowIdx(time,off){const l=new Date(Date.now()+off*1000);const t=l.getUTCFullYear()+'-'+pad2(l.getUTCMonth()+1)+'-'+pad2(l.getUTCDate())+'T'+pad2(l.getUTCHours())+':00';const i=time.indexOf(t);return i>=0?i:0;}
+function idxByDate(time){const map={};for(let i=0;i<time.length;i++){const d=dayOf(time[i]);(map[d]=map[d]||[]).push(i);}return map;}
+const inHours=(idxs,time,s,e)=>idxs.filter(i=>{const h=hourOf(time[i]);return h>=s&&h<e;});
+
+function assessHazards(d){
+  const feels=d.feelsMax, t=d.tmax, rh=d.humid, gust=d.gustMph, snow=d.snowCm, uv=d.uv, feelsMin=d.feelsMin, tmin=d.tmin, thunder=!!d.thunder, fog=!!d.fog;
+  // Heat from apparent temperature (feels-like already blends temp+humidity+wind hourly),
+  // with a raw-air-temp backstop for very hot dry days. Avoids false "muggy" flags from a
+  // morning humidity spike that never coincides with the afternoon heat.
+  let heat='none';
+  if(feels>=31 || t>=30) heat='danger';
+  else if(feels>=27 || t>=28) heat='caution';
+  let cold='none';
+  if(feelsMin<=-2) cold='hard'; else if(feelsMin<=3) cold='cold';
+  // Wind bands on peak GUST (mph). The old thresholds were far too high - a 32 mph-gust Saturday in
+  // Bath (genuinely windy, brollies-inside-out territory) came out as 'calm' and showed nothing,
+  // because 'breezy' did not even start until 30 and the first advisory needed 40. Real perception:
+  // ~22 mph gusts is a noticeable breeze, ~33 is properly windy, ~45+ is disruptive.
+  const wind = gust>=45?'severe':gust>=33?'high':gust>=22?'breezy':'calm';
+  const ice = snow>0 && tmin<=1;
+  const adv=[];
+  if(thunder) adv.push({sev:'bad',icon:'⛈️',title:'Thunderstorms likely',text:'Thunder and lightning possible. When you hear it, head indoors - stay off open ground, hilltops and open water, and away from tall trees.',src:'HowsDaWeather advisory - from the forecast, not an official Met Office warning'});
+  if(heat==='danger'){const muggy=rh>=55;adv.push({sev:'bad',icon:'🥵',title:'Heat-health caution',text:'Feels like '+Math.round(feels)+'° at the hottest point'+(muggy?', and muggy at '+rh+'% humidity - draining in the sun':' - a fierce, dry heat')+'. Go easy in the midday sun, keep water on you, and check on anyone vulnerable.',src:'HowsDaWeather advisory - from the forecast, not an official Met Office warning'});}
+  else if(heat==='caution'){const muggy=rh>=60;adv.push({sev:'warn',icon:'☀️',title:(muggy?'Warm and muggy':'Warm in the sun'),text:'Feels like '+Math.round(feels)+'°'+(muggy?', a bit muggy at '+rh+'% humidity':'')+'. Fine for most, but take it steady in the midday sun and carry water.',src:'HowsDaWeather advisory - from the forecast'});}
+  if(wind==='severe') adv.push({sev:'bad',icon:'🌬️',title:'Severe gusts',text:'Gusts up to '+gust+' mph. Secure loose items; disruption to travel and exposed activities is likely.',src:'HowsDaWeather advisory - not an official Met Office warning'});
+  else if(wind==='high') adv.push({sev:'warn',icon:'🌬️',title:'Strong wind',text:'Gusts up to '+gust+' mph - blustery for cycling, high-sided vehicles, brollies and tents.',src:'HowsDaWeather advisory - from the forecast'});
+  else if(wind==='breezy') adv.push({sev:'warn',icon:'🍃',title:'Breezy',text:'Gusts up to '+gust+' mph - noticeably breezy. Fine for most, but the brolly and anything loose in the garden might have other ideas.',src:'HowsDaWeather advisory - from the forecast'});
+  if(snow>0) adv.push({sev:(ice?'bad':'warn'),icon:'❄️',title:(ice?'Snow and ice':'Snow'),text:(snow>=1?Math.round(snow):'A little')+' cm of snow'+(ice?', with ice likely on untreated paths and roads. Take real care underfoot and on the drive.':' possible - wrap up and allow extra time.'),src:'HowsDaWeather advisory - from the forecast'});
+  else if(cold==='hard') adv.push({sev:'warn',icon:'🥶',title:'Bitterly cold',text:'Feels like '+Math.round(feelsMin)+'° at its coldest. Wrap up well and watch for ice on untreated surfaces.',src:'HowsDaWeather advisory - from the forecast'});
+  if(uv>=6) adv.push({sev:'warn',icon:'😎',title:'High UV ('+Math.round(uv)+')',text:'Strong sun - sunscreen, hat and shade if you are out for a while, even if it feels breezy.',src:'HowsDaWeather advisory - from the forecast'});
+  else if(fog) adv.push({sev:'warn',icon:'🌫️',title:'Fog about',text:'Patchy fog is likely to cut visibility - allow extra time and use fog lights on the roads.',src:'HowsDaWeather advisory - from the forecast'});
+  // Valley fog: clear + calm + very humid night at a spot the terrain profile says is a valley
+  // bottom. The grid forecast often misses this - it is a terrain effect, not a weather one.
+  if(!fog&&d.valleyFog) adv.push({sev:'warn',icon:'🌫️',title:'Valley fog possible',text:'A clear, calm and damp night in a valley spot - fog may pool overnight and linger past dawn, even if the wider forecast looks clear.',src:'HowsDaWeather terrain estimate - from the shape of the land, not an official warning'});
+  return {heat,cold,wind,snow:snow>0,ice,uv,thunder,fog,adv};
+}
+
+// How steady has this day's rain/dry call been across the last few model runs?
+// 1.0 = every recent run said the same thing; ~0.66 = it keeps flip-flopping.
+function stabilityFor(prev,date){
+  if(!prev||!prev.hourly||!prev.time)return null;
+  const idx=[];
+  for(let i=0;i<prev.time.length;i++){const t=prev.time[i];if(t.slice(0,10)===date){const h=+t.slice(11,13);if(h>=6&&h<24)idx.push(i);}}
+  if(!idx.length)return null;
+  const keys=['precipitation','precipitation_previous_day1','precipitation_previous_day2','precipitation_previous_day3'];
+  const totals=[];
+  for(const k of keys){const a=prev.hourly[k];if(!a)continue;let t=0,seen=false;for(const i of idx){if(a[i]!=null){t+=a[i];seen=true;}}if(seen)totals.push(t);}
+  if(totals.length<2)return null;
+  const call=v=>v>=WET_MM;
+  const now=call(totals[0]);
+  const agree=totals.filter(v=>call(v)===now).length/totals.length;
+  return 0.55+0.45*agree;
+}
+function makeHeadline(P,tonight,d){
+  // p.peak is the chance of PROPER rain (>=0.5mm) now, so these bands are on the wet scale: a day
+  // whose wettest period only has a single-figure chance of real rain reads "Sunny and dry", where
+  // before it could read "hit-and-miss" off a trace figure inflated by a few drizzly members.
+  const hz=d.hazards; const [m,a,e]=P.map(p=>p.peak);
+  const t=d.tmax, sunny=(d.icon==='sunny'||d.icon==='hot'||d.icon==='scorch'), bright=(sunny||d.icon==='partly'), cloudy=d.icon==='cloudy', foggy=(d.icon==='fog'||d.icon==='mist');
+  const maxP=Math.max(m,a,e), minP=Math.min(m,a,e);
+  const wettest=[{k:'morning',p:m},{k:'afternoon',p:a},{k:'evening',p:e}].sort((x,y)=>y.p-x.p)[0];
+  let h;
+  if(maxP<12){
+    // genuinely dry - vary the flavour by warmth and sky so no two read the same
+    if(foggy) h='Dry, but grey and murky.';
+    else if(sunny) h = t>=24?'Bags of sunshine and dry.':t>=16?'Sunny and dry - crack on.':'Bright and dry, but on the cool side.';
+    else if(bright) h = t>=16?'Dry with some sunny spells.':'Dry with sunny spells, but cool.';
+    else if(cloudy) h = t>=16?'Dry, but rather cloudy.':'Grey and cool, but staying dry.';
+    else h='A dry day - crack on.';
+  }
+  else if(maxP<24) h='Mostly dry, with just a slim chance of a shower'+(wettest.p>=16?' in the '+wettest.k:'')+'.';
+  else if(maxP<36) h='Largely dry but a touch hit-and-miss - the odd shower possible, most likely in the '+wettest.k+'.';
+  else if(minP>=33) h='A showery one on and off through the day - keep the brolly handy.';
+  else if(maxP<52) h='Turning showery, with the wettest spell probably the '+wettest.k+'.';
+  else h='Likely wet at times, and the '+wettest.k+' looks the soggiest.';
+  if(tonight>=52 && maxP<32) h+=' Rain probably moving in overnight.';
+  else if(tonight>=62) h+=' Likely wet overnight too.';
+  if(hz.heat==='danger') h+=' A proper scorcher - keep cool and hydrated.';
+  else if(hz.snow) h+=' Snow about - wrap up.';
+  else if(hz.wind==='severe') h+=' Wild and windy.';
+  else if(hz.heat==='caution') h+=' Warm out - take it steady.';
+  else if(hz.wind==='high') h+=' Blustery out.';
+  else if(hz.cold==='hard') h+=' Bitterly cold.';
+  return h;
+}
+
+function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain){
+  const off=rich.utcOffsetSeconds;
+  // One track record per location (not per day): it describes how the model has been handling this
+  // spot's weather lately, so every day's confidence is nudged by the same measured figure.
+  const skill=trackRecord(prev,obs);
+  const rTime=rich.time, rH=rich.hourly, daily=rich.daily;
+  const eTime=ens?ens.time:null, members=(ens&&ens.members&&ens.members.length>=10)?ens.members:null;
+  const useEns=!!members;
+  // Per-member weights: each centre gets its published-skill weight, tilted by any measured local
+  // skill (srcSkill.nudge, bounded/gated). Equal weights if we cannot tell centres apart.
+  const weights=useEns?memberWeights(ens.centres,srcSkill&&srcSkill.nudge):null;
+  const rGroups=idxByDate(rTime);
+  const eGroups=eTime?idxByDate(eTime):{};
+  const dmap={}; daily.time.forEach((d,i)=>dmap[d]=i);
+  // fallback member set for probability if ensemble missing: the 5 deterministic runs (2-day only)
+  const detMembers=MODELS.map(m=>det.perModel[m.id].precip);
+  const dTime=det.time;
+  const dGroups=idxByDate(dTime);
+
+  // mm = the total over the window a member must reach to count as "wet".
+  function rainAt(date,s,e,mm){
+    const thr=mm==null?ANY_MM:mm;
+    if(useEns){const idxs=inHours(eGroups[date]||[],eTime,s,e);return rainProbTotal(members,idxs,thr,weights);}
+    // Before the ensemble loads, use the rich fetch's own 7-day hourly PoP (peak chance in the
+    // window). This covers all 7 days - the 5-run fallback only spans 2 days and would force
+    // days 3-7 to a false 0%. A single PoP cannot express amount, so the WET threshold is
+    // approximated here and becomes exact the moment the ensemble lands.
+    const ridx=inHours(rGroups[date]||[],rTime,s,e);
+    if(rH.precipitation_probability && ridx.length){
+      const pop=Math.round(Math.max.apply(null,ridx.map(i=>rH.precipitation_probability[i]||0)));
+      return thr>ANY_MM?Math.round(pop*0.7):pop;
+    }
+    const idxs=inHours(dGroups[date]||[],dTime,s,e);return rainProbTotal(detMembers,idxs,thr);
+  }
+  // How MUCH rain, not just the chance: the median and 90th-percentile member total over a window.
+  // The median is the honest "expected" amount (immune to one wild member); the 90th shows the
+  // realistic worst case. Answers the user's point directly - a "chance" of 0.1mm is not rain.
+  function rainAmt(date,s,e){
+    if(!useEns)return null;
+    const idxs=inHours(eGroups[date]||[],eTime,s,e);
+    if(!idxs.length)return null;
+    const tot=members.map(a=>{let t=0;for(const i of idxs){const v=a[i];if(v!=null)t+=v;}return t}).sort((x,y)=>x-y);
+    const q=f=>tot[Math.min(tot.length-1,Math.floor(f*tot.length))];
+    return {med:q(0.5),p90:q(0.9)};
+  }
+
+  const nowIdxR=findNowIdx(rTime,off);
+  const days=[];
+  const dates=daily.time.slice(0,DAYS);
+  dates.forEach((date,di)=>{
+    const rg=rGroups[date]||[];
+    // Terrain adjustment for THIS day: cold pooling is gated on tonight's actual clearness and
+    // calm, and wind shelter/funnelling on today's dominant wind direction vs the valley axis.
+    let tAdj=null;
+    if(terrain&&terrain.cls!=='flat'){
+      const nightRg=(rGroups[date]||[]).concat(rGroups[dates[di+1]]||[]);
+      const nIdx=nightRg.filter(i=>{const h=hourOf(rTime[i]);const sameDay=rTime[i].slice(0,10)===date;return sameDay?h>=21:h<6;});
+      const nc=nIdx.map(i=>rH.cloud_cover[i]).filter(v=>v!=null);
+      const ng=nIdx.map(i=>rH.wind_gusts_10m[i]).filter(v=>v!=null);
+      const nr=nIdx.map(i=>rH.relative_humidity_2m[i]).filter(v=>v!=null);
+      tAdj=terrainDayAdj(terrain,
+        daily.wind_direction_10m_dominant?daily.wind_direction_10m_dominant[di]:null,
+        nc.length?nc.reduce((a,b)=>a+b,0)/nc.length:null,
+        ng.length?mph(Math.max.apply(null,ng)):null,
+        nr.length?Math.max.apply(null,nr):null);
+    }
+    const wF=tAdj?tAdj.windFactor:1;
+    const periods=PERIODS.map(P=>{
+      const any=rainAt(date,P.s,P.e);             // chance of ANY rain, incl. a 0.1mm spit
+      const wet=rainAt(date,P.s,P.e,WET_MM);      // chance of rain you would actually notice (>=0.5mm)
+      const amt=rainAmt(date,P.s,P.e);            // how much: median + 90th-pct member total
+      const tIdx=inHours(rg,rTime,P.s,P.e);
+      const temp=tIdx.length?Math.round(tIdx.map(i=>rH.temperature_2m[i]).reduce((a,b)=>a+b,0)/tIdx.length):Math.round(daily.temperature_2m_max[di]);
+      // Peak gust in this window (mph), terrain-adjusted, so the period icon can turn windy when
+      // it is genuinely blowy AT THIS SPOT (sheltered valley reads lower, exposed top higher).
+      const pGust=Math.round((tIdx.length&&rH.wind_gusts_10m?mph(Math.max.apply(null,tIdx.map(i=>rH.wind_gusts_10m[i]||0))):0)*wF);
+      // Feels-like high/low in this window, so a hot afternoon slot shows a hot sun and a frosty
+      // morning slot shows frost, rather than everything reading the same bland sun.
+      const pFeels=tIdx.map(i=>rH.apparent_temperature[i]).filter(v=>v!=null);
+      const pFeelsHi=pFeels.length?Math.max.apply(null,pFeels):null, pFeelsLo=pFeels.length?Math.min.apply(null,pFeels):null;
+      // The number we PRINT and CONSUME everywhere is `wet` (meaningful rain), not the trace `any`.
+      // A sunny day where 84 of 89 members forecast 0.0mm read "25% rain" because it printed the
+      // trace probability; it now reads "7% rain / Odd spot". `peak` is aliased to `wet` so every
+      // downstream reader (display, week strip, driest/wettest window, activities) uses the honest
+      // number. The icon keys off `wet`, plus gust and feels-like so the dominant condition wins.
+      const icon=skyIcon(tIdx.map(i=>rH.weather_code[i]),tIdx.map(i=>rH.cloud_cover[i]),wet,daily.snowfall_sum[di]||0,any,pGust,pFeelsHi,pFeelsLo);
+      return {key:P.key,label:P.label,peak:wet,any,wet,amt,temp,gust:pGust,verdict:rainVerdict(any,wet),icon};
+    });
+    const pAny=rainAt(date,6,24);                 // trace over the whole day (kept for internal use)
+    // The day's headline chance of rain = the wettest single period's chance of proper rain. Summing
+    // the trace over an 18-hour window inflated this badly (a bone-dry Bath read 45%); the max of the
+    // periods can never exceed any period and never cries wolf. Confidence is judged on this too.
+    const pWet=Math.max.apply(null,periods.map(p=>p.wet));
+    const dayAmt=rainAmt(date,6,24);
+    // overnight into next day
+    let tonight=0;
+    const next=dates[di+1];
+    if(next){const a=inHours(useEns?(eGroups[date]||[]):(dGroups[date]||[]),useEns?eTime:dTime,21,24);const b=inHours(useEns?(eGroups[next]||[]):(dGroups[next]||[]),useEns?eTime:dTime,0,6);tonight=rainProb(useEns?members:detMembers,a.concat(b),0.1);}
+    const dayIdx=inHours(rg,rTime,6,21);
+    // Humidity that PAIRS with the heat: RH at the hottest (peak feels-like) hour, not the
+    // daily max - which lands at the cool, damp dawn and misrepresents a hot, dry afternoon.
+    let peakHeatI=dayIdx.length?dayIdx[0]:nowIdxR, peakHeatV=-999;
+    for(const i of dayIdx){const v=rH.apparent_temperature[i]; if(v!=null&&v>peakHeatV){peakHeatV=v;peakHeatI=i;}}
+    const humid=Math.round(rH.relative_humidity_2m[peakHeatI]??70);
+    const skyIdx=inHours(rg,rTime,7,20);
+    const dayCodes=skyIdx.map(i=>rH.weather_code[i]);
+    const dayClouds=skyIdx.map(i=>rH.cloud_cover[i]);
+    const fogN=dayCodes.filter(c=>c===45||c===48).length;
+    // Terrain-adjusted numbers: a valley-bottom night can genuinely read colder than the grid
+    // forecast (cold pooling), and its gusts sheltered or funnelled; an exposed top gusts higher.
+    const tminDelta=tAdj?tAdj.tminDelta:0;
+    const d={
+      date,idx:di,
+      tmax:Math.round(daily.temperature_2m_max[di]),tmin:Math.round(daily.temperature_2m_min[di]+tminDelta),
+      feelsMax:daily.apparent_temperature_max[di],feelsMin:daily.apparent_temperature_min[di]+tminDelta,
+      humid:humid,gustMph:Math.round(mph(daily.wind_gusts_10m_max[di])*wF),snowCm:daily.snowfall_sum[di]||0,
+      valleyFog:!!(tAdj&&tAdj.fog),terrain:terrain&&terrain.cls!=='flat'?{cls:terrain.cls,windFactor:wF,tminDelta}:null,
+      uv:daily.uv_index_max[di]||0,weatherCode:daily.weather_code[di],precipSum:daily.precipitation_sum[di]||0,
+      thunder:dayCodes.some(c=>c!=null&&c>=95),
+      fog:dayCodes.length?fogN>=Math.max(2,Math.ceil(dayCodes.length*0.4)):false,
+      // Confidence is judged on WET (rain you would notice), not on trace risk; damped by how much
+      // this day's call has been churning between runs, and by the model's measured local record.
+      periods,pAny,pWet,dayAmt,stability:stabilityFor(prev,date),
+      dayConfidence:confidenceFromProb(pWet,di,stabilityFor(prev,date),skill),tonight
+    };
+    d.icon=skyIcon(dayCodes,dayClouds,pWet,d.snowCm,pAny,d.gustMph,d.feelsMax,d.feelsMin);
+    d.hazards=assessHazards(d);
+    d.headline=makeHeadline(periods,tonight,d);
+    // driest/wettest keyed on the honest wet number (period.peak is aliased to wet)
+    d.driest=periods.reduce((x,y)=>y.peak<x.peak?y:x);
+    d.wettest=periods.reduce((x,y)=>y.peak>x.peak?y:x);
+    days.push(d);
+  });
+
+  // ---- today's "now" + detail (nowcast + model-agreement panel) ----
+  const nowTemp=Math.round(rH.temperature_2m[nowIdxR]??days[0].tmax);
+  const nowFeels=Math.round(rH.apparent_temperature[nowIdxR]??nowTemp);
+  const nowHumid=Math.round(rH.relative_humidity_2m[nowIdxR]??days[0].humid);
+  const nowGust=mph(rH.wind_gusts_10m[nowIdxR]);
+  const nowCode=rH.weather_code[nowIdxR];
+  const nowP=useEns?rainProb(members,[findNowIdx(eTime,off)],0.1):rainProb(detMembers,[findNowIdx(dTime,off)],0.1);
+  let word=nowTemp>=25?'Hot':nowTemp>=20?'Warm':nowTemp>=15?'Mild':nowTemp>=10?'Cool':nowTemp>=5?'Chilly':'Cold';
+  const rainw=nowP<25?'dry':nowP<55?'showery':'wet';
+  const nowCond=word+', '+rainw;
+
+  // today rainfall mm by named model (det, 2-day)
+  const today=days[0].date;
+  const dTodayIdx=inHours(dGroups[today]||[],dTime,6,24);
+  const useDay=dTodayIdx.length?dTodayIdx:[findNowIdx(dTime,off)];
+  const amtBy=perModelAmount(det,useDay); const amts=MODELS.map(m=>amtBy[m.id]);
+  let aw=0,at=0;for(const m of MODELS){aw+=amtBy[m.id]*m.weight;at+=m.weight;} const synthAmt=Math.round(aw/at*10)/10;
+
+  // 6h nowcast timeline (ensemble aligned)
+  const nowIdxE=useEns?findNowIdx(eTime,off):findNowIdx(dTime,off);
+  const tlMembers=useEns?members:detMembers, tlTime=useEns?eTime:dTime;
+  const tl=[];for(let k=0;k<=6;k++){const i=nowIdxE+k;tl.push(i<tlTime.length?rainProb(tlMembers,[i],0.1):0);}
+  let imminent='';
+  try{ if(det.minutely&&det.minutely.time&&det.minutely.precipitation){
+    const mt=det.minutely.time, mp=det.minutely.precipitation;
+    const mi=mt.findIndex(t=>t.slice(0,13)===dTime[findNowIdx(dTime,off)].slice(0,13));
+    if(mi>=0){
+      if(mp[mi]!=null&&mp[mi]>=0.1){const stop=mp.slice(mi).findIndex(v=>v==null||v<0.1);imminent=stop>0?('Raining now, easing in about '+(stop*15)+' min.'):'Raining now.';}
+      else{const nxt=mp.slice(mi,mi+8).findIndex(v=>v!=null&&v>=0.1);if(nxt>0)imminent='Dry now - rain likely in about '+(nxt*15)+' min.';}
+    }
+  }}catch(e){}
+  const peak=Math.max.apply(null,tl),pI=tl.indexOf(peak);
+  const nowLede=imminent||(peak<25?'Dry for the next few hours.':('Showers most likely '+(pI===0?'now':'in about '+pI+'h')+' (~'+peak+'% of forecasts).'));
+
+  return {
+    place,
+    now:{temp:nowTemp,feels:nowFeels,humid:nowHumid,gust:nowGust,cond:nowCond,code:nowCode},
+    days,skill,srcSkill:srcSkill||null,terrain:terrain||null,
+    detail:{
+      models:MODELS.map(m=>({nm:m.label,mm:amtBy[m.id]})),synthAmt,
+      maxAmt:Math.max.apply(null,amts.concat([0.1])),amtMin:Math.min.apply(null,amts),amtMax:Math.max.apply(null,amts),
+      tl,nowLede,pDayToday:days[0].pWet,pAnyToday:days[0].pAny,memberCount:(useEns?members.length:MODELS.length),ensemble:useEns
+    },
+    issued:new Date()
+  };
+}
+
+// ---- activities + puns (customisable, hazard-aware) ----
+// ---- Activity x weather matrix ----
+// Each activity checks its RELEVANT hazards in priority order: safety-first blockers
+// (thunder, ice, severe wind, extreme heat) can override the base rain verdict with a
+// bespoke pun; medium-relevance hazards append a practical note. See ACTIVITY-WEATHER-MATRIX.md.
+const ACTIVITIES=[
+  {id:'washing',emoji:'🧺',label:'Washing out?',fn:c=>{
+    if(c.snow) return {c:'bad',verdict:'Not a chance',meta:'Snow and damp air - it will freeze on the line before it dries. Airer by the radiator.'};
+    const windy=c.wind==='high'||c.wind==='severe';
+    const dry=[]; if(c.m<22)dry.push('morning'); if(c.a<22)dry.push('afternoon'); if(c.e<22)dry.push('evening');
+    if(dry.length===3){let m=(c.day<9?'Line-drying weather dawn to dusk. ':'Should stay dry enough all day. ')+(windy?'Breezy too, so it dries fast - but peg it down.':c.heat!=='none'?'Warm and dry - crispy in an hour.':'Fill yer boots.');return {c:'good',verdict:c.day<9?'Get it out':'Probably safe all day',meta:m};}
+    if(dry.length===0) return {c:'bad',verdict:'Leave it on the airer',meta:'Showers on and off all day - the socks will only mock you.'};
+    return {c:'warn',verdict:'Dry-ish: '+dry.join(' & '),meta:'Best in the '+dry[0]+'. Whip it in before the '+c.wettest.label.toLowerCase()+' - a shower is likely then (~'+c.wettest.peak+'%).'+(windy?' And peg it down.':'')};
+  }},
+  {id:'cycle',emoji:'🚲',label:'Cycle to work?',fn:c=>{
+    if(c.ice) return {c:'bad',verdict:'Icy - take the bus',meta:'Ice likely on untreated roads. Two wheels and black ice do not mix.'};
+    if(c.wind==='severe') return {c:'bad',verdict:'Wild in the wind',meta:'Gusts to '+c.gust+' mph - hard going and risky on exposed roads.'};
+    const p=c.m;
+    let base={c:p<18?'good':p<37?'warn':'bad',verdict:p<11?'Clear run':p<25?'Probably dry':p<40?'Pack a jacket':'You will likely get wet',meta:p<11?'Should be a dry commute.':'About '+p+'% chance of a shower on the way in'+(c.disagree?' - though the models are hedging.':'.')};
+    if(c.wind==='high'){if(base.c==='good')base.c='warn';base.meta+=' Gusty ('+c.gust+' mph) - mind the crosswinds.';}
+    if(c.thunder)base.meta+=' Storms possible - shelter if it turns.';
+    if(c.heat==='danger')base.meta+=' A scorcher later - carry water for the ride home.';
+    return base;}},
+  {id:'dog',emoji:'🐕',label:'Walkies?',fn:c=>{
+    if(c.thunder) return {c:'warn',verdict:'Quick one between storms',meta:'Thunder about - keep it short and steer clear of open fields and tall trees.'};
+    if(c.heat==='danger') return {c:'warn',verdict:'Early or late only',meta:'Too hot midday - pavements can burn paws. Dawn or dusk, and take water for you both.'};
+    const d=c.driest;
+    return {c:d.peak<25?'good':d.peak<43?'warn':'bad',verdict:'Best in the '+d.label.toLowerCase(),meta:'Driest window (~'+d.peak+'% rain, about '+d.temp+'°). '+(c.ice?'Mind icy paths. ':'')+(d.peak<25?'The dog votes yes.':'Might get a bit damp, mind.')};}},
+  {id:'bbq',emoji:'🍖',label:'BBQ weather?',fn:c=>{
+    if(c.thunder) return {c:'bad',verdict:'Lightning says no',meta:'Storms forecast - not the day to stand over a metal grill in the open. Plan B.'};
+    if(c.snow) return {c:'bad',verdict:'Grill pan job',meta:'Snowy out - the coals will not thank you. Cook indoors.'};
+    if(c.wind==='severe') return {c:'bad',verdict:'Too windy to light',meta:'Gusts to '+c.gust+' mph - flames and gusts are a bad mix. Save it.'};
+    const best=Math.min(c.a,c.e),slot=c.a<=c.e?'this afternoon':'this evening';
+    let base={c:best<18?'good':best<37?'warn':'bad',verdict:best<18?('Fire up the grill '+slot):best<37?'Risky - have a plan B':'Sausages indoors',meta:best<18?'Driest slot for a cook-up. Get the coals on.':best<37?'A shower could gatecrash it (~'+best+'% chance).':'Likely too wet (~'+best+'%). Grill pan it is.'};
+    if(base.c!=='bad'&&c.heat==='danger')base.meta+=' Scorcher - keep drinks and raw meat properly cold.';
+    else if(base.c!=='bad'&&c.wind==='high')base.meta+=' A bit breezy - shelter the grill.';
+    return base;}},
+  {id:'beergarden',emoji:'🍺',label:'Beer garden?',fn:c=>{
+    if(c.snow) return {c:'bad',verdict:'Inside by the fire',meta:'Snowy - the garden can wait. Grab a spot indoors.'};
+    const best=Math.min(c.a,c.e),warm=c.temp>=16;
+    if(best<22&&c.heat==='danger') return {c:'warn',verdict:'Bag the shady table',meta:'Cracking, but a scorcher ('+Math.round(c.feels)+'° feels-like). Shade and water between rounds.'};
+    if(best<18&&warm) return {c:'good',verdict:'Pint outside - go on',meta:'Should stay dry and '+c.temp+'°. Bag a table before everyone else does.'+(c.wind==='severe'?' Weigh the glasses down - it is gusty.':'')};
+    if(best<18) return {c:'warn',verdict:'Dry but a bit nippy',meta:'Probably dry, but only '+c.temp+'° - bring a jumper for the garden.'};
+    if(best<37) return {c:'warn',verdict:'Risky - showers about',meta:'A shower could land on your pint (~'+best+'%). Sit near the door.'};
+    return {c:'bad',verdict:'Inside table today',meta:'Likely too wet for the garden. The bar is calling.'};}},
+  {id:'gardening',emoji:'🌱',label:'Gardening?',fn:c=>{
+    if(c.snow) return {c:'bad',verdict:'Nothing doing',meta:'Snow on the beds - leave it be. Sharpen the tools instead.'};
+    if(c.heat==='danger') return {c:'warn',verdict:'Early birds only',meta:'Too hot to be digging midday. Before 11 or after 6, and drink up - heat plus graft is a proper strain.'};
+    if(c.cold==='hard') return {c:'warn',verdict:'Ground is like iron',meta:'Hard frost - digging is a battle. Prune or plan the borders instead.'};
+    const p=Math.max(c.m,c.a);
+    if(p<18) return {c:'good',verdict:'Crack on',meta:'Should stay dry enough to get stuck in. The weeds will not pull themselves.'+(c.thunder?' Keep an ear out for thunder.':'')};
+    if(c.day>52) return {c:'warn',verdict:'Let it water itself',meta:'Likely wet - the rain will do your watering, just not much else.'};
+    return {c:'warn',verdict:'Grab a dry gap',meta:'A bit showery (~'+p+'%). Nip out between the drops.'};}},
+  {id:'run',emoji:'🏃',label:'Going for a run?',fn:c=>{
+    if(c.thunder) return {c:'bad',verdict:'Not in a storm',meta:'Thunder forecast - open ground in lightning is a no. Treadmill, or wait it out.'};
+    if(c.ice) return {c:'bad',verdict:'Skiddy underfoot',meta:'Ice on the paths - a turned ankle is not worth it. Indoors today.'};
+    if(c.heat==='danger') return {c:'bad',verdict:'Too hot to trot midday',meta:'Feels like '+Math.round(c.feels)+'° at the peak'+(c.humid>=55?', muggy at '+c.humid+'%':'')+' - hard on the body. Dawn or after 7pm, water, easy pace.'};
+    const p=c.driest.peak,cool=c.temp<=16;
+    let base={c:p<30?'good':p<45?'warn':'bad',verdict:'Best in the '+c.driest.label.toLowerCase(),meta:(cool?'Cool and ':'')+chancePhrase(p)+' in your best window (~'+p+'%). Good legs weather.'};
+    if(c.heat==='caution')base.meta+=' Warm out - carry water and do not go daft on the pace.';
+    if(c.wind==='high'||c.wind==='severe')base.meta+=' Windy - it will feel harder into the gusts.';
+    return base;}},
+  {id:'golf',emoji:'⛳',label:'Round of golf?',fn:c=>{
+    if(c.thunder) return {c:'bad',verdict:'Get off the course',meta:'Lightning risk - a raised metal club in the open is the last thing you want. Clubhouse today.'};
+    if(c.snow) return {c:'bad',verdict:'Greens are shut',meta:'Snow on the course - no play. One for the simulator.'};
+    if(c.wind==='severe') return {c:'bad',verdict:'Unplayable gusts',meta:'Gusts to '+c.gust+' mph - the ball will not sit. Save your scorecard.'};
+    const p=Math.max(c.m,c.a);let base={c:p<22?'good':p<40?'warn':'bad',verdict:p<22?'Tee off happy':p<40?'Pack the brolly':'One for the 19th hole',meta:p<22?'Front nine should stay dry at least.':p<40?'Showers may well find you on the back nine (~'+p+'%).':'Likely a wet round (~'+p+'%) - swimming, not swinging.'};
+    if(c.wind==='high')base.meta+=' Club up - '+c.gust+' mph gusts will move it.';
+    if(c.heat==='danger')base.meta+=' And a scorcher - hat, water, shade at the turn.';
+    return base;}},
+  {id:'footy',emoji:'⚽',label:'Kickabout?',fn:c=>{
+    if(c.thunder) return {c:'bad',verdict:'Ref calls it off',meta:'Thunder about - players off the pitch. Not worth it.'};
+    if(c.ice||c.snow) return {c:'bad',verdict:'Pitch is frozen',meta:'Frozen or snowy ground - hard as concrete and slippy. Postponed.'};
+    const p=Math.max(c.a,c.e);let base={c:p<25?'good':p<46?'warn':'bad',verdict:p<25?'Jumpers for goalposts':p<46?'Muddy but doable':'Postponed, ref',meta:p<25?'Should be dry enough for a proper game.':p<46?'Likely a bit greasy (~'+p+'%) - bring the studs.':'Pitch will probably be a paddling pool.'};
+    if(c.heat==='danger')base.meta+=' Water breaks - it is a scorcher.';
+    else if(c.wind==='severe')base.meta+=' A gale will make a mockery of any long ball.';
+    return base;}},
+  {id:'schoolrun',emoji:'🎒',label:'School run?',fn:c=>{
+    const am=c.m,pm=c.a,both=Math.max(am,pm);
+    let base;
+    if(both<11) base={c:'good',verdict:'Coats can stay home',meta:'Dry both ends - drop-off and pick-up should stay rain-free.'};
+    else if(both<23) base={c:'good',verdict:'Probably fine',meta:'Mostly dry (drop-off '+am+'%, pick-up '+pm+'%) - maybe tuck a light coat in the bag, just in case.'};
+    else if(both<43) base={c:'warn',verdict:'Coats on',meta:'A shower is likely one end or the other (drop-off '+am+'%, pick-up '+pm+'%).'};
+    else base={c:'bad',verdict:'Full waterproofs',meta:'Probably wet both ways (drop-off '+am+'%, pick-up '+pm+'%). Wellies weather.'};
+    if(c.ice)base.meta+=' Icy paths - mind the little legs and allow extra time.';
+    else if(c.cold==='hard')base.meta+=' Bitter - hats and gloves on.';
+    if(c.heat==='danger')base.meta+=' Hot one - water bottle and a sun hat in the bag.';
+    else if(c.heat==='caution'&&both<23)base.meta+=' Warm - a water bottle is a good shout.';
+    return base;}},
+  {id:'carwash',emoji:'🚗',label:'Wash the car?',fn:c=>{
+    if(c.snow||c.ice) return {c:'bad',verdict:'Save it for the thaw',meta:'It will refreeze on the paintwork and the roads just resalt it. Pointless today.'};
+    if(c.day<14) return {c:'good',verdict:'Safe to shine it',meta:'Should stay dry all day - it might actually stay clean.'};
+    if(c.day<37) return {c:'warn',verdict:'Tempting fate',meta:'Wash it and you will probably summon a shower (~'+c.day+'%). You know the rules.'};
+    return {c:'bad',verdict:'Nature is doing it',meta:'Rain is likely - let the sky rinse it for free.'};}},
+  {id:'diy',emoji:'🖌',label:'Painting outdoors?',fn:c=>{
+    if(c.snow||c.cold==='hard') return {c:'bad',verdict:'Too cold to cure',meta:'Most exterior paint will not dry below about 5°. Do the indoor jobs today.'};
+    if(c.day<14){let m='Should stay dry enough for a coat to actually cure.';if(c.wind==='high'||c.wind==='severe')m+=' Gusty though - grit and leaves will stick to wet paint.';else if(c.heat==='danger')m+=' Very hot - it may skin over too fast, work in the shade.';return {c:'good',verdict:'Get the brushes out',meta:m};}
+    return {c:c.day<37?'warn':'bad',verdict:c.day<37?'Risky':'Not today',meta:c.day<37?'A shower could ruin your finish (~'+c.day+'%).':'Rain is likely and paint hates it. Do the skirting boards instead.'};}},
+  {id:'picnic',emoji:'🥪',label:'Picnic?',fn:c=>{
+    if(c.thunder) return {c:'bad',verdict:'Storms brewing',meta:'Thunder about - not a day for an open field. Rain check.'};
+    const best=Math.min(c.a,c.e);
+    if(best<22&&c.heat==='danger') return {c:'warn',verdict:'Shady spot only',meta:'Dry but a scorcher - pick a tree, pack water and suncream, keep the food cool. Mind the wasps.'};
+    let base={c:(best<18&&c.temp>=15)?'good':best<35?'warn':'bad',verdict:(best<18&&c.temp>=15)?'Rug out, go':best<35?'Have a plan B':'Sarnies indoors',meta:(best<18&&c.temp>=15)?('Should stay dry and '+c.temp+'°. Mind the wasps.'):best<35?'A shower could crash it (~'+best+'%) - soggy scotch egg risk.':'Likely too wet (~'+best+'%). The sandwiches would drown.'};
+    if(base.c!=='bad'&&(c.wind==='high'||c.wind==='severe'))base.meta+=' Weigh the blanket down - it is breezy.';
+    return base;}},
+  {id:'beach',emoji:'🏖',label:'Beach day?',fn:c=>{
+    const warm=c.temp>=18,best=Math.min(c.a,c.e);
+    if(warm&&best<18){let m=c.temp+'° and probably dry. Proper beach weather - rare, seize it.';if(c.uv>=6||c.heat==='danger')m+=' UV is strong - suncream, hat, shade at midday.';if(c.wind==='high'||c.wind==='severe')m+=' Windy - the windbreak earns its keep.';return {c:'good',verdict:'Sea, sun, go',meta:m};}
+    if(best<25) return {c:'warn',verdict:c.temp>=18?'Go, but pack a brolly':'Dry-ish, bring layers',meta:(c.temp>=18?'Warm enough, ':'Only '+c.temp+'°. ')+'British beach special: coat on, ice cream in hand.'+(c.wind==='high'||c.wind==='severe'?' Windy - windbreak up.':'')};
+    return {c:'bad',verdict:'Arcade day',meta:'Likely too wet for the sand (~'+best+'%). 2p machines it is.'};}},
+  {id:'camping',emoji:'⛺',label:'Camping / festival?',fn:c=>{
+    if(c.wind==='severe') return {c:'bad',verdict:'Tent will take off',meta:'Gusts to '+c.gust+' mph - pitching is a nightmare and risky. Sit this one out.'};
+    if(c.thunder) return {c:'bad',verdict:'Exposed in a storm',meta:'Thunder forecast - a tent in an open field is no place to be. Postpone.'};
+    if(c.day<20){let m='Should stay dry - the tent might too. Wellies just in case.';if(c.wind==='high')m+=' A bit breezy - double-peg the guy ropes.';if(c.cold==='hard'||c.cold==='cold')m+=' Cold night ahead - pack a proper sleeping bag.';return {c:'good',verdict:'Pitch up',meta:m};}
+    return {c:c.day<43?'warn':'bad',verdict:c.day<43?'Pack the wellies':'Mud bath incoming',meta:c.day<43?'Showery spells likely (~'+c.day+'%) - guy ropes tight, groundsheet down.':'Probably a swamp (~'+c.day+'%). Bin bags for the feet.'};}},
+  {id:'hair',emoji:'💇',label:'Good hair day?',fn:c=>{
+    const frizz=c.day>=40||c.humid>=72;
+    let base={c:(!frizz&&c.day<18)?'good':(!frizz?'warn':'bad'),verdict:(!frizz&&c.day<18)?'Frizz-free':(!frizz?'Bring product':'Frizz alert'),meta:frizz?('Humid at '+c.humid+'% - it is probably coming for your barnet. Hat backup advised.'):(c.day<18?'Dry air - the hair should behave.':'A bit damp about - tame it before you leave.')};
+    if(base.c==='good'&&(c.wind==='high'||c.wind==='severe')){base.c='warn';base.verdict='Windswept incoming';base.meta='Dry, but '+c.gust+' mph gusts will undo any styling. Tie it back.';}
+    return base;}},
+  {id:'window',emoji:'🪟',label:'Clean the windows?',fn:c=>{
+    if(c.snow||c.ice) return {c:'bad',verdict:'It will freeze on the glass',meta:'Below freezing - the water turns to ice as you go. Wait for a milder day.'};
+    if(c.day<14) return {c:'good',verdict:'Sparkle time',meta:'Should stay dry - they might keep their streak-free shine for a day.'};
+    if(c.day<33) return {c:'warn',verdict:'Might be wasted effort',meta:'A shower could spot them (~'+c.day+'%). Your call.'};
+    return {c:'bad',verdict:'Save your elbow grease',meta:'Rain is likely - they will spot within the hour. Put the cloth down.'};}},
+  {id:'stargaze',emoji:'✨',label:'Stargazing tonight?',fn:c=>{
+    if(c.thunder) return {c:'bad',verdict:'Cloudy and stormy',meta:'Storms tonight - nothing to see but cloud. Another night.'};
+    const e=c.eAny; // clear-sky odds track the WIDER rain risk (any cloud/spit), not just proper rain
+    return {c:e<25?'good':e<50?'warn':'bad',verdict:e<25?'Clear-ish skies':e<50?'Patchy cloud':'Cloud blanket',meta:(e<25?'Evening looking clear enough for a proper look up.':e<50?'Cloud coming and going - you might catch a gap.':'Probably too much cloud tonight. Save it for another night.')+((e<50&&(c.cold==='hard'||c.cold==='cold'))?' Bitter out - wrap up warm.':'')};}},
+  {id:'fishing',emoji:'🎣',label:'Off fishing?',fn:c=>{
+    if(c.thunder) return {c:'bad',verdict:'Reel it in',meta:'Thunder forecast - a carbon rod is basically a lightning rod. Off the water until it passes.'};
+    let base={c:c.day<33?'good':c.day<52?'warn':'bad',verdict:c.day<33?'Cast away':c.day<52?'Waterproofs on':'One for the shed',meta:c.day<22?'Settled enough for a sit by the water.':c.day<33?'Mostly dry, the odd shower possible.':c.day<52?'Showery spells likely (~'+c.day+'%) - the brolly earns its keep.':'Probably wetter than the fish (~'+c.day+'%).'};
+    if(c.wind==='severe')base.meta+=' Very windy - casting will be a battle.';
+    else if(c.cold==='hard')base.meta+=' Bitter - a flask of tea is essential.';
+    return base;}},
+  {id:'drive',emoji:'🛣',label:'Long drive?',fn:c=>{
+    if(c.ice||c.snow) return {c:'bad',verdict:'Only if you must',meta:'Ice or snow on the roads - slow right down, pack a blanket and a charged phone, and give yourself twice the time.'};
+    if(c.wind==='severe') return {c:'bad',verdict:'Grip the wheel',meta:'Gusts to '+c.gust+' mph - hairy on exposed stretches and bridges, worse with a roof box or towing. Only if you must.'};
+    if(c.day>=43||c.precipSum>=6) return {c:'warn',verdict:'Spray and standing water',meta:'Rain likely (~'+c.day+'%) - lights on, ease off, and watch for aquaplaning on the fast lane.'};
+    if(c.fog) return {c:'warn',verdict:'Fog about',meta:'Patchy fog - fog lights on, ease off the speed and leave a big gap.'};
+    if(c.wind==='high') return {c:'warn',verdict:'Buffety out there',meta:'Gusts to '+c.gust+' mph - a proper shove on open roads and bridges. Two hands on the wheel.'};
+    if(c.heat==='danger') return {c:'warn',verdict:'Keep it cool',meta:'A hot one ('+c.temp+'°, feels like '+Math.round(c.feels)+'°) - hydrate, watch for tiredness on the long stretches, and check coolant and tyre pressures before a big run.'};
+    if(c.day>=22) return {c:'good',verdict:'Watch for showers',meta:'The odd shower possible (~'+c.day+'%) - wet patches and a bit of spray, nothing dramatic.'};
+    if(c.heat==='caution') return {c:'good',verdict:'Good to go',meta:'Warm and settled ('+c.temp+'°) - crack the aircon, keep a drink handy and you are golden.'};
+    if(c.wind==='breezy') return {c:'good',verdict:'Bit breezy, fine to drive',meta:'Noticeably breezy ('+c.gust+' mph gusts) - a light nudge on exposed stretches and bridges, nothing to worry about. Usual breaks.'};
+    return {c:'good',verdict:'Good to go',meta:'Settled and clear at '+c.temp+'° - an easy run. Usual breaks and you will be grand.'};}}
+];
+const ALS='howsdaweather_acts_v1';
+let acts=(function(){try{const v=JSON.parse(localStorage.getItem(ALS));return Array.isArray(v)&&v.length?v:null;}catch(e){return null;}})()||['washing','cycle','dog','bbq'];
+function storeActs(){try{localStorage.setItem(ALS,JSON.stringify(acts));}catch(e){}}
+let lastCtx=null;
+function actColor(k){return k==='good'?'var(--good)':k==='warn'?'var(--warn)':'var(--bad)';}
+function renderDecisions(){
+  const dr=$('decisions'); dr.innerHTML='';
+  if(!lastCtx){return;}
+  // display in the order the user selected them (acts preserves add-order), so the most
+  // important activities can be added first and sit at the top.
+  const chosen=acts.map(id=>ACTIVITIES.find(a=>a.id===id)).filter(Boolean);
+  if(!chosen.length){dr.innerHTML='<div class="emptysaved" style="grid-column:1/-1">No activities picked - tap Customise to add some.</div>';return;}
+  chosen.forEach(a=>{const v=a.fn(lastCtx);const col=actColor(v.c);const el=document.createElement('div');el.className='dc';
+    el.innerHTML='<div class="ic">'+a.emoji+'</div><div><div class="h">'+a.label+'</div><div class="verdict"><span class="dot" style="background:'+col+'"></span>'+v.verdict+'</div><div class="meta">'+v.meta+'</div></div>';
+    dr.appendChild(el);});
+}
+function renderActPanel(){
+  const p=$('actpanel'); p.innerHTML='';
+  ACTIVITIES.forEach(a=>{const on=acts.includes(a.id);const b=document.createElement('button');b.className='actchip'+(on?' on':'');
+    b.innerHTML='<span class="em">'+a.emoji+'</span>'+a.label;
+    b.onclick=()=>{if(on){acts=acts.filter(x=>x!==a.id);}else{acts=acts.concat([a.id]);}storeActs();renderActPanel();renderDecisions();};
+    p.appendChild(b);});
+}
+$('customise').onclick=()=>{const p=$('actpanel');p.hidden=!p.hidden;if(!p.hidden)renderActPanel();};
+
+// ---- geocoding (postcodes.io + OpenStreetMap fallback) ----
+const looksLikePostcode=s=>/^[a-z]{1,2}\d/i.test(s.replace(/\s+/g,''));
+const placeToLoc=r=>({name:r.name_1,admin1:[r.local_type,r.county_unitary||r.region].filter(Boolean).join(', '),lat:r.latitude,lon:r.longitude});
+const postcodeToLoc=r=>({name:r.postcode,admin1:[r.admin_district,r.region].filter(Boolean).join(', '),lat:r.latitude,lon:r.longitude});
+async function nominatim(q){const j=await fetchJSON('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(q)+'&countrycodes=gb&format=json&limit=6&addressdetails=1');return (j||[]).map(r=>({name:r.name||(r.display_name||'').split(',')[0],admin1:[cap(r.type||''),(r.address&&(r.address.county||r.address.state||r.address.city))||''].filter(Boolean).join(', '),lat:+r.lat,lon:+r.lon}));}
+async function geoSearch(q){
+  q=(q||'').trim(); if(q.length<2) return [];
+  try{
+    if(looksLikePostcode(q)){const j=await fetchJSON('https://api.postcodes.io/postcodes?q='+encodeURIComponent(q)+'&limit=8');const out=(j.result||[]).map(postcodeToLoc).filter(r=>r.lat!=null);if(out.length)return out;}
+    const j=await fetchJSON('https://api.postcodes.io/places?q='+encodeURIComponent(q)+'&limit=8');
+    const out=(j.result||[]).map(placeToLoc).filter(r=>r.lat!=null);
+    if(out.length)return out;
+    return await nominatim(q);
+  }catch(e){ try{return await nominatim(q);}catch(_){return [];} }
+}
+async function geoReverse(lat,lon){try{const j=await fetchJSON('https://api.postcodes.io/postcodes?lon='+lon+'&lat='+lat+'&limit=1&radius=2000');const r=(j.result||[])[0];if(r&&r.admin_district)return r.admin_district;}catch(e){}return 'Your location';}
+
+// ---- state + cache ----
+const CACHE=new Map(),TTL=30*60*1000;
+const ckey=(lat,lon)=>lat.toFixed(2)+','+lon.toFixed(2);
+const LS='howsdaweather_saved_v1';
+let mem=null;
+function loadSaved(){try{const v=localStorage.getItem(LS);return v?JSON.parse(v):null;}catch(e){return mem;}}
+function storeSaved(a){mem=a;try{localStorage.setItem(LS,JSON.stringify(a));}catch(e){}}
+let saved=loadSaved();
+const firstRun=!saved||!saved.length;
+if(firstRun){saved=[{name:'London',lat:51.51,lon:-0.13},{name:'Manchester',lat:53.48,lon:-2.24},{name:'Fort William',lat:56.82,lon:-5.11}];storeSaved(saved);}
+// Last-viewed location: the app opens here next time (so it remembers your primary place).
+const LSLAST='howsdaweather_last_v1';
+function storeLast(loc){try{localStorage.setItem(LSLAST,JSON.stringify({name:loc.name,lat:loc.lat,lon:loc.lon}));}catch(e){}}
+function loadLast(){try{const v=JSON.parse(localStorage.getItem(LSLAST));return v&&v.lat!=null&&v.lon!=null?v:null;}catch(e){return null;}}
+let current=null,currentIsGeo=false;
+let curData=null,selDay=0,loadSeq=0;
+
+function setLoading(name){
+  $('place').textContent='Loading '+name+'...';
+  const pbl=$('placesBtnLabel');if(pbl)pbl.textContent=name;
+  $('herotemp').innerHTML='&middot;';$('herocond').textContent='Fetching the latest...';$('herofeels').textContent='';
+  const tl0=$('terraline');if(tl0)tl0.hidden=true;
+  const we=$('wordday');if(we){we.textContent='...';we.style.color='var(--muted)';}
+  ['week','periods','decisions','advisories'].forEach(id=>$(id).innerHTML='');
+  $('dayhead').textContent='';const cp=$('confpill');cp.textContent='';cp.style.background='transparent';
+  const hc=$('heroConf');if(hc){hc.textContent='...';hc.style.background='transparent';hc.style.color='var(--muted)';}
+}
+// Progressive load: paint from the two fast Open-Meteo calls first, then enhance with the
+// heavier ensemble (better rain%/confidence) and the slower EA floods, without blocking.
+async function loadForecast(loc,isGeo){
+  const seq=++loadSeq;
+  current=loc;currentIsGeo=!!isGeo;selDay=0;
+  storeLast(loc);
+  const k=ckey(loc.lat,loc.lon);const cached=CACHE.get(k);
+  if(cached&&cached.full&&Date.now()-cached.t<=TTL){
+    render({...cached.v,place:loc.name,floods:cached.floods||[]},isGeo);
+    renderSaved();updateSaveToggle();return;
+  }
+  setLoading(loc.name);renderSaved();updateSaveToggle();
+  let det,rich;
+  try{[det,rich]=await Promise.all([fetchDeterministic(loc.lat,loc.lon),fetchRich(loc.lat,loc.lon)]);}
+  catch(e){if(seq===loadSeq){$('place').textContent='Could not load '+loc.name;$('herotemp').innerHTML='&middot;';$('herocond').textContent='Check your connection and try again.';}return;}
+  if(seq!==loadSeq)return; // a newer request superseded this one
+  // Terrain profile is location-static and cached forever, so a repeat visit gets valley/hilltop
+  // adjustments from the very first paint; a first visit picks them up with the enhancement pass.
+  const terr0=terrCacheGet(loc.lat,loc.lon);
+  const v1=synthesize(det,rich,null,loc.name,null,null,null,terr0); // first paint, 5-run fallback for rain
+  CACHE.set(k,{t:Date.now(),v:v1,floods:[],full:false});
+  render({...v1,place:loc.name,floods:[]},isGeo);
+  renderSaved();updateSaveToggle();
+  // Enhance 1: 156-member ensemble -> sharper rain%, previous runs -> churn, terrain -> local shape.
+  Promise.all([
+    fetchEnsemble(loc.lat,loc.lon).catch(()=>null),
+    fetchPrevRuns(loc.lat,loc.lon).catch(()=>null),
+    fetchTerrain(loc.lat,loc.lon).catch(()=>null)
+  ]).then(([ens,prev,terr])=>{
+    if(seq!==loadSeq||(!ens&&!prev&&!terr))return;
+    const v2=synthesize(det,rich,ens,loc.name,prev,null,null,terr||terr0);
+    const c=CACHE.get(k)||{};CACHE.set(k,{t:Date.now(),v:v2,floods:c.floods||[],full:!!ens});
+    render({...v2,place:loc.name,floods:(CACHE.get(k)||{}).floods||[]},isGeo,true);
+    // Enhance 2: score those past runs against real rain gauges. Needs `prev`, is the slowest
+    // fetch in the app (the EA station lookup alone is ~7s across several calls), and only ever
+    // nudges confidence by a few points - so it runs last, off the critical path, and the app is
+    // completely correct without it.
+    if(!prev)return;
+    const off=rich.utcOffsetSeconds||0, past=[];
+    for(let i=VERIFY_DAYS;i>=1;i--) past.push(new Date(Date.now()+off*1000-i*86400000).toISOString().slice(0,10));
+    // Fetch the real gauge record AND each source's own past forecasts together, then (a) score the
+    // blend for confidence and (b) score each source to gently reweight the reliable ones.
+    Promise.all([
+      fetchObserved(loc.lat,loc.lon,off,past),
+      fetchSourceRuns(loc.lat,loc.lon).catch(()=>null)
+    ]).then(([obs,srcRuns])=>{
+      if(seq!==loadSeq||!obs)return;
+      const srcSk=sourceSkill(srcRuns,obs);
+      const v3=synthesize(det,rich,ens,loc.name,prev,obs,srcSk,terr||terr0);
+      const c2=CACHE.get(k)||{};CACHE.set(k,{t:Date.now(),v:v3,floods:c2.floods||[],full:!!ens});
+      render({...v3,place:loc.name,floods:(CACHE.get(k)||{}).floods||[]},isGeo,true);
+    }).catch(()=>{});
+  }).catch(()=>{});
+  // Enhance 3: official EA flood alerts (slow endpoint, so never on the critical path).
+  fetchFloods(loc.lat,loc.lon).then(floods=>{
+    if(seq!==loadSeq)return;
+    const c=CACHE.get(k)||{};CACHE.set(k,{t:c.t||Date.now(),v:c.v,floods:floods||[],full:c.full});
+    if(curData){curData.floods=floods||[];selectDay(selDay);}
+  }).catch(()=>{});
+}
+
+function dayLabel(dateStr,i){
+  const d=new Date(dateStr+'T12:00:00');
+  if(i===0)return 'Today';
+  if(i===1)return 'Tomorrow';
+  return DOW[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()];
+}
+function dayShort(dateStr,i){
+  const d=new Date(dateStr+'T12:00:00');
+  return {top:i===0?'Today':DOW[d.getDay()],bot:d.getDate()+' '+MON[d.getMonth()]};
+}
+
+function render(j,isGeo,keepSel){
+  curData=j;
+  $('place').innerHTML=j.place+(isGeo?' <span class="cur">Your location</span>':'');
+  $('placesBtnLabel').textContent=j.place;
+  // hero (now)
+  $('herotemp').innerHTML=j.now.temp+'&deg;';
+  $('herocond').textContent=j.now.cond;
+  $('herofeels').innerHTML='Feels like '+j.now.feels+'&deg; &middot; Humidity '+j.now.humid+'%'+(j.now.gust>=20?' &middot; Gusts '+j.now.gust+' mph':'');
+  // Word for the day in the hero always reflects TODAY (the current day), not the selected day.
+  const wt=wordForDay(j.days[0]);const we=$('wordday');if(we){we.textContent=wt.word;we.style.color=wt.color;}
+  // Today's forecast confidence, labelled in the hero.
+  const hc=$('heroConf'),c0=j.days[0].dayConfidence;
+  if(hc){hc.textContent=c0.word+' ('+c0.value+'%)';hc.style.background=c0.color;hc.style.color='#08121f';hc.title=c0.why;}
+  const hw=$('heroConfWhy');if(hw)hw.textContent=c0.why+'.';
+  // Terrain line: tell the user their spot's shape is being factored in, and what it changes.
+  const tl2=$('terraline');
+  if(tl2){
+    const T=j.terrain;
+    if(T&&T.cls!=='flat'){
+      const names={deep:'Deep valley spot',valley:'Valley spot',hollow:'Sheltered hollow',exposed:'Exposed high spot'};
+      const rel=T.cls==='exposed'?('about '+T.dep5+'m above'):('about '+Math.abs(Math.min(T.dep1!=null?T.dep1:0,T.dep2,T.dep5))+'m below');
+      const what=T.cls==='exposed'
+        ?'gusts read higher here than the area forecast'
+        :'clear calm nights can turn colder here, and wind is sheltered or funnelled by the valley';
+      tl2.innerHTML='&#9968; <b>'+names[T.cls]+'</b> - the shape of the land around this exact spot ('+rel+' its surroundings) is factored in: '+what+'.';
+      tl2.hidden=false;
+    } else tl2.hidden=true;
+  }
+  renderWeek();
+  selectDay(keepSel?selDay:0);
+  // detail (today only)
+  const dt=j.detail;
+  $('nowlede').textContent=dt.nowLede;
+  const tl=$('timeline');tl.innerHTML='';
+  if(Math.max.apply(null,dt.tl)<10){
+    tl.innerHTML='<div class="drybar">Looking dry - nothing on the radar for the next 6 hours.</div>';
+  } else {
+    dt.tl.forEach((v,i)=>{const slot=document.createElement('div');slot.className='slot';
+      const col=document.createElement('div');col.className='col';
+      const fill=document.createElement('div');fill.className='fill';fill.style.height=Math.max(v,2)+'%';fill.style.background=v>=45?'linear-gradient(180deg,#f59e0b,#d97706)':'linear-gradient(180deg,#5db4ff,#2b74e0)';
+      col.appendChild(fill);
+      const t=document.createElement('div');t.className='t';t.textContent=TIMELBL[i];
+      const pv=document.createElement('div');pv.className='pv';pv.textContent=v+'%';
+      slot.appendChild(col);slot.appendChild(t);slot.appendChild(pv);tl.appendChild(slot);});
+  }
+  const conf0=j.days[0].dayConfidence;
+  // Agreement here is the RAW ensemble split (not the lead-weighted confidence), since this
+  // panel is describing what the members actually say about today.
+  let wtxt='';
+  if(dt.ensemble){
+    wtxt=' Sources are weighted by proven reliability - ECMWF and the Met Office carry the most, GFS the least.';
+    const ss=j.srcSkill;
+    if(ss&&ss.applied&&ss.best) wtxt+=' Against local gauges lately, '+(CENTRE_LABEL[ss.best]||ss.best)+' has edged it, nudged up a touch.';
+    else if(ss&&ss.detail&&!ss.applied) wtxt+=' (Too few recent rain events here to re-rank them, so the published order stands.)';
+  }
+  $('agree').textContent=(dt.ensemble?dt.memberCount+'-member ensemble (ECMWF, ICON, GEFS, GEM, Met Office): ':'From '+dt.memberCount+' models: ')+dt.pDayToday+'% chance of proper rain today'+(dt.pAnyToday-dt.pDayToday>=15?' ('+dt.pAnyToday+'% for even a spit)':'')+'. '+(conf0.agreement>=70?'They strongly agree.':conf0.agreement>=35?'Broad agreement.':'They are split - it could go either way.')+wtxt;
+  const mr=$('models');mr.innerHTML='';
+  j.detail.models.forEach(m=>{const w=Math.round(100*m.mm/dt.maxAmt);const el=document.createElement('div');el.className='m';el.innerHTML='<div class="nm">'+m.nm+'</div><div style="height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden"><span style="display:block;height:100%;width:'+w+'%;background:linear-gradient(90deg,#5db4ff,#2b74e0)"></span></div><div class="val">'+m.mm.toFixed(1)+' mm</div>';mr.appendChild(el);});
+  $('synthval').textContent=dt.synthAmt.toFixed(1)+' mm';
+  const sp=$('synthpill');sp.textContent=conf0.word+' ('+conf0.value+'%)';sp.style.background=conf0.color;sp.style.color='#08121f';
+  $('synthspread').textContent='Range: '+dt.amtMin.toFixed(1)+'-'+dt.amtMax.toFixed(1)+' mm';
+  $('srcline').textContent='Updated '+new Date(j.issued).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+'.';
+}
+
+function renderWeek(){
+  const w=$('week');w.innerHTML='';
+  curData.days.forEach((d,i)=>{
+    const s=dayShort(d.date,i);
+    const rv=rainVerdict(d.pAny,d.pWet);
+    const el=document.createElement('div');el.className='wday'+(i===selDay?' sel':'');
+    el.innerHTML='<div class="wdate"><div class="wd">'+s.top+'</div><div class="wdd">'+s.bot+'</div></div>'+
+      '<div class="wi">'+WICONS[d.icon]+'</div>'+
+      '<div class="wt">'+d.tmax+'&deg;<small> /'+d.tmin+'&deg;</small></div>'+
+      '<div class="wr" style="color:'+rv.color+'">'+d.pWet+'%<span class="wl"> rain</span></div>'+
+      '<div class="wc"><i style="background:'+d.dayConfidence.color+'"></i>'+d.dayConfidence.value+'%<span class="wl"> sure</span></div>';
+    el.onclick=()=>selectDay(i);
+    w.appendChild(el);
+  });
+}
+
+function selectDay(i){
+  if(!curData||!curData.days[i])return;
+  selDay=i;
+  const d=curData.days[i];
+  // highlight
+  Array.prototype.forEach.call($('week').children,(c,k)=>c.classList.toggle('sel',k===i));
+  // day summary + confidence
+  // summary word for the SELECTED day, inline and bold at the line's own size, coloured by mood
+  const wd=wordForDay(d);
+  $('dayhead').innerHTML='<b>'+dayLabel(d.date,i)+'</b> &middot; <b style="color:'+wd.color+'">'+wd.word+'</b> - '+d.headline;
+  const cp=$('confpill');cp.textContent=d.dayConfidence.word+' ('+d.dayConfidence.value+'%)';cp.style.background=d.dayConfidence.color;cp.style.color='#08121f';cp.title=d.dayConfidence.why;
+  // advisories: official floods (today only) first, then derived
+  const av=$('advisories');av.innerHTML='';
+  if(i===0 && curData.floods && curData.floods.length){
+    curData.floods.forEach(f=>{
+      const sev=f.level<=2?'official':'official';const cls=f.level<=2?'bad':'official';
+      const el=document.createElement('div');el.className='adv '+(f.level<=2?'bad':'official');
+      el.innerHTML='<div class="aic">🌊</div><div class="abody"><div class="at">'+f.severity+(f.area?' - '+f.area:'')+'</div><div class="ax">'+(f.desc||'A flood alert is in force for your area.')+'</div><div class="src">Environment Agency - official (England). Check the flood service for details.</div></div>';
+      av.appendChild(el);
+    });
+  }
+  d.hazards.adv.forEach(a=>{
+    const el=document.createElement('div');el.className='adv '+(a.sev==='bad'?'bad':'warn');
+    el.innerHTML='<div class="aic">'+a.icon+'</div><div class="abody"><div class="at">'+a.title+'</div><div class="ax">'+a.text+'</div><div class="src">'+a.src+'</div></div>';
+    av.appendChild(el);
+  });
+  // periods. The big number is now the chance of PROPER rain (>=0.5mm); a hover shows the expected
+  // amount, which is the honest reply to "25% - but the only wet member was 0.1mm".
+  const pr=$('periods');pr.innerHTML='';
+  d.periods.forEach(p=>{const el=document.createElement('div');el.className='period';
+    el.title=amtHint(p);
+    el.innerHTML='<div class="plbl">'+p.label+'</div><div class="pic">'+WICONS[p.icon]+'</div><div class="ptemp">'+p.temp+'&deg;</div><div class="prain" style="color:'+p.verdict.color+'">'+p.peak+'% rain</div><div class="pverd">'+p.verdict.word+'</div>';
+    pr.appendChild(el);});
+  // activity context for this day. m/a/e and day are the chance of PROPER rain (what activities
+  // should react to); mAny/aAny/eAny/dayAny keep the trace figure for the few things that care about
+  // any dampness at all (e.g. stargazing keys cloud-risk off the wider figure).
+  const P=d.periods;
+  lastCtx={m:P[0].peak,a:P[1].peak,e:P[2].peak,day:d.pWet,
+    mAny:P[0].any,aAny:P[1].any,eAny:P[2].any,dayAny:d.pAny,conf:d.dayConfidence.value,
+    temp:P[1].temp,feels:d.feelsMax,humid:d.humid,gust:d.gustMph,snow:d.snowCm>0,ice:d.hazards.ice,
+    heat:d.hazards.heat,wind:d.hazards.wind,cold:d.hazards.cold,uv:d.uv,thunder:d.hazards.thunder,fog:d.hazards.fog,precipSum:d.precipSum,
+    driest:d.driest,wettest:d.wettest,disagree:Math.abs(d.pWet-50)<12,isToday:i===0,label:dayLabel(d.date,i)};
+  renderDecisions();
+}
+
+// ---- saved ----
+const sameLoc=(a,b)=>a&&b&&a.name===b.name&&Math.abs(a.lat-b.lat)<0.02;
+const isSaved=l=>saved.some(s=>sameLoc(s,l));
+function toggleSave(l){if(isSaved(l)){saved=saved.filter(s=>!sameLoc(s,l));}else{saved=saved.concat([{name:l.name,lat:l.lat,lon:l.lon}]);}storeSaved(saved);renderSaved();updateSaveToggle();}
+function renderSaved(){
+  const el=$('saved');el.innerHTML='';
+  if(!saved.length){el.innerHTML='<span class="emptysaved">No saved places yet - search above and tap + Save.</span>';return;}
+  saved.forEach(s=>{const chip=document.createElement('div');chip.className='schip'+(sameLoc(s,current)?' active':'');
+    const label=document.createElement('span');label.textContent=s.name;label.onclick=()=>{loadForecast(s,false);closePlaces();};
+    const x=document.createElement('span');x.className='x';x.textContent='×';x.title='Remove';x.onclick=e=>{e.stopPropagation();toggleSave(s);};
+    chip.appendChild(label);chip.appendChild(x);el.appendChild(chip);});
+}
+function updateSaveToggle(){
+  const b=$('savetoggle');if(!current){b.style.display='none';return;}b.style.display='inline-flex';
+  const on=isSaved(current);b.className='savetoggle'+(on?' on':'');
+  b.innerHTML=on?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 6" stroke="#9beecb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Saved':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#bfe0ff" stroke-width="2.2" stroke-linecap="round"/></svg> Save location';
+  b.onclick=()=>toggleSave(current);
+}
+
+// ---- search ----
+const searchEl=$('search'),resultsEl=$('results');
+let searchTimer=null,lastResults=[];
+async function runSearch(q){
+  q=q.trim();if(!q){resultsEl.classList.remove('show');resultsEl.innerHTML='';return;}
+  try{
+    const res=await geoSearch(q);lastResults=res;resultsEl.innerHTML='';
+    if(!res.length){resultsEl.innerHTML='<div><span>No UK match</span><span class="sub">try another name</span></div>';resultsEl.classList.add('show');return;}
+    res.slice(0,7).forEach((r,i)=>{const row=document.createElement('div');row.className='rrow'+(i===0?' hi':'');
+      const info=document.createElement('span');info.className='rinfo';
+      info.innerHTML='<span class="rn">'+r.name+'</span><span class="ra">'+(r.admin1||'')+'</span>';
+      info.onmousedown=e=>{e.preventDefault();pick(r);};
+      const sv=document.createElement('button');sv.className='rsave';
+      const setSv=()=>{const on=isSaved(r);sv.textContent=on?'Saved':'+ Save';sv.classList.toggle('on',on);};setSv();
+      sv.onmousedown=e=>{e.preventDefault();e.stopPropagation();toggleSave({name:r.name,lat:r.lat,lon:r.lon});setSv();};
+      row.appendChild(info);row.appendChild(sv);resultsEl.appendChild(row);});
+    resultsEl.classList.add('show');
+  }catch(e){}
+}
+function pick(r){loadForecast({name:r.name,lat:r.lat,lon:r.lon},false);closePlaces();}
+searchEl.addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>runSearch(searchEl.value),250);});
+searchEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&lastResults[0])pick(lastResults[0]);else if(e.key==='Escape'){resultsEl.classList.remove('show');searchEl.blur();}});
+searchEl.addEventListener('blur',()=>setTimeout(()=>resultsEl.classList.remove('show'),150));
+
+// ---- geolocation ----
+function showGeoNote(m){$('geomsg').textContent=m;$('geonote').style.display='flex';}
+$('geoclose').onclick=()=>$('geonote').style.display='none';
+function useMyLocation(auto){
+  if(!navigator.geolocation){if(!auto)showGeoNote("This browser can't provide your location. Search for your city instead.");return;}
+  showGeoNote('Getting your location...');
+  navigator.geolocation.getCurrentPosition(
+    async pos=>{const lat=+pos.coords.latitude.toFixed(3),lon=+pos.coords.longitude.toFixed(3);const name=await geoReverse(lat,lon);loadForecast({name,lat,lon},true);closePlaces();showGeoNote('Showing your area: '+name+'.');},
+    err=>{const why=err.code===1?'Location permission was denied':err.code===3?'Location timed out':"Location isn't available here";showGeoNote(why+(auto?'. Showing saved places - search or press Locate me to change.':'. Search for your city instead.'));},
+    {enableHighAccuracy:false,timeout:8000,maximumAge:600000}
+  );
+}
+$('geo').onclick=()=>useMyLocation(false);
+
+// ---- places popup (search / save / switch location) ----
+function openPlaces(){$('placesModal').hidden=false;renderSaved();updateSaveToggle();setTimeout(()=>{try{searchEl.focus();}catch(e){}},60);}
+function closePlaces(){$('placesModal').hidden=true;resultsEl.classList.remove('show');searchEl.value='';}
+$('placesBtn').onclick=openPlaces;
+$('placesClose').onclick=closePlaces;
+$('placesModal').addEventListener('click',e=>{if(e.target===$('placesModal'))closePlaces();});
+$('place').onclick=openPlaces;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('placesModal').hidden)closePlaces();});
+
+// ---- PWA: install prompt + service worker ----
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;const b=$('install');if(b)b.hidden=false;});
+$('install').onclick=async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;$('install').hidden=true;};
+window.addEventListener('appinstalled',()=>{$('install').hidden=true;});
+if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{});});}
+
+// ---- release notes (pops once per update, dismissible, gone 24h after you first see it) ----
+// Newest first. Add a new entry (bump v) each release; only the latest ever pops.
+const RELEASES=[
+  {v:'1.7', date:'27 Jul 2026', title:'Your valley is not the same as the next town',
+   notes:[
+     'If you live in a valley, you already know the forecast lies to you: colder nights than promised, fog that nobody mentioned, wind that never arrives - or howls straight down the glen. That is because forecasts are made for an area, not for the shape of the land you actually live in.',
+     'So the app now reads the landscape around your exact spot - twenty-four elevation samples in rings at 1, 2 and 5 km - and works out whether you are on a valley floor, in a deep glen, in a sheltered hollow, on an exposed top, or on the flat. (We tested it on the real thing: it spots Glencoe as a deep glen, Hebden Bridge as a narrow valley, Shaftesbury as a hilltop, and - locals will nod - Bath as a bowl.)',
+     'Valley spots get the frost-hollow treatment: on clear, calm nights the night temperature is nudged colder, because cold air genuinely drains downhill and pools at the bottom. Cloudy or windy nights are left alone - the effect only happens when conditions allow it.',
+     'Wind gets the same respect: sheltered when it blows across your valley, funnelled a touch stronger when it blows straight along it, and read higher if you are on an exposed top. And on a clear, calm, damp night in a valley, you get a heads-up that fog may pool.',
+     'For this to work the app needs to know exactly where you are - and search takes full postcodes (like "LL55 4TY"), pinning you to within about 100 metres. In the hills, the next street can be a hundred metres higher, so it matters.',
+     'Honesty corner: gentle lowland hollows are too subtle for this method, so there we say nothing rather than guess. When your spot is recognised, a small note under the forecast tells you what is being adjusted and why.'
+   ]},
+  {v:'1.6', date:'27 Jul 2026', title:'Windier, wiser, and no more "Steady" downpours',
+   notes:[
+     'A rainy morning that cleared up was sometimes summed up as "STEADY" - which is a daft word for a morning of rain. There was a gap in our word list where showery days fell through the cracks. Plugged it: those days now read SHOWERY, HIT-AND-MISS or CATCHY, as they should.',
+     'We were badly underplaying the wind. A genuinely blustery day (think 30 mph gusts, brolly-inside-out weather) was quietly filed as "calm" and shown nothing at all, because our idea of "windy" started far too high. Lowered the bar to match real life - you now get a proper heads-up from a fresh breeze upward.',
+     'And the forecast icons now cover the whole range of weather, at a glance and by strength. On a dry but blowy day you used to get a bland little sun; now there is a proper wind symbol in three strengths (breeze, windy, gale). We also gave a face to the conditions that never had one: a hot sun and a fierce red one for heatwaves, an ice crystal for a hard frost, a blizzard for heavy snow, and a lighter mist to go with dense fog. Whatever is the dominant weather that day wins the icon - a scorcher looks like a scorcher, a gale like a gale.',
+     'You were right that different forecasters disagree - so we now weight them by how good they actually are. Each of the five centres is scored on decades of published accuracy (ECMWF and the Met Office lead the pack, so they get more of a say), rather than every forecast counting the same.',
+     'We also check each source against real rain gauges near you over the last week or two, and lean the weights a little toward whichever has been closest to reality. Honestly though - over a fortnight in one spot the sources mostly agree, so this is a gentle nudge, not a revolution, and we say so rather than pretend we can rank them perfectly from a handful of rainy days.'
+   ]},
+  {v:'1.5', date:'17 Jul 2026', title:'Hands up - we were crying wolf about the rain',
+   notes:[
+     'Confession time: we made a right hash of the rain maths. Our old "chance of rain" counted a single stray droplet as a proper shower - so on a gloriously sunny day, if a handful of forecasts fancied one spit, we would flash "25% rain" at you and send you hunting for a brolly you never needed. Sorry about that.',
+     'The daily number was even dafter. It quietly added up every tiny "maybe" across the whole day, until a bone-dry afternoon somehow rang up as 45%. A bit like counting every cloud that so much as thought about raining and declaring a washout.',
+     'Now sorted. "Rain" means rain you would actually feel on the back of your neck - half a millimetre or more - not a rumour of a drizzle. Dry days finally read as dry, and a sunny Bath no longer looks like the ark is being loaded.',
+     'Want the nitty-gritty? Hover (or press and hold) any morning, afternoon or evening card and we will tell you how much rain is actually coming, in millimetres. Turns out that scary old "25%" usually meant "one theoretical droplet".',
+     'We also had a stern word with every activity tip, so "fire up the grill" and "get the washing out" stop losing their nerve over rain that was never really on its way.',
+     'And we have pulled up three more chairs at the weather table - the American forecasters (GEFS), the Canadians (GEM) and, best of the lot, the UK Met Office\'s own model (MOGREPS). More heads means steadier answers - and yes, the Met Office now gets a proper vote on your forecast.'
+   ]},
+  {v:'1.4', date:'16 Jul 2026', title:'Now we check the forecast against reality',
+   notes:[
+     'Until now, every part of confidence was the forecasts marking their own homework - how much the models agreed with each other, and how steady they had been. None of it ever checked whether they were actually right.',
+     'They do now. HowsDaWeather fetches what the model predicted for the last three days and compares it against what really fell, using live rain gauges - the Environment Agency network in England and SEPA in Scotland. If the models have been getting rain wrong at your spot lately, confidence is marked down and tells you so.',
+     'It only scores rain the models got right or missed. Correctly calling a dry day earns nothing, so a dry spell cannot quietly inflate the number - which would have been the easiest way to fake a good score.',
+     'We read several gauges and take the middle value, never a single one. Real gauges do break: while building this, one gauge near Plymouth reported 15mm of rain in a single 15-minute burst while all twenty of its neighbours sat bone dry. A lone reading with nothing to check it against is indistinguishable from a fault.',
+     'This is an honest nudge, not a proof - a few days at one place moves confidence by a few points at most. Where there are no gauges (Wales, Northern Ireland) it is simply left out.'
+   ]},
+  {v:'1.3', date:'16 Jul 2026', title:'Confidence you can actually trust',
+   notes:[
+     'Confidence has been rebuilt. It used to only measure how much the forecasts agreed, so a six-day-out day could claim 97% and then change completely - making the number meaningless.',
+     'It now also weighs how far ahead the day is (skill really does decay with range - a day-6 forecast tops out around 75%, not 97%) and how steady the forecast has been across the last few model runs. If it has been flip-flopping, you are told now rather than finding out tomorrow.',
+     'Confidence is judged on rain you would actually notice rather than a trace, so it no longer swings about on drizzle.',
+     'New "Odd spot" verdict: a day with a 26% chance of a spit but almost no chance of real rain no longer reads the same as a genuinely wet one.',
+     'Each confidence figure now explains itself - "Forecasts strongly agree, 3 days ahead, and steady across recent runs".',
+     'Weather icons now match the rain % printed beside them. Previously the icon came from a different model than the number, so you could see a rain cloud at 1% or a beaming sun at 16%.'
+   ]},
+  {v:'1.2', date:'9 Jul 2026', title:"What's new in HowsDaWeather",
+   notes:[
+     'New Places menu - search, save and switch location from one tidy popup, so the main page stays clean.',
+     'Friendlier, honester forecasts: the tips now say "probably", "occasionally" and "a chance of" rather than pretending to be certain, and a genuinely showery day no longer reads as dry.',
+     'Heat advisories use the real midday humidity now, so a hot-but-dry day is not mislabelled as muggy.',
+     'The hero clearly shows it is your live, current conditions - with today\'s forecast confidence.',
+     'Your chosen activities now appear in the order you picked them, plus a "Word for the day" (even "TOSS-UP" when the models cannot agree).'
+   ]}
+];
+const RELKEY='howsdaweather_relnote_v1';
+function showRelease(r){
+  $('relTitle').textContent=r.title||"What's new";
+  $('relMeta').textContent='Version '+r.v+(r.date?' · '+r.date:'');
+  const ul=$('relList');ul.innerHTML='';
+  (r.notes||[]).forEach(n=>{const li=document.createElement('li');li.textContent=n;ul.appendChild(li);});
+  $('relModal').hidden=false;
+}
+function closeRelease(){ $('relModal').hidden=true; }
+function maybeShowRelease(){
+  const r=RELEASES[0]; if(!r)return;
+  let st=null; try{st=JSON.parse(localStorage.getItem(RELKEY));}catch(e){}
+  if(st && st.v===r.v) return; // this version has already been shown once - never pop again
+  // Record it as shown BEFORE displaying, so it can never appear a second time (even if the
+  // tab is closed without dismissing). Brand-new users are recorded but skip the "what's new".
+  try{localStorage.setItem(RELKEY,JSON.stringify({v:r.v,shownAt:Date.now()}));}catch(e){}
+  if(!firstRun) showRelease(r);
+}
+$('relClose').onclick=closeRelease;
+$('relGot').onclick=closeRelease;
+$('relModal').addEventListener('click',e=>{if(e.target===$('relModal'))closeRelease();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('relModal').hidden)closeRelease();});
+
+// ---- boot ----
+// Open where you left off (your remembered primary). Only auto-locate on a genuine first
+// visit, so a saved/last location is never silently overridden by geolocation.
+renderSaved();
+const lastLoc=loadLast();
+if(lastLoc){
+  loadForecast(lastLoc,false);
+}else{
+  loadForecast(saved[0],false);
+  if(firstRun)useMyLocation(true);
+}
+setTimeout(maybeShowRelease,800);
+</script>
+</body>
+</html>
