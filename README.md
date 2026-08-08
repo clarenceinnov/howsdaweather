@@ -83,4 +83,8 @@ HTTPS hosting also enables the "Locate me" button (browsers require a secure pag
 
 ## Licence
 
-Copyright (c) 2026 HowsDaWeather. All rights reserved for now - the app is free for everyone to use at [howsdaweather.netlify.app](https://howsdaweather.netlify.app/), and the code is public to read and learn from. A formal open-source licence may follow.
+[PolyForm Noncommercial 1.0.0](LICENSE.md) - you are free to use, copy, modify and share this software **for any non-commercial purpose**: run it, learn from it, self-host it for your family, fork it for your village. Commercial use of the code requires separate permission from the copyright holder. This keeps the app what it was built to be - free for everyone, funded by no one.
+
+Required Notice: Copyright (c) 2026 HowsDaWeather (https://howsdaweather.netlify.app/)
+
+The **HowsDaWeather name and logo are not licensed** - forks should use their own name and branding. Note also that Open-Meteo's free API tier is itself for non-commercial use, and the Fredoka font remains under the SIL Open Font Licence 1.1.
