@@ -1406,7 +1406,9 @@ $('customise').onclick=()=>{const p=$('actpanel');p.hidden=!p.hidden;if(!p.hidde
 // ---- geocoding (postcodes.io + OpenStreetMap fallback) ----
 const looksLikePostcode=s=>/^[a-z]{1,2}\d/i.test(s.replace(/\s+/g,''));
 const placeToLoc=r=>({name:r.name_1,admin1:[r.local_type,r.county_unitary||r.region].filter(Boolean).join(', '),lat:r.latitude,lon:r.longitude});
-const postcodeToLoc=r=>({name:r.postcode,admin1:[r.admin_district,r.region].filter(Boolean).join(', '),lat:r.latitude,lon:r.longitude});
+// name = bare postcode (kept compact for the dropdown row); fullName = "District - Postcode",
+// which is what actually loads onto the homepage so the place reads with its area context.
+const postcodeToLoc=r=>({name:r.postcode,fullName:(r.admin_district?r.admin_district+' - ':'')+r.postcode,admin1:[r.admin_district,r.region].filter(Boolean).join(', '),lat:r.latitude,lon:r.longitude});
 async function nominatim(q){const j=await fetchJSON('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(q)+'&countrycodes=gb&format=json&limit=6&addressdetails=1');return (j||[]).map(r=>({name:r.name||(r.display_name||'').split(',')[0],admin1:[cap(r.type||''),(r.address&&(r.address.county||r.address.state||r.address.city))||''].filter(Boolean).join(', '),lat:+r.lat,lon:+r.lon}));}
 async function geoSearch(q){
   q=(q||'').trim(); if(q.length<2) return [];
@@ -1418,7 +1420,9 @@ async function geoSearch(q){
     return await nominatim(q);
   }catch(e){ try{return await nominatim(q);}catch(_){return [];} }
 }
-async function geoReverse(lat,lon){try{const j=await fetchJSON('https://api.postcodes.io/postcodes?lon='+lon+'&lat='+lat+'&limit=1&radius=2000');const r=(j.result||[])[0];if(r&&r.admin_district)return r.admin_district;}catch(e){}return 'Your location';}
+// Locate me: name the spot as "District - Full Postcode" (e.g. "Bath and North East Somerset -
+// BA2 5PX") so the homepage shows exactly where the forecast is pinned, not just the wider area.
+async function geoReverse(lat,lon){try{const j=await fetchJSON('https://api.postcodes.io/postcodes?lon='+lon+'&lat='+lat+'&limit=1&radius=2000');const r=(j.result||[])[0];if(r&&r.postcode)return (r.admin_district?r.admin_district+' - ':'')+r.postcode;if(r&&r.admin_district)return r.admin_district;}catch(e){}return 'Your location';}
 
 // ---- state + cache ----
 const CACHE=new Map(),TTL=30*60*1000;
@@ -1672,17 +1676,20 @@ async function runSearch(q){
     const res=await geoSearch(q);lastResults=res;resultsEl.innerHTML='';
     if(!res.length){resultsEl.innerHTML='<div><span>No UK match</span><span class="sub">try another name</span></div>';resultsEl.classList.add('show');return;}
     res.slice(0,7).forEach((r,i)=>{const row=document.createElement('div');row.className='rrow'+(i===0?' hi':'');
+      // The dropdown row stays compact (bare postcode / place name); loading and saving use the
+      // fuller "District - Postcode" name so the homepage and saved chips carry the area context.
+      const loc={name:r.fullName||r.name,lat:r.lat,lon:r.lon};
       const info=document.createElement('span');info.className='rinfo';
       info.innerHTML='<span class="rn">'+r.name+'</span><span class="ra">'+(r.admin1||'')+'</span>';
       info.onmousedown=e=>{e.preventDefault();pick(r);};
       const sv=document.createElement('button');sv.className='rsave';
-      const setSv=()=>{const on=isSaved(r);sv.textContent=on?'Saved':'+ Save';sv.classList.toggle('on',on);};setSv();
-      sv.onmousedown=e=>{e.preventDefault();e.stopPropagation();toggleSave({name:r.name,lat:r.lat,lon:r.lon});setSv();};
+      const setSv=()=>{const on=isSaved(loc);sv.textContent=on?'Saved':'+ Save';sv.classList.toggle('on',on);};setSv();
+      sv.onmousedown=e=>{e.preventDefault();e.stopPropagation();toggleSave(loc);setSv();};
       row.appendChild(info);row.appendChild(sv);resultsEl.appendChild(row);});
     resultsEl.classList.add('show');
   }catch(e){}
 }
-function pick(r){loadForecast({name:r.name,lat:r.lat,lon:r.lon},false);closePlaces();}
+function pick(r){loadForecast({name:r.fullName||r.name,lat:r.lat,lon:r.lon},false);closePlaces();}
 searchEl.addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>runSearch(searchEl.value),250);});
 searchEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&lastResults[0])pick(lastResults[0]);else if(e.key==='Escape'){resultsEl.classList.remove('show');searchEl.blur();}});
 searchEl.addEventListener('blur',()=>setTimeout(()=>resultsEl.classList.remove('show'),150));
