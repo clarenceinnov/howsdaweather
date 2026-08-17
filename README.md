@@ -10,7 +10,7 @@ Then it answers the questions you actually have: *Can I hang the washing out? Wi
 
 | | A typical weather app | HowsDaWeather |
 |---|---|---|
-| **Location** | Nearest city or grid point | Your **full postcode** (~100 m), e.g. `BA2 5PX` |
+| **Location** | Nearest city or grid point | Your **full postcode** (~100 m), e.g. `LL55 4TY` |
 | **Terrain** | Ignored | Reads the landscape in 1/2/5 km rings: valley, glen, hollow, hilltop - then applies frost-hollow nights, wind shelter/funnelling, valley fog |
 | **Forecast source** | One model | ~156 ensemble members from **5 national centres** (ECMWF, Met Office, ICON, GEFS, GEM), weighted by published skill |
 | **"% rain"** | Often the chance of a 0.1 mm trace | Chance of rain you would **actually notice** (>=0.5 mm), with expected millimetres on hover |
@@ -32,7 +32,7 @@ Then it answers the questions you actually have: *Can I hang the washing out? Wi
 Everything below runs in your browser against free, open data. There is no server.
 
 ### 1. Postcode-level location, not city-level
-Search accepts **full UK postcodes** (e.g. `LL55 4TY`) and pins the forecast to about 100 m; "Locate me" reverse-looks-up your nearest full postcode and labels the forecast with it ("Bath and North East Somerset - BA2 5PX"). In the hills the next street can be 100 m higher - the difference between rain and snow, or fog and sunshine. Temperature is corrected to the exact spot's elevation with a 90 m model.
+Search accepts **full UK postcodes** (e.g. `LL55 4TY`) and pins the forecast to about 100 m; "Locate me" reverse-looks-up your nearest full postcode and labels the forecast with it ("Gwynedd - LL55 4TY"). In the hills the next street can be 100 m higher - the difference between rain and snow, or fog and sunshine. Temperature is corrected to the exact spot's elevation with a 90 m model.
 
 ### 2. Terrain: your valley is not the same as the next town
 The app samples the **shape of the land** around your exact spot - 24 elevation readings in rings at 1, 2 and 5 km - and classifies it: valley floor, deep glen, narrow valley, sheltered hollow, exposed hilltop, or flat. Then, only when the physics applies:

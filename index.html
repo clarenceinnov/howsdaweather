@@ -636,8 +636,8 @@ async function fetchFloods(lat,lon){
 // starts 2026-07-19), so 21 days is close to the maximum honest window. More days = more real rain
 // events to score, which makes both the confidence track record and the per-source comparison far
 // less starved than the old 10-day window. 21d x 96 readings = ~2016 rows/gauge, one call each.
-// GAUGE_CAND > GAUGE_N because gauges DIE: measured near Chesterfield, 3 of the 8 nearest gauges
-// return zero readings. Picking strictly the 5 nearest there leaves only 2 live ones - below the
+// GAUGE_CAND > GAUGE_N because gauges DIE: at one user-reported spot, 3 of the 8 nearest gauges
+// returned zero readings. Picking strictly the 5 nearest there leaves only 2 live ones - below the
 // minimum - so verification silently gave up in exactly the places users asked about. We now fetch
 // up to 8 candidates and keep the nearest LIVE ones.
 const VERIFY_DAYS=21, MIN_GAUGES=3, GAUGE_KM=25, GAUGE_N=5, GAUGE_CAND=8;
@@ -1502,8 +1502,8 @@ async function geoSearch(q){
     return await nominatim(q);
   }catch(e){ try{return await nominatim(q);}catch(_){return [];} }
 }
-// Locate me: name the spot as "District - Full Postcode" (e.g. "Bath and North East Somerset -
-// BA2 5PX") so the homepage shows exactly where the forecast is pinned, not just the wider area.
+// Locate me: name the spot as "District - Full Postcode" (e.g. "Gwynedd -
+// LL55 4TY") so the homepage shows exactly where the forecast is pinned, not just the wider area.
 async function geoReverse(lat,lon){try{const j=await fetchJSON('https://api.postcodes.io/postcodes?lon='+lon+'&lat='+lat+'&limit=1&radius=2000');const r=(j.result||[])[0];if(r&&r.postcode)return (r.admin_district?r.admin_district+' - ':'')+r.postcode;if(r&&r.admin_district)return r.admin_district;}catch(e){}return 'Your location';}
 
 // ---- state + cache ----
@@ -1809,6 +1809,14 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.s
 // ---- release notes (pops once per update, dismissible, gone 24h after you first see it) ----
 // Newest first. Add a new entry (bump v) each release; only the latest ever pops.
 const RELEASES=[
+  {v:'1.8', date:'17 Aug 2026', title:'Sharper words, tougher self-checks',
+   notes:[
+     'The Word for the Day now judges the day the way you live it: morning and afternoon carry full weight, and evening only 60%. A soaked morning brands the day; rain that only turns up after dinner no longer spoils a decent one - and a grey, drizzly morning can no longer sneak a "STUNNER" past us just because the afternoon clears.',
+     'Related fix: a real chance of rain used to force the icon to "partly sunny" even under a 100% overcast sky - politely promoting a miserable morning to a bright one. Overcast now looks overcast.',
+     'Our reality-check against rain gauges grew teeth. It turns out real gauges die quietly - at one reader\'s spot, three of the eight nearest stations had simply stopped reporting, which silently switched off verification exactly where it was needed. We now detect dead gauges and skip to the nearest living ones.',
+     'Verification also looks back three weeks instead of ten days, and compares four weeks of each forecast centre\'s own past predictions - roughly double the real rain events to judge everyone against.',
+     'Your location now reads with its full context - district and full postcode, like "Gwynedd - LL55 4TY" - on the homepage and from Locate me, while search results stay compact.'
+   ]},
   {v:'1.7', date:'27 Jul 2026', title:'Your valley is not the same as the next town',
    notes:[
      'If you live in a valley, you already know the forecast lies to you: colder nights than promised, fog that nobody mentioned, wind that never arrives - or howls straight down the glen. That is because forecasts are made for an area, not for the shape of the land you actually live in.',
