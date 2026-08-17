@@ -358,7 +358,7 @@
   </div>
 
   <div class="foot">
-    <strong>For fun, and free.</strong> Each part of the day shows the chance of <em>proper</em> rain - the share of a ~156-member ensemble (five forecasting centres: ECMWF, ICON, the US GEFS, the Canadian GEM and the UK Met Office's own MOGREPS, via Open-Meteo) whose total for that window reaches 0.5 mm, the point at which you would actually notice it. It deliberately does not headline the chance of a 0.1 mm trace: on a sunny day a lone drizzly member could push that to 25% and read like a downpour, when four-fifths of the forecasts are bone dry. Hover a period to see the expected amount in mm. <strong>Not every source is equal.</strong> The five centres do not forecast equally well, so we do not count them equally: each is weighted by decades of published verification, with ECMWF and the Met Office carrying the most and GFS the least. We also quietly score each centre against the local rain gauges over the past week or two and nudge the weights a touch toward whichever has been closest to reality near you - but only gently, and only when there have been enough real rain events to judge, because at one spot over a fortnight the sources mostly agree and a thin sample is far too easy to over-read. So the published ranking does the heavy lifting; the local check only ever leans on it. <strong>Confidence</strong> combines three things: how strongly the members agree, how far ahead the day is (forecast skill genuinely decays with range, so a unanimous six-day-out call is capped well below a unanimous one for today), and how steady the forecast has been across the last few model runs - if it has been flip-flopping between runs, we say so now rather than letting it surprise you tomorrow. Agreement is judged on rain you would actually notice (0.5 mm), not on a trace, so the figure does not swing about on drizzle. <strong>Track record:</strong> confidence is also checked against reality. Everything else here is forecasts marking their own homework, so we fetch what the model <em>predicted</em> for the last ten days or so and compare it against what actually fell, using real tipping-bucket rain gauges - the Environment Agency network in England and SEPA in Scotland. If the models have been getting rain wrong at your spot lately, confidence is marked down. We take the median across several nearby gauges and never trust a lone one: gauges do break, and a single reading with no neighbours to check it against is indistinguishable from a fault. Scoring only counts rain the models got right or missed, never the free marks for correctly calling a dry day, so a dry spell cannot quietly inflate the figure. Where there are no gauges (Wales, Northern Ireland, and outside the UK) this term is simply left out. It is honest but coarse - a few days at one place is a nudge, not a proof, so it is capped to a few points either way and the lead-time factors still reflect published rain/no-rain skill decay. Treat confidence as an honest guide, not a guarantee. "Feels like" is the apparent temperature, factoring humidity and wind, so hot-and-muggy days read honestly. Wind, snow and heat advisories are derived from the forecast, not official Met Office warnings. Flood alerts come from the Environment Agency (England only). Temperature is corrected to your exact spot using a 90 m elevation model. <strong>Terrain:</strong> beyond plain altitude, the app reads the SHAPE of the land around your exact spot (twenty-four elevation samples in rings at 1, 2 and 5 km - the near ring catches narrow valleys like Hebden Bridge or the Ironbridge gorge whose walls sit within a kilometre) and classifies it - valley floor, deep glen, sheltered hollow, exposed top, or flat. If you are in a valley, clear calm nights are nudged colder (cold air genuinely drains into valley bottoms - the frost-hollow effect), gusts are read lower for wind blowing across the valley and a touch higher for wind funnelled along it, and a clear, calm, damp night raises a valley-fog advisory. An exposed top reads gusts higher. These are bounded, physics-based estimates gated on the conditions that make each effect real - and where the land is gentle or ambiguous (a broad lowland hollow, a hillside) the app deliberately makes no claim rather than an invented one. Search works with full postcodes too (e.g. "LL55 4TY"), pinning the forecast to within about 100 m - which matters in the hills, where the next street can be 100 m higher. Runs entirely in your browser - no server, no accounts, no tracking. Places via postcodes.io and OpenStreetMap. <span id="srcline"></span><br>
+    <strong>For fun, and free.</strong> Each part of the day shows the chance of <em>proper</em> rain - the share of a ~156-member ensemble (five forecasting centres: ECMWF, ICON, the US GEFS, the Canadian GEM and the UK Met Office's own MOGREPS, via Open-Meteo) whose total for that window reaches 0.5 mm, the point at which you would actually notice it. It deliberately does not headline the chance of a 0.1 mm trace: on a sunny day a lone drizzly member could push that to 25% and read like a downpour, when four-fifths of the forecasts are bone dry. Hover a period to see the expected amount in mm. <strong>Not every source is equal.</strong> The five centres do not forecast equally well, so we do not count them equally: each is weighted by decades of published verification, with ECMWF and the Met Office carrying the most and GFS the least. We also quietly score each centre against the local rain gauges over the past week or two and nudge the weights a touch toward whichever has been closest to reality near you - but only gently, and only when there have been enough real rain events to judge, because at one spot over a fortnight the sources mostly agree and a thin sample is far too easy to over-read. So the published ranking does the heavy lifting; the local check only ever leans on it. <strong>Confidence</strong> combines three things: how strongly the members agree, how far ahead the day is (forecast skill genuinely decays with range, so a unanimous six-day-out call is capped well below a unanimous one for today), and how steady the forecast has been across the last few model runs - if it has been flip-flopping between runs, we say so now rather than letting it surprise you tomorrow. Agreement is judged on rain you would actually notice (0.5 mm), not on a trace, so the figure does not swing about on drizzle. <strong>Track record:</strong> confidence is also checked against reality. Everything else here is forecasts marking their own homework, so we fetch what the model <em>predicted</em> for the last three weeks and compare it against what actually fell, using real tipping-bucket rain gauges (dead gauges are detected and skipped) - the Environment Agency network in England and SEPA in Scotland. If the models have been getting rain wrong at your spot lately, confidence is marked down. We take the median across several nearby gauges and never trust a lone one: gauges do break, and a single reading with no neighbours to check it against is indistinguishable from a fault. Scoring only counts rain the models got right or missed, never the free marks for correctly calling a dry day, so a dry spell cannot quietly inflate the figure. Where there are no gauges (Wales, Northern Ireland, and outside the UK) this term is simply left out. It is honest but coarse - a few days at one place is a nudge, not a proof, so it is capped to a few points either way and the lead-time factors still reflect published rain/no-rain skill decay. Treat confidence as an honest guide, not a guarantee. "Feels like" is the apparent temperature, factoring humidity and wind, so hot-and-muggy days read honestly. Wind, snow and heat advisories are derived from the forecast, not official Met Office warnings. Flood alerts come from the Environment Agency (England only). Temperature is corrected to your exact spot using a 90 m elevation model. <strong>Terrain:</strong> beyond plain altitude, the app reads the SHAPE of the land around your exact spot (twenty-four elevation samples in rings at 1, 2 and 5 km - the near ring catches narrow valleys like Hebden Bridge or the Ironbridge gorge whose walls sit within a kilometre) and classifies it - valley floor, deep glen, sheltered hollow, exposed top, or flat. If you are in a valley, clear calm nights are nudged colder (cold air genuinely drains into valley bottoms - the frost-hollow effect), gusts are read lower for wind blowing across the valley and a touch higher for wind funnelled along it, and a clear, calm, damp night raises a valley-fog advisory. An exposed top reads gusts higher. These are bounded, physics-based estimates gated on the conditions that make each effect real - and where the land is gentle or ambiguous (a broad lowland hollow, a hillside) the app deliberately makes no claim rather than an invented one. Search works with full postcodes too (e.g. "LL55 4TY"), pinning the forecast to within about 100 m - which matters in the hills, where the next street can be 100 m higher. Runs entirely in your browser - no server, no accounts, no tracking. Places via postcodes.io and OpenStreetMap. <span id="srcline"></span><br>
     <span class="ios">On iPhone, tap Share then "Add to Home Screen" to install. On Android, use the Install button or your browser menu.</span> Not for safety-critical decisions - always check official <a href="https://www.metoffice.gov.uk/weather/warnings-and-advice/uk-warnings" style="color:var(--muted)">Met Office warnings</a> and <a href="https://check-for-flooding.service.gov.uk" style="color:var(--muted)">flood alerts</a>.
   </div>
 
@@ -495,9 +495,12 @@ function skyIcon(codes,clouds,wetProb,snowCm,anyProb,gustMph,feelsHi,feelsLo){
   const fogN=codes.filter(c=>c===45||c===48).length, fogFrac=codes.length?fogN/codes.length:0;
   if(fogFrac>=0.5 && fogN>=3) return 'fog';        // dense/persistent fog
   if(fl!=null && fl<=FROST_FEELS && (fh==null||fh<=FROST_DAYMAX)) return 'frost'; // a day that stays freezing
-  if(p>=10) return 'partly';       // a real chance of proper rain - never a cloudless sun
-  if(fogFrac>=0.25 && fogN>=2) return 'mist';      // patchy/light fog
   const mc=clouds.length?clouds.reduce((a,b)=>a+b,0)/clouds.length:50;
+  // A real rain chance forbids a cloudless sun, but it must never UPGRADE the sky: a 100%-overcast
+  // drizzly morning with a 15% rain figure is a grey morning, not a "partly sunny" one. (Measured:
+  // Bath read STUNNER on exactly such a morning because this branch used to force 'partly'.)
+  if(p>=10) return mc<60?'partly':'cloudy';
+  if(fogFrac>=0.25 && fogN>=2) return 'mist';      // patchy/light fog
   if(mc<25) return (fh!=null&&fh>=HEAT_WARM)?'hot':(any>=40?'partly':'sunny'); // clear + warm -> hot sun
   if(g>=WIND_BREEZY_ICON) return 'breezy';    // breezy AND not clear-sunny -> show the breeze
   if(mc<60) return 'partly';
@@ -552,7 +555,10 @@ async function fetchPrevRuns(lat,lon){
 // separately, but here we ask by the seamless ids directly). Verified: models= returns one
 // precipitation_previous_day1_<id> array per source.
 const SOURCE_RUN_MODELS=[['ecmwf_ifs025','ecmwf'],['ukmo_seamless','ukmo'],['icon_seamless','icon'],['gfs_seamless','gfs'],['gem_seamless','gem']];
-const SOURCE_PAST_DAYS=14;
+// 28 days of each source's own day-1 forecasts (the API holds up to 92, but the gauge record we
+// score against only reaches ~28, so more would be unmatched). Doubles the rain events available
+// for the per-source comparison vs the old 14 days.
+const SOURCE_PAST_DAYS=28;
 async function fetchSourceRuns(lat,lon){
   const ids=SOURCE_RUN_MODELS.map(m=>m[0]).join(',');
   const url='https://previous-runs-api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
@@ -626,10 +632,15 @@ async function fetchFloods(lat,lon){
 // immune to one gauge screaming, which is precisely the failure mode these networks have. This is
 // also the argument against a private sensor: one device has no neighbours, so when it lies there
 // is nothing to catch it.
-// 10-day window: enough past days that the gauge check actually catches some rain to score (a
-// 3-day window in a dry spell had nothing), while EA 15-min readings over 10 days (~960 rows/gauge)
-// still fit one call. Feeds BOTH the confidence track record and the per-source skill comparison.
-const VERIFY_DAYS=10, MIN_GAUGES=3, GAUGE_KM=25, GAUGE_N=5;
+// 21-day window: the EA flood-monitoring feed only holds ~28 days (measured: asking for 60 still
+// starts 2026-07-19), so 21 days is close to the maximum honest window. More days = more real rain
+// events to score, which makes both the confidence track record and the per-source comparison far
+// less starved than the old 10-day window. 21d x 96 readings = ~2016 rows/gauge, one call each.
+// GAUGE_CAND > GAUGE_N because gauges DIE: measured near Chesterfield, 3 of the 8 nearest gauges
+// return zero readings. Picking strictly the 5 nearest there leaves only 2 live ones - below the
+// minimum - so verification silently gave up in exactly the places users asked about. We now fetch
+// up to 8 candidates and keep the nearest LIVE ones.
+const VERIFY_DAYS=21, MIN_GAUGES=3, GAUGE_KM=25, GAUGE_N=5, GAUGE_CAND=8;
 function medianOf(a){if(!a.length)return null;const s=a.slice().sort((x,y)=>x-y);const m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;}
 function kmApart(aLat,aLon,bLat,bLon){return 111*Math.hypot(aLat-bLat,(aLon-bLon)*Math.cos(aLat*Math.PI/180));}
 // Bucket an observation into the same LOCAL day the forecast is keyed on, so the two line up.
@@ -656,26 +667,30 @@ async function eaObserved(lat,lon,off,days){
     lat.toFixed(4)+'&long='+lon.toFixed(4)+'&dist='+GAUGE_KM,12000);
   const all=(st.items||[]).filter(g=>g&&g.lat!=null&&g.long!=null);
   if(all.length<MIN_GAUGES)return null;
-  const near=all.map(g=>({g,d:kmApart(lat,lon,g.lat,g.long)})).sort((a,b)=>a.d-b.d).slice(0,GAUGE_N).map(o=>o.g);
+  const near=all.map(g=>({g,d:kmApart(lat,lon,g.lat,g.long)})).sort((a,b)=>a.d-b.d).slice(0,GAUGE_CAND).map(o=>o.g);
   const series=await Promise.all(near.map(g=>{
     const id=g.notation||(g['@id']||'').split('/').pop();
     return fetchJSON('https://environment.data.gov.uk/flood-monitoring/id/stations/'+id+'/readings?startdate='+
-      days[0]+'&enddate='+days[days.length-1]+'&_sorted&_limit=1500',14000)
+      days[0]+'&enddate='+days[days.length-1]+'&_sorted&_limit=2500',14000)
       .then(r=>(r.items||[]).map(x=>[x.dateTime,x.value])).catch(()=>null);
   }));
-  return foldGauges(series.filter(Boolean),off,days,'Environment Agency rain gauges');
+  // Keep only LIVE gauges (a dead station returns an empty list, not an error), nearest first,
+  // capped at GAUGE_N so one dense cluster cannot dominate the median.
+  const live=series.filter(s=>s&&s.length>=24).slice(0,GAUGE_N);
+  return foldGauges(live,off,days,'Environment Agency rain gauges');
 }
 function sepaTime(s){const m=/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/.exec(s||'');return m?m[3]+'-'+m[2]+'-'+m[1]+'T'+m[4]+':'+m[5]+':00Z':null;}
 async function sepaObserved(lat,lon,off,days){
   const all=await fetchJSON('https://www2.sepa.org.uk/rainfall/api/Stations',12000);
   if(!Array.isArray(all))return null;
   const near=all.map(x=>({x,d:kmApart(lat,lon,+x.station_latitude,+x.station_longitude)}))
-    .filter(o=>isFinite(o.d)&&o.d<=GAUGE_KM).sort((a,b)=>a.d-b.d).slice(0,GAUGE_N);
+    .filter(o=>isFinite(o.d)&&o.d<=GAUGE_KM).sort((a,b)=>a.d-b.d).slice(0,GAUGE_CAND);
   if(near.length<MIN_GAUGES)return null;
   const series=await Promise.all(near.map(o=>
     fetchJSON('https://www2.sepa.org.uk/rainfall/api/Hourly/'+o.x.station_no+'?all=true',12000)
       .then(r=>Array.isArray(r)?r.map(v=>[sepaTime(v.Timestamp),+v.Value]):null).catch(()=>null)));
-  return foldGauges(series.filter(Boolean),off,days,'SEPA rain gauges');
+  const live=series.filter(s=>s&&s.length>=24).slice(0,GAUGE_N); // drop dead stations, keep nearest live
+  return foldGauges(live,off,days,'SEPA rain gauges');
 }
 // The border is not a latitude line, so try the likelier network first and fall back to the other.
 // (SEPA answers in ~250ms; the EA station lookup is ~7s and returns nothing north of the border.)
@@ -980,7 +995,12 @@ function amtHint(p){
 // showers > strong wind > muggy > fog > bitter cold > glorious > lovely > crisp > dull > mixed.
 // A synonym is picked deterministically from the date, so it is stable per day but varies day to day.
 function wordForDay(d){
-  const h=d.hazards||{}, feels=d.feelsMax, t=d.tmax, rain=d.pWet, sum=d.precipSum||0, gust=d.gustMph||0, coldMin=d.feelsMin;
+  // The word describes the day AS PEOPLE EXPERIENCE IT, so morning and afternoon carry full
+  // weight and the evening only 60%: a soaking morning must never be shrugged off, but rain that
+  // only arrives after dinner should not brand an otherwise fine day.
+  const Pd=d.periods||[];
+  const rain=Pd.length===3?Math.max(Pd[0].wet,Pd[1].wet,Math.round(Pd[2].wet*0.6)):d.pWet;
+  const h=d.hazards||{}, feels=d.feelsMax, t=d.tmax, sum=d.precipSum||0, gust=d.gustMph||0, coldMin=d.feelsMin;
   const C={bad:'var(--bad)',warn:'var(--warn)',sky:'var(--sky)',good:'var(--good)',sun:'var(--sun)',ice:'#8fd3ff',mix:'var(--accent)',mystery:'#c3b5ff'};
   const seed=parseInt(String(d.date).replace(/-/g,''),10)||0;
   const pick=(arr,col)=>({word:arr[seed%arr.length],color:col});
@@ -1003,7 +1023,12 @@ function wordForDay(d){
   if(h.heat==='danger') return pick(['MUGGY','CLAMMY','STICKY'],C.warn);
   if(h.fog) return pick(['MURKY','FOGGY','MISTY'],C.warn);
   if(coldMin<=-2) return pick(['BITTER','BALTIC','PARKY','FREEZING'],C.ice);
-  const bright=d.icon==='sunny'||d.icon==='partly'||d.icon==='hot'||d.icon==='scorch';
+  // "Bright" must hold for the parts of the day people live in: a grey, drizzly morning bars the
+  // sunny words even if the afternoon clears enough to drag the daily cloud average down.
+  // (Measured: Bath read STUNNER on a 100%-cloud drizzle morning because only the day icon was
+  // checked.) Evening is ignored here - evening sun rescues nothing, evening cloud spoils nothing.
+  const okIc=ic=>ic==='sunny'||ic==='partly'||ic==='hot'||ic==='scorch';
+  const bright=okIc(d.icon) && (Pd.length!==3 || (okIc(Pd[0].icon||d.icon)&&okIc(Pd[1].icon||d.icon)));
   if(rain<18 && t>=22 && bright) return pick(['GLORIOUS','CRACKING','STUNNER','LUSH','A BEAUT'],C.sun);
   if(rain<22 && t>=16 && bright) return pick(['LOVELY','GRAND','PLEASANT','DECENT','TIDY'],C.good);
   if(rain<26 && t<=10 && bright) return pick(['CRISP','FRESH','BRIGHT','NIPPY'],C.sky);
