@@ -559,7 +559,7 @@ const WICONS={
 // generic sun. Thresholds mirror assessHazards so the icon, the advisories and the word agree.
 const WIND_GALE=45, WIND_STRONG=33, WIND_BREEZY_ICON=28;
 const HEAT_SCORCH=31, HEAT_WARM=27, FROST_FEELS=-2, FROST_DAYMAX=4;
-function skyIcon(codes,clouds,wetProb,snowCm,anyProb,gustMph,feelsHi,feelsLo){
+function skyIcon(codes,clouds,wetProb,snowCm,anyProb,gustMph,feelsHi,feelsLo,rainMm,heavyMm){
   codes=(codes||[]).filter(v=>v!=null); clouds=(clouds||[]).filter(v=>v!=null);
   const p=wetProb||0, any=anyProb==null?p:anyProb, g=gustMph||0;
   const fh=(feelsHi==null?null:feelsHi), fl=(feelsLo==null?null:feelsLo);
@@ -567,7 +567,10 @@ function skyIcon(codes,clouds,wetProb,snowCm,anyProb,gustMph,feelsHi,feelsLo){
   if((snowCm||0)>0 || codes.some(c=>(c>=71&&c<=77)||c===85||c===86))
     return ((snowCm||0)>=3 || g>=WIND_STRONG) ? 'blizzard' : 'snow'; // heavy or wind-driven -> blizzard
   if(g>=WIND_GALE) return 'gale';  // a gale dominates even heavy rain - it is the dangerous story
-  if(p>=70) return 'wet';
+  // Likelihood decides WHETHER a rain icon shows; intensity decides WHICH. A 90% chance of drizzle
+  // must not wear the heavy three-stroke icon a downpour gets: when the expected amount is known
+  // and small, a high-probability hour/window is demoted to the two-stroke showers icon.
+  if(p>=70) return (rainMm==null||rainMm>=(heavyMm==null?2:heavyMm))?'wet':'showers';
   if(p>=25) return 'showers';
   if(g>=WIND_STRONG) return 'windy'; // properly windy and not raining much -> wind is the headline
   if(fh!=null && fh>=HEAT_SCORCH) return 'scorch'; // a scorcher is the story on any dry day
@@ -1194,13 +1197,15 @@ const CENTRE_LABEL={ecmwf:'ECMWF',ukmo:'Met Office',icon:'ICON',gem:'GEM',gfs:'G
 // p = chance of ANY rain (the number we print), wet = chance of rain you would actually notice.
 // The word is graded on `wet`, so a day with a 26% chance of a spit but only 1% chance of real
 // rain reads "Odd spot" rather than "Showery" - same number, honest meaning.
-function rainVerdict(p,wet){
+function rainVerdict(p,wet,amt){
   const w=(wet==null?p:wet);
   if(p<15)return{word:'Dry',color:'var(--good)',icon:'sunny'};
   if(w<10)return{word:'Odd spot',color:'var(--good)',icon:'partly'};
   if(w<25)return{word:'Odd shower',color:'var(--accent)',icon:'partly'};
   if(w<45)return{word:'Showery',color:'var(--warn)',icon:'showers'};
   if(w<70)return{word:'Wet spells',color:'var(--warn)',icon:'showers'};
+  // Near-certain rain, but a KNOWN small amount = drizzle, not a soaking - grade by intensity too.
+  if(amt&&amt.med!=null&&amt.med<2)return{word:'Drizzly',color:'var(--warn)',icon:'showers'};
   return{word:'Wet',color:'var(--bad)',icon:'wet'};
 }
 // Probabilistic phrasing helpers - weather is never certain, so the copy should not be either.
@@ -1479,8 +1484,8 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
       // trace probability; it now reads "7% rain / Odd spot". `peak` is aliased to `wet` so every
       // downstream reader (display, week strip, driest/wettest window, activities) uses the honest
       // number. The icon keys off `wet`, plus gust and feels-like so the dominant condition wins.
-      const icon=skyIcon(tIdx.map(i=>rH.weather_code[i]),tIdx.map(i=>rH.cloud_cover[i]),wet,daily.snowfall_sum[di]||0,any,pGust,pFeelsHi,pFeelsLo);
-      return {key:P.key,label:P.label,peak:wet,any,wet,amt,temp,gust:pGust,verdict:rainVerdict(any,wet),icon};
+      const icon=skyIcon(tIdx.map(i=>rH.weather_code[i]),tIdx.map(i=>rH.cloud_cover[i]),wet,daily.snowfall_sum[di]||0,any,pGust,pFeelsHi,pFeelsLo,amt?amt.med:null,2);
+      return {key:P.key,label:P.label,peak:wet,any,wet,amt,temp,gust:pGust,verdict:rainVerdict(any,wet,amt),icon};
     });
     const pAny=rainAt(date,6,24);                 // trace over the whole day (kept for internal use)
     // The day's headline chance of rain = the wettest single period's chance of proper rain. Summing
@@ -1548,11 +1553,12 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
       stability:stabilityFor(prev,date),
       dayConfidence:confidenceFromProb(pWet,di,stabilityFor(prev,date),skill),tonight
     };
-    d.icon=skyIcon(dayCodes,dayClouds,pWet,d.snowCm,pAny,d.gustMph,d.feelsMax,d.feelsMin);
+    d.icon=skyIcon(dayCodes,dayClouds,pWet,d.snowCm,pAny,d.gustMph,d.feelsMax,d.feelsMin,dayAmt?dayAmt.med:null,4);
     // A clearing day's face should be the day AFTER the early rain, not the pre-breakfast soaking.
     if(clearing){
       const restIdx=inHours(rg,rTime,9,20);
-      d.icon=skyIcon(restIdx.map(i=>rH.weather_code[i]),restIdx.map(i=>rH.cloud_cover[i]),restWet,d.snowCm,rainAt(date,9,24),d.gustMph,d.feelsMax,d.feelsMin);
+      const restAmt=rainAmt(date,9,24);
+      d.icon=skyIcon(restIdx.map(i=>rH.weather_code[i]),restIdx.map(i=>rH.cloud_cover[i]),restWet,d.snowCm,rainAt(date,9,24),d.gustMph,d.feelsMax,d.feelsMin,restAmt?restAmt.med:null,3);
     }
     // Tell the user their odds are locally calibrated (only when the factor genuinely bites).
     if(calib&&Math.abs(1-calibR)>=0.05)
@@ -1577,7 +1583,7 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
   const nowCond=word+', '+rainw;
   // Icon for RIGHT NOW - drives the live brand bubble and the dynamic favicon.
   const nowCloud=Math.round(rH.cloud_cover[nowIdxR]??50);
-  const nowIcon=skyIcon([nowCode],[nowCloud],nowP>=55?70:(nowP>=25?30:0),0,nowP,nowGust,nowFeels,nowFeels);
+  const nowIcon=skyIcon([nowCode],[nowCloud],nowP>=55?70:(nowP>=25?30:0),0,nowP,nowGust,nowFeels,nowFeels,rH.precipitation?(rH.precipitation[nowIdxR]||0):null,1.2);
   // At-a-glance extras for the "current conditions" stat-tile grid.
   const cmp=dg=>dg==null?'':['N','NE','E','SE','S','SW','W','NW'][Math.round(dg/45)%8];
   const nowXtra={
@@ -1596,7 +1602,7 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
     const i=nowIdxR+k, t=rTime[i], day=t.slice(0,10), hm=t.slice(11,16), h=hourOf(t);
     const pop=Math.round(rH.precipitation_probability?(rH.precipitation_probability[i]||0):0);
     const gust=mph(rH.wind_gusts_10m[i]||0), feels=rH.apparent_temperature[i];
-    let ic=skyIcon([rH.weather_code[i]],[rH.cloud_cover[i]],pop>=55?70:(pop>=25?30:0),0,pop,gust,feels,feels);
+    let ic=skyIcon([rH.weather_code[i]],[rH.cloud_cover[i]],pop>=55?70:(pop>=25?30:0),0,pop,gust,feels,feels,rH.precipitation?(rH.precipitation[i]||0):null,1.2);
     const sun=sunByDate[day];
     const night=sun&&sun.rise&&sun.set?(hm<sun.rise||hm>=sun.set):(h<6||h>=21);
     if(night){if(ic==='sunny'||ic==='hot'||ic==='scorch')ic='clearnight';else if(ic==='partly')ic='partlynight';}
@@ -2130,7 +2136,7 @@ function renderWeek(){
   const span=Math.max(1,wkMax-wkMin);
   curData.days.forEach((d,i)=>{
     const s=dayShort(d.date,i);
-    const rv=rainVerdict(d.pAny,d.pWet);
+    const rv=rainVerdict(d.pAny,d.pWet,d.dayAmt);
     const L=Math.round((d.tmin-wkMin)/span*100), W=Math.max(8,Math.round((d.tmax-d.tmin)/span*100));
     const el=document.createElement('div');el.className='wday'+(i===selDay?' sel':'');
     el.innerHTML='<div class="wdate"><div class="wd">'+s.top+'</div><div class="wdd">'+s.bot+'</div></div>'+
@@ -2328,7 +2334,8 @@ const RELEASES=[
      'And a little time travel: "This day last year here" shows what the weather did exactly a year ago at your spot.',
      'A proper hour-by-hour strip (swipe along it) with night-aware icons - no more beaming sun at 11pm - and sunrise and sunset woven in exactly where they happen.',
      'The 7-day list gained temperature range bars, so you can see at a glance which day is the warm one. And "Right now at a glance" tiles: feels-like, wind with direction, humidity, UV, pressure with its trend, and visibility.',
-     'The "next 90 minutes" rain chart moved into its own card near the top with mm/h on every bar - it only appears when rain is actually close, and now it is impossible to miss.'
+     'The "next 90 minutes" rain chart moved into its own card near the top with mm/h on every bar - it only appears when rain is actually close, and now it is impossible to miss.',
+     'Icons now grade by how MUCH, not just how likely: a near-certain drizzle no longer wears the heavy three-stroke rain icon a downpour gets, and a drizzly day is called "Drizzly" instead of "Wet".'
    ]},
   {v:'1.8', date:'17 Aug 2026', title:'Sharper words, tougher self-checks',
    notes:[
