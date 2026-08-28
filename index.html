@@ -283,7 +283,7 @@
   .synth{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
   .synth .big{font-family:var(--brand);font-size:24px;font-weight:600} .synth .sub{font-size:12px;color:var(--muted)}
   .foot{margin-top:26px;font-size:12px;color:var(--dim);line-height:1.6;border-top:1px solid var(--line);padding-top:16px}
-  .foot .ios{color:var(--muted)}
+  .foot .installhint{color:var(--muted)}
 
   /* ---- responsive: readable down to 320px ---- */
   @media(max-width:760px){.grid{grid-template-columns:1fr}}
@@ -434,8 +434,8 @@
   </div>
 
   <div class="foot">
-    <strong>For fun, and free.</strong> Each part of the day shows the chance of <em>proper</em> rain - the share of a ~156-member ensemble (five forecasting centres: ECMWF, ICON, the US GEFS, the Canadian GEM and the UK Met Office's own MOGREPS, via Open-Meteo) whose total for that window reaches 0.5 mm, the point at which you would actually notice it. It deliberately does not headline the chance of a 0.1 mm trace: on a sunny day a lone drizzly member could push that to 25% and read like a downpour, when four-fifths of the forecasts are bone dry. Hover a period to see the expected amount in mm. <strong>Not every source is equal.</strong> The five centres do not forecast equally well, so we do not count them equally: each is weighted by decades of published verification, with ECMWF and the Met Office carrying the most and GFS the least. We also quietly score each centre against the local rain gauges over the past week or two and nudge the weights a touch toward whichever has been closest to reality near you - but only gently, and only when there have been enough real rain events to judge, because at one spot over a fortnight the sources mostly agree and a thin sample is far too easy to over-read. So the published ranking does the heavy lifting; the local check only ever leans on it. <strong>Confidence</strong> combines three things: how strongly the members agree, how far ahead the day is (forecast skill genuinely decays with range, so a unanimous six-day-out call is capped well below a unanimous one for today), and how steady the forecast has been across the last few model runs - if it has been flip-flopping between runs, we say so now rather than letting it surprise you tomorrow. Agreement is judged on rain you would actually notice (0.5 mm), not on a trace, so the figure does not swing about on drizzle. <strong>Track record:</strong> confidence is also checked against reality. Everything else here is forecasts marking their own homework, so we fetch what the model <em>predicted</em> for the last three weeks and compare it against what actually fell, using real tipping-bucket rain gauges (dead gauges are detected and skipped) - the Environment Agency network in England and SEPA in Scotland. If the models have been getting rain wrong at your spot lately, confidence is marked down. We take the median across several nearby gauges and never trust a lone one: gauges do break, and a single reading with no neighbours to check it against is indistinguishable from a fault. Scoring only counts rain the models got right or missed, never the free marks for correctly calling a dry day, so a dry spell cannot quietly inflate the figure. Where there are no gauges (Wales, Northern Ireland, and outside the UK) this term is simply left out. It is honest but coarse - a few days at one place is a nudge, not a proof, so it is capped to a few points either way and the lead-time factors still reflect published rain/no-rain skill decay. Treat confidence as an honest guide, not a guarantee. "Feels like" is the apparent temperature, factoring humidity and wind, so hot-and-muggy days read honestly. Wind, snow and heat advisories are derived from the forecast, not official Met Office warnings. Flood alerts come from the Environment Agency (England only). Temperature is corrected to your exact spot using a 90 m elevation model. <strong>Terrain:</strong> beyond plain altitude, the app reads the SHAPE of the land around your exact spot (twenty-four elevation samples in rings at 1, 2 and 5 km - the near ring catches narrow valleys like Hebden Bridge or the Ironbridge gorge whose walls sit within a kilometre) and classifies it - valley floor, deep glen, sheltered hollow, exposed top, or flat. If you are in a valley, clear calm nights are nudged colder (cold air genuinely drains into valley bottoms - the frost-hollow effect), gusts are read lower for wind blowing across the valley and a touch higher for wind funnelled along it, and a clear, calm, damp night raises a valley-fog advisory. An exposed top reads gusts higher. These are bounded, physics-based estimates gated on the conditions that make each effect real - and where the land is gentle or ambiguous (a broad lowland hollow, a hillside) the app deliberately makes no claim rather than an invented one. Search works with full postcodes too (e.g. "LL55 4TY"), pinning the forecast to within about 100 m - which matters in the hills, where the next street can be 100 m higher. <strong>Learning your patch:</strong> where England's official gauge archive allows, three months of the models' own past rain calls are compared against what the gauges actually recorded near your spot, and every rain percentage is scaled by the measured over- or under-calling ratio (capped at 25% either way, refreshed daily, and declared in the confidence explanation when it bites). Radar card reads the live rain-radar pixel over your exact coordinate - radar tiles by <a href="https://www.rainviewer.com/" style="color:var(--sky)" target="_blank" rel="noopener">RainViewer</a>. Air quality and pollen via Open-Meteo's air-quality API; a-year-ago weather via the Open-Meteo archive; gauge history via the Environment Agency Hydrology API (OGL). Runs entirely in your browser - no server, no accounts, no tracking. Places via postcodes.io and OpenStreetMap. <span id="appver" style="color:var(--text);font-weight:600"></span> <span id="srcline"></span><br>
-    <span class="ios">On iPhone, tap Share then "Add to Home Screen" to install. On Android, use the Install button or your browser menu.</span> Not for safety-critical decisions - always check official <a href="https://www.metoffice.gov.uk/weather/warnings-and-advice/uk-warnings" style="color:var(--muted)">Met Office warnings</a> and <a href="https://check-for-flooding.service.gov.uk" style="color:var(--muted)">flood alerts</a>.
+    <strong>For fun, and free.</strong> No ads, no accounts, no tracking - everything runs in your browser. Curious how the forecast is made? Tap <em>"What makes this forecast different?"</em> under the confidence line. Data: <a href="https://open-meteo.com/" style="color:var(--muted)" target="_blank" rel="noopener">Open-Meteo</a>, Environment Agency &amp; SEPA (OGL), postcodes.io, OpenStreetMap; radar by <a href="https://www.rainviewer.com/" style="color:var(--muted)" target="_blank" rel="noopener">RainViewer</a>. <span id="appver" style="color:var(--text);font-weight:600"></span> <span id="srcline"></span><br>
+    <span class="installhint">On iPhone, tap Share then "Add to Home Screen" to install. On Android, use the Install button or your browser menu.</span> Not for safety-critical decisions - always check official <a href="https://www.metoffice.gov.uk/weather/warnings-and-advice/uk-warnings" style="color:var(--muted)">Met Office warnings</a> and <a href="https://check-for-flooding.service.gov.uk" style="color:var(--muted)">flood alerts</a>.
   </div>
 
   <!-- Places popup: search, save and switch location; keeps the main page clean -->
@@ -1578,7 +1578,7 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
   // Icon for RIGHT NOW - drives the live brand bubble and the dynamic favicon.
   const nowCloud=Math.round(rH.cloud_cover[nowIdxR]??50);
   const nowIcon=skyIcon([nowCode],[nowCloud],nowP>=55?70:(nowP>=25?30:0),0,nowP,nowGust,nowFeels,nowFeels);
-  // At-a-glance extras for the stat tiles (iOS-style "current conditions" grid).
+  // At-a-glance extras for the "current conditions" stat-tile grid.
   const cmp=dg=>dg==null?'':['N','NE','E','SE','S','SW','W','NW'][Math.round(dg/45)%8];
   const nowXtra={
     windMph:rH.wind_speed_10m?Math.round((rH.wind_speed_10m[nowIdxR]||0)/1.609):null,
@@ -2071,7 +2071,7 @@ function render(j,isGeo,keepSel){
       nr.hidden=false;
     } else nr.hidden=true;
   }
-  // Hour-by-hour strip (iOS-style), with sunrise/sunset woven in.
+  // Hour-by-hour strip, with sunrise/sunset woven in.
   const hsEl=$('hourstrip');
   if(hsEl&&j.hourStrip&&j.hourStrip.length){
     hsEl.innerHTML='';
@@ -2124,7 +2124,7 @@ function render(j,isGeo,keepSel){
 
 function renderWeek(){
   const w=$('week');w.innerHTML='';
-  // iOS-style temperature range bar: where each day's min-max sits within the whole week's span.
+  // Temperature range bar: where each day's min-max sits within the whole week's span.
   const wkMin=Math.min.apply(null,curData.days.map(d=>d.tmin));
   const wkMax=Math.max.apply(null,curData.days.map(d=>d.tmax));
   const span=Math.max(1,wkMax-wkMin);
