@@ -152,6 +152,18 @@
   .difflink:hover{color:var(--text)}
   .updtoast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:200;background:#12325e;color:#eaf1fb;border:1px solid rgba(93,180,255,.5);border-radius:999px;padding:11px 18px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow);cursor:pointer;max-width:92vw;text-align:center}
   .updtoast:hover{background:#173d72}
+  .dayrainwrap{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px 9px}
+  .drlbl,.nrlbl{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:8px}
+  .drlbl2{font-weight:400;color:var(--dim)}
+  .dayrain{display:flex;align-items:flex-end;gap:2px;height:46px}
+  .dayrain .drb{flex:1;background:rgba(255,255,255,.05);border-radius:2px 2px 0 0;position:relative;height:100%;display:flex;align-items:flex-end}
+  .dayrain .drf{width:100%;border-radius:2px 2px 0 0;background:linear-gradient(180deg,#5db4ff,#2b74e0);min-height:1px}
+  .drhours{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);margin-top:4px}
+  .nextrain{margin:10px 0 12px}
+  .nrbars{display:flex;gap:4px;align-items:flex-end;height:40px}
+  .nrbars .nrb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end}
+  .nrbars .nrf{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#5db4ff,#2b74e0)}
+  .nrbars .nrt{font-size:9.5px;color:var(--dim)}
   .confwhy{flex-basis:100%;font-size:12px;color:var(--dim);line-height:1.4}
   .heromain{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-top:12px}
   .heronow{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
@@ -336,6 +348,11 @@
   <div class="daysum"><div class="dh" id="dayhead"></div><span class="pill" id="confpill"></span></div>
   <div class="advisories" id="advisories"></div>
   <div class="periods" id="periods"></div>
+  <div class="dayrainwrap" id="dayrainwrap" hidden>
+    <div class="drlbl">Rain chance through the day <span class="drlbl2">(share of 156 forecasts expecting rain each hour)</span></div>
+    <div class="dayrain" id="dayrain"></div>
+    <div class="drhours"><span>midnight</span><span>6am</span><span>noon</span><span>6pm</span><span></span></div>
+  </div>
 
   <div class="sec sechead"><span>Can I... ?</span><button class="mini" id="customise">Customise</button></div>
   <div class="actpanel" id="actpanel" hidden></div>
@@ -346,6 +363,10 @@
     <div class="card nowcast">
       <h2>Nowcast - next 6 hours (rain chance)</h2>
       <div class="lede" id="nowlede"></div>
+      <div class="nextrain" id="nextrain" hidden>
+        <div class="nrlbl">Next 90 minutes - rain intensity <span class="drlbl2">(15-min steps, model estimate)</span></div>
+        <div class="nrbars" id="nrbars"></div>
+      </div>
       <div class="tl" id="timeline"></div>
     </div>
     <div class="card">
@@ -1010,6 +1031,9 @@ function wordForDay(d){
   if(h.snow||h.ice){ if(h.ice||d.tmin<=0) return pick(['FROZEN','ICY','BALTIC','ARCTIC'],C.ice); return pick(['SNOWY','WINTRY','WHITE-OUT'],C.ice); }
   if(feels>=32||t>=30) return pick(['SCORCHED','SCORCHIO','ROASTING','SWELTERING','MELTING'],C.bad);
   if(gust>=45) return pick(['BATTERED','WILD','HOWLING'],C.bad);
+  // Wet before breakfast, decent after: the day's story is the recovery, not the rain. (Verified
+  // case: rain over by 7am then wall-to-wall sun must never read SOAKED - or STUNNER.)
+  if(d.clearing) return pick(['CLEARING','BRIGHTENING','ON THE UP','COMES GOOD'],C.mix);
   // Genuine coin-flip on PROPER rain - own the uncertainty with a laugh. `rain` is now the chance
   // of meaningful rain (>=0.5mm), so this fires on real doubt about getting wet, not on trace spits:
   // a bone-dry Bath that used to read "MYSTERY" off a 45% trace figure now sails past this.
@@ -1109,8 +1133,15 @@ function makeHeadline(P,tonight,d){
   const t=d.tmax, sunny=(d.icon==='sunny'||d.icon==='hot'||d.icon==='scorch'), bright=(sunny||d.icon==='partly'), cloudy=d.icon==='cloudy', foggy=(d.icon==='fog'||d.icon==='mist');
   const maxP=Math.max(m,a,e), minP=Math.min(m,a,e);
   const wettest=[{k:'morning',p:m},{k:'afternoon',p:a},{k:'evening',p:e}].sort((x,y)=>y.p-x.p)[0];
+  const fmtH=x=>{x=((x%24)+24)%24;return x===0?'midnight':x===12?'noon':x<12?x+'am':(x-12)+'pm';};
+  const win=d.rainWindow;
   let h;
-  if(maxP<12){
+  if(d.clearing){
+    // Wet early, then it comes good - say so, instead of branding the whole day wet.
+    h='Rain first thing'+(win&&win.e<=12?' (clearing by about '+fmtH(win.e)+')':'')+', then drying out - '+
+      (bright?'a decent, brighter day from mid-morning.':'staying mostly dry from mid-morning.');
+  }
+  else if(maxP<12){
     // genuinely dry - vary the flavour by warmth and sky so no two read the same
     if(foggy) h='Dry, but grey and murky.';
     else if(sunny) h = t>=24?'Bags of sunshine and dry.':t>=16?'Sunny and dry - crack on.':'Bright and dry, but on the cool side.';
@@ -1123,6 +1154,10 @@ function makeHeadline(P,tonight,d){
   else if(minP>=33) h='A showery one on and off through the day - keep the brolly handy.';
   else if(maxP<52) h='Turning showery, with the wettest spell probably the '+wettest.k+'.';
   else h='Likely wet at times, and the '+wettest.k+' looks the soggiest.';
+  // WHEN the rain is coming - the single most useful sentence on a mixed day. Only shown when the
+  // ensemble concentrates the rain into one window worth planning around (not a wall-to-wall day).
+  if(!d.clearing && win && maxP>=22 && win.hours<=10 && (win.e-win.s)<=9)
+    h+=' Rain most likely '+(win.s<=6&&win.e<=9?'before '+fmtH(win.e):fmtH(win.s)+' to '+fmtH(win.e))+'.';
   if(tonight>=52 && maxP<32) h+=' Rain probably moving in overnight.';
   else if(tonight>=62) h+=' Likely wet overnight too.';
   if(hz.heat==='danger') h+=' A proper scorcher - keep cool and hydrated.';
@@ -1228,6 +1263,32 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain){
     // periods can never exceed any period and never cries wolf. Confidence is judged on this too.
     const pWet=Math.max.apply(null,periods.map(p=>p.wet));
     const dayAmt=rainAmt(date,6,24);
+    // Rain TIMING, not just amount. Verified failure (27 Aug, Bath): rain fell 4-7am then the day
+    // was gloriously sunny, but the app read "100% rain today" all day - technically true, humanly
+    // misleading. So each day now carries: an hourly rain-probability curve (weighted share of the
+    // ~156 members with >=0.1mm that hour), the day's most-likely RAIN WINDOW (longest contiguous
+    // run of hours >=40%), and a CLEARING flag (wet early, dry and decent after ~9am) that lets
+    // the word, headline and icon tell the "comes good" story instead of crying rain all day.
+    let hourlyRain=null,rainWindow=null;
+    if(useEns){
+      const idxs=eGroups[date]||[];
+      hourlyRain=[];
+      for(const i of idxs){
+        const h=hourOf(eTime[i]); let w=0,aw=0;
+        for(let k=0;k<members.length;k++){const wt=weights?weights[k]:1;aw+=wt;const v=members[k][i];if(v!=null&&v>=0.1)w+=wt;}
+        if(aw)hourlyRain.push({h,p:Math.round(100*w/aw)});
+      }
+      hourlyRain.sort((a,b)=>a.h-b.h);
+      const wetH=hourlyRain.filter(x=>x.p>=40).map(x=>x.h);
+      if(wetH.length){
+        let bs=wetH[0],be=wetH[0],cs=wetH[0],ce=wetH[0];
+        for(let i=1;i<wetH.length;i++){if(wetH[i]===ce+1)ce=wetH[i];else{if(ce-cs>be-bs){bs=cs;be=ce;}cs=ce=wetH[i];}}
+        if(ce-cs>be-bs){bs=cs;be=ce;}
+        rainWindow={s:bs,e:be+1,hours:wetH.length};
+      }
+    }
+    const earlyWet=rainAt(date,6,9,WET_MM), restWet=rainAt(date,9,24,WET_MM);
+    const clearing=earlyWet>=50&&restWet<18;
     // overnight into next day
     let tonight=0;
     const next=dates[di+1];
@@ -1256,10 +1317,16 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain){
       fog:dayCodes.length?fogN>=Math.max(2,Math.ceil(dayCodes.length*0.4)):false,
       // Confidence is judged on WET (rain you would notice), not on trace risk; damped by how much
       // this day's call has been churning between runs, and by the model's measured local record.
-      periods,pAny,pWet,dayAmt,stability:stabilityFor(prev,date),
+      periods,pAny,pWet,dayAmt,hourlyRain,rainWindow,earlyWet,restWet,clearing,
+      stability:stabilityFor(prev,date),
       dayConfidence:confidenceFromProb(pWet,di,stabilityFor(prev,date),skill),tonight
     };
     d.icon=skyIcon(dayCodes,dayClouds,pWet,d.snowCm,pAny,d.gustMph,d.feelsMax,d.feelsMin);
+    // A clearing day's face should be the day AFTER the early rain, not the pre-breakfast soaking.
+    if(clearing){
+      const restIdx=inHours(rg,rTime,9,20);
+      d.icon=skyIcon(restIdx.map(i=>rH.weather_code[i]),restIdx.map(i=>rH.cloud_cover[i]),restWet,d.snowCm,rainAt(date,9,24),d.gustMph,d.feelsMax,d.feelsMin);
+    }
     d.hazards=assessHazards(d);
     d.headline=makeHeadline(periods,tonight,d);
     // driest/wettest keyed on the honest wet number (period.peak is aliased to wet)
@@ -1290,13 +1357,28 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain){
   const nowIdxE=useEns?findNowIdx(eTime,off):findNowIdx(dTime,off);
   const tlMembers=useEns?members:detMembers, tlTime=useEns?eTime:dTime;
   const tl=[];for(let k=0;k<=6;k++){const i=nowIdxE+k;tl.push(i<tlTime.length?rainProb(tlMembers,[i],0.1):0);}
-  let imminent='';
-  try{ if(det.minutely&&det.minutely.time&&det.minutely.precipitation){
-    const mt=det.minutely.time, mp=det.minutely.precipitation;
-    const mi=mt.findIndex(t=>t.slice(0,13)===dTime[findNowIdx(dTime,off)].slice(0,13));
-    if(mi>=0){
-      if(mp[mi]!=null&&mp[mi]>=0.1){const stop=mp.slice(mi).findIndex(v=>v==null||v<0.1);imminent=stop>0?('Raining now, easing in about '+(stop*15)+' min.'):'Raining now.';}
-      else{const nxt=mp.slice(mi,mi+8).findIndex(v=>v!=null&&v>=0.1);if(nxt>0)imminent='Dry now - rain likely in about '+(nxt*15)+' min.';}
+  // Next 90 minutes at 15-minute resolution - the finest timing the free data allows (true
+  // 5-minute lines need radar, the designed-but-not-built upgrade). Mean across the deterministic
+  // models' minutely_15 series. NOTE: with models= the API returns precipitation_<model> keys, so
+  // the old code reading `.precipitation` had silently never fired - fixed here.
+  let imminent='',nextRain=null;
+  try{ if(det.minutely&&det.minutely.time){
+    const mt=det.minutely.time;
+    const mkeys=Object.keys(det.minutely).filter(k=>k.indexOf('precipitation')===0&&Array.isArray(det.minutely[k]));
+    if(mkeys.length){
+      let mi=mt.findIndex(t=>t.slice(0,13)===dTime[findNowIdx(dTime,off)].slice(0,13));
+      if(mi>=0){
+        const nowMin=new Date(Date.now()+off*1000).getUTCMinutes();
+        mi=Math.min(mt.length-1,mi+Math.floor(nowMin/15));
+        nextRain=[];
+        for(let s=0;s<6&&mi+s<mt.length;s++){
+          let sum=0,n=0;for(const k of mkeys){const v=det.minutely[k][mi+s];if(v!=null){sum+=v;n++;}}
+          nextRain.push({t:mt[mi+s].slice(11,16),mmh:n?Math.round(sum/n*4*10)/10:0});
+        }
+        const stop=nextRain.findIndex(x=>x.mmh<0.4), start=nextRain.findIndex(x=>x.mmh>=0.4);
+        if(nextRain[0]&&nextRain[0].mmh>=0.4)imminent=stop>0?('Raining now, easing in about '+(stop*15)+' min.'):'Raining now.';
+        else if(start>0)imminent='Dry now - rain likely in about '+(start*15)+' min.';
+      }
     }
   }}catch(e){}
   const peak=Math.max.apply(null,tl),pI=tl.indexOf(peak);
@@ -1309,7 +1391,7 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain){
     detail:{
       models:MODELS.map(m=>({nm:m.label,mm:amtBy[m.id]})),synthAmt,
       maxAmt:Math.max.apply(null,amts.concat([0.1])),amtMin:Math.min.apply(null,amts),amtMax:Math.max.apply(null,amts),
-      tl,nowLede,pDayToday:days[0].pWet,pAnyToday:days[0].pAny,memberCount:(useEns?members.length:MODELS.length),ensemble:useEns
+      tl,nowLede,nextRain,pDayToday:days[0].pWet,pAnyToday:days[0].pAny,memberCount:(useEns?members.length:MODELS.length),ensemble:useEns
     },
     issued:new Date()
   };
@@ -1418,6 +1500,8 @@ const ACTIVITIES=[
     const best=Math.min(c.a,c.e);
     if(best<22&&c.heat==='danger') return {c:'warn',verdict:'Shady spot only',meta:'Dry but a scorcher - pick a tree, pack water and suncream, keep the food cool. Mind the wasps.'};
     let base={c:(best<18&&c.temp>=15)?'good':best<35?'warn':'bad',verdict:(best<18&&c.temp>=15)?'Rug out, go':best<35?'Have a plan B':'Sarnies indoors',meta:(best<18&&c.temp>=15)?('Should stay dry and '+c.temp+'°. Mind the wasps.'):best<35?'A shower could crash it (~'+best+'%) - soggy scotch egg risk.':'Likely too wet (~'+best+'%). The sandwiches would drown.'};
+    // A dry afternoon after a wet morning is still picnic-able, but the grass remembers.
+    if(base.c==='good'&&c.m>=50)base.meta+=' Ground may still be damp from the morning rain - take something waterproof to sit on.';
     if(base.c!=='bad'&&(c.wind==='high'||c.wind==='severe'))base.meta+=' Weigh the blanket down - it is breezy.';
     return base;}},
   {id:'beach',emoji:'🏖',label:'Beach day?',fn:c=>{
@@ -1530,6 +1614,8 @@ function setLoading(name){
   const pbl=$('placesBtnLabel');if(pbl)pbl.textContent=name;
   $('herotemp').innerHTML='&middot;';$('herocond').textContent='Fetching the latest...';$('herofeels').textContent='';
   const tl0=$('terraline');if(tl0)tl0.hidden=true;
+  const dw0=$('dayrainwrap');if(dw0)dw0.hidden=true;
+  const nr0=$('nextrain');if(nr0)nr0.hidden=true;
   const we=$('wordday');if(we){we.textContent='...';we.style.color='var(--muted)';}
   ['week','periods','decisions','advisories'].forEach(id=>$(id).innerHTML='');
   $('dayhead').textContent='';const cp=$('confpill');cp.textContent='';cp.style.background='transparent';
@@ -1652,6 +1738,20 @@ function render(j,isGeo,keepSel){
       const pv=document.createElement('div');pv.className='pv';pv.textContent=v+'%';
       slot.appendChild(col);slot.appendChild(t);slot.appendChild(pv);tl.appendChild(slot);});
   }
+  // Next-90-minutes intensity strip: shown only when the models expect actual rain soon, so a dry
+  // day stays uncluttered.
+  const nr=$('nextrain'),nb=$('nrbars');
+  if(nr&&nb){
+    const arr=dt.nextRain, any=arr&&arr.some(x=>x.mmh>0);
+    if(any){
+      nb.innerHTML='';
+      const mx=Math.max.apply(null,arr.map(x=>x.mmh).concat([1]));
+      arr.forEach(x=>{const b=document.createElement('div');b.className='nrb';b.title=x.mmh.toFixed(1)+' mm/h around '+x.t;
+        b.innerHTML='<div class="nrf" style="height:'+Math.max(3,Math.round(28*x.mmh/mx))+'px"></div><div class="nrt">'+x.t+'</div>';
+        nb.appendChild(b);});
+      nr.hidden=false;
+    } else nr.hidden=true;
+  }
   const conf0=j.days[0].dayConfidence;
   // Agreement here is the RAW ensemble split (not the lead-weighted confidence), since this
   // panel is describing what the members actually say about today.
@@ -1720,6 +1820,20 @@ function selectDay(i){
     el.title=amtHint(p);
     el.innerHTML='<div class="plbl">'+p.label+'</div><div class="pic">'+WICONS[p.icon]+'</div><div class="ptemp">'+p.temp+'&deg;</div><div class="prain" style="color:'+p.verdict.color+'">'+p.peak+'% rain</div><div class="pverd">'+p.verdict.word+'</div>';
     pr.appendChild(el);});
+  // Hour-by-hour rain chance for the SELECTED day - the graph that answers "so WHEN will it rain?"
+  // (built from the same weighted ensemble as every other figure, so it can never disagree).
+  const dw=$('dayrainwrap'),dr=$('dayrain');
+  if(dw&&dr){
+    const hr=d.hourlyRain;
+    if(hr&&hr.length>=20&&hr.some(x=>x.p>=10)){
+      dr.innerHTML='';
+      hr.forEach(x=>{const b=document.createElement('div');b.className='drb';
+        b.title=(x.h<10?'0':'')+x.h+':00 - '+x.p+'% of forecasts expect rain';
+        b.innerHTML='<div class="drf" style="height:'+Math.max(x.p>=5?8:2,Math.round(x.p))+'%"></div>';
+        dr.appendChild(b);});
+      dw.hidden=false;
+    } else dw.hidden=true;
+  }
   // activity context for this day. m/a/e and day are the chance of PROPER rain (what activities
   // should react to); mAny/aAny/eAny/dayAny keep the trace figure for the few things that care about
   // any dampness at all (e.g. stargazing keys cloud-risk off the wider figure).
@@ -1844,7 +1958,10 @@ const RELEASES=[
      'Related fix: a real chance of rain used to force the icon to "partly sunny" even under a 100% overcast sky - politely promoting a miserable morning to a bright one. Overcast now looks overcast.',
      'Our reality-check against rain gauges grew teeth. It turns out real gauges die quietly - at one reader\'s spot, three of the eight nearest stations had simply stopped reporting, which silently switched off verification exactly where it was needed. We now detect dead gauges and skip to the nearest living ones.',
      'Verification also looks back three weeks instead of ten days, and compares four weeks of each forecast centre\'s own past predictions - roughly double the real rain events to judge everyone against.',
-     'Your location now reads with its full context - district and full postcode, like "Gwynedd - LL55 4TY" - on the homepage and from Locate me, while search results stay compact.'
+     'Your location now reads with its full context - district and full postcode, like "Gwynedd - LL55 4TY" - on the homepage and from Locate me, while search results stay compact.',
+     'NEW: every day now shows an hour-by-hour rain-chance graph and, on mixed days, a plain-English rain window ("Rain most likely before 7am") - because "100% rain" that all falls before breakfast is a lovely day wearing a scary number. Days like that now read CLEARING or ON THE UP, with the icon showing the day after the early rain.',
+     'NEW: when rain is close, a "next 90 minutes" intensity strip appears in the detail section, in 15-minute steps - the finest the free data goes; proper 5-minute radar lines are on the wishlist.',
+     'And if the morning was wet but the afternoon is fine, the picnic card now says yes BUT reminds you the ground remembers - take something waterproof to sit on.'
    ]},
   {v:'1.7', date:'27 Jul 2026', title:'Your valley is not the same as the next town',
    notes:[
