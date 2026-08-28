@@ -159,11 +159,30 @@
   .dayrain .drb{flex:1;background:rgba(255,255,255,.05);border-radius:2px 2px 0 0;position:relative;height:100%;display:flex;align-items:flex-end}
   .dayrain .drf{width:100%;border-radius:2px 2px 0 0;background:linear-gradient(180deg,#5db4ff,#2b74e0);min-height:1px}
   .drhours{display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);margin-top:4px}
-  .nextrain{margin:10px 0 12px}
-  .nrbars{display:flex;gap:4px;align-items:flex-end;height:40px}
-  .nrbars .nrb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end}
-  .nrbars .nrf{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#5db4ff,#2b74e0)}
-  .nrbars .nrt{font-size:9.5px;color:var(--dim)}
+  .nextrain{margin-bottom:14px;border-color:rgba(93,180,255,.4)}
+  .nextrain h2{margin:0 0 6px;font-size:15px}
+  .nrbars{display:flex;gap:6px;align-items:flex-end;height:74px;margin-top:10px}
+  .nrbars .nrb{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+  .nrbars .nrv{font-size:10.5px;color:var(--sky);font-weight:700}
+  .nrbars .nrf{width:100%;max-width:44px;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#5db4ff,#2b74e0)}
+  .nrbars .nrt{font-size:10px;color:var(--dim)}
+  .hourcard{margin-bottom:14px;padding:14px 6px 10px 16px}
+  .hourstrip{display:flex;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;scrollbar-width:thin}
+  .hourstrip .hs{flex:0 0 auto;width:52px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0;border-radius:10px}
+  .hourstrip .hs.now{background:rgba(93,180,255,.12)}
+  .hourstrip .hs .ht{font-size:10.5px;color:var(--dim);white-space:nowrap}
+  .hourstrip .hs svg{width:24px;height:24px}
+  .hourstrip .hs .hv{font-size:13px;font-weight:700}
+  .hourstrip .hs .hp{font-size:10px;color:var(--sky);font-weight:600;min-height:12px}
+  .hourstrip .hs.sunmark .hv{font-size:14px}
+  .wtr{position:relative;height:5px;border-radius:999px;background:rgba(255,255,255,.1);margin-top:7px;overflow:hidden}
+  .wtr i{position:absolute;top:0;bottom:0;border-radius:999px;background:linear-gradient(90deg,#5db4ff,#ffca4b)}
+  .tiles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:10px}
+  .tiles .ti{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 11px}
+  .tiles .ti .tk{font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px}
+  .tiles .ti .tv{font-size:16px;font-weight:700;margin-top:3px}
+  .tiles .ti .ts{font-size:10.5px;color:var(--muted);margin-top:2px}
+  @media(max-width:600px){.wday .wt{min-width:88px}.hourcard{padding-left:12px}.tiles{grid-template-columns:1fr 1fr}}
   .logo{position:relative}
   .livecond{position:absolute;right:-5px;bottom:-5px;width:21px;height:21px;background:#0f2242;border:1.5px solid rgba(255,255,255,.8);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.35)}
   .livecond svg{width:14px;height:14px}
@@ -355,6 +374,18 @@
     <button class="difflink" id="diffBtn">&#10024; What makes this forecast different?</button>
   </div>
 
+  <div class="card nextrain" id="nextrain" hidden>
+    <h2>&#127783;&#65039; Rain in the next 90 minutes</h2>
+    <div class="lede" id="nrlede"></div>
+    <div class="nrbars" id="nrbars"></div>
+    <div class="drlbl2" style="margin-top:7px">15-minute steps, model estimate - mm/h shown above each bar</div>
+  </div>
+
+  <div class="card hourcard">
+    <div class="drlbl" style="margin-bottom:6px">Hour by hour <span class="drlbl2">(next 24 hours - swipe along)</span></div>
+    <div class="hourstrip" id="hourstrip"></div>
+  </div>
+
   <div class="weeklbl">Next 7 days - tap a day to plan it</div>
   <div class="week" id="week"></div>
 
@@ -377,10 +408,6 @@
     <div class="card nowcast">
       <h2>Nowcast - next 6 hours (rain chance)</h2>
       <div class="lede" id="nowlede"></div>
-      <div class="nextrain" id="nextrain" hidden>
-        <div class="nrlbl">Next 90 minutes - rain intensity <span class="drlbl2">(15-min steps, model estimate)</span></div>
-        <div class="nrbars" id="nrbars"></div>
-      </div>
       <div class="tl" id="timeline"></div>
       <div class="lastyear" id="lastyear" hidden></div>
       <div class="aqline" id="aqline" hidden></div>
@@ -390,6 +417,10 @@
       <div class="lede" id="radlede"></div>
       <div class="radbars" id="radbars"></div>
       <div class="src" style="margin-top:8px">Live radar tiles by <a href="https://www.rainviewer.com/" target="_blank" rel="noopener" style="color:var(--sky)">RainViewer</a>. Read at your exact coordinate, ~600 m resolution.</div>
+    </div>
+    <div class="card">
+      <h2>Right now at a glance</h2>
+      <div class="tiles" id="tiles"></div>
     </div>
     <div class="card">
       <h2>Model agreement - rainfall today</h2>
@@ -504,7 +535,10 @@ const WICONS={
   // Heavy snow / blizzard: snow cloud, more flakes, plus wind streaks.
   blizzard:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M7 12a3.5 3.5 0 0 1 .4-7A4.7 4.7 0 0 1 16.5 7.1a3 3 0 0 1-.4 4.9H7z" fill="#cdd9ec"/><g fill="#eaf3ff"><circle cx="7.5" cy="16.4" r="1.2"/><circle cx="11" cy="18.8" r="1.2"/><circle cx="14.6" cy="16.2" r="1.2"/><circle cx="17.6" cy="18.6" r="1.1"/></g><g stroke="#aebccf" stroke-width="1.5" stroke-linecap="round"><path d="M3.5 20.8h7.5M12.5 22.4h6.5"/></g></svg>',
   // Light fog / mist: horizontal haze, no cloud, lighter than the dense fog icon.
-  mist:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><g stroke="#aebccf" stroke-width="1.7" stroke-linecap="round"><path d="M4 8h13M6 11.6h14M4 15.2h12M7 18.8h11"/></g></svg>'
+  mist:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><g stroke="#aebccf" stroke-width="1.7" stroke-linecap="round"><path d="M4 8h13M6 11.6h14M4 15.2h12M7 18.8h11"/></g></svg>',
+  // Night variants (used by the hour-by-hour strip so 11pm never shows a beaming sun).
+  clearnight:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M20 12.5A8.2 8.2 0 1 1 11.5 4a6.5 6.5 0 0 0 8.5 8.5z" fill="#cfd9ea"/><circle cx="6.2" cy="6.6" r="1" fill="#eaf3ff"/><circle cx="9.2" cy="3.8" r="0.7" fill="#eaf3ff"/></svg>',
+  partlynight:'<svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M13.6 8.9A4.6 4.6 0 1 1 8.8 4a3.7 3.7 0 0 0 4.8 4.9z" fill="#cfd9ea"/><path d="M7 17.5a3.5 3.5 0 0 1 .4-7A4.7 4.7 0 0 1 16.3 12.2a3 3 0 0 1-.3 5.3H7z" fill="#9fb1c9"/></svg>'
 };
 // Representative sky icon for a window (daytime hours, or one period).
 // The RAIN part of the icon is driven by `wetProb` - the very same meaningful-rain % (chance of
@@ -574,7 +608,7 @@ async function fetchDeterministic(lat,lon){
 }
 async function fetchRich(lat,lon){
   const url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
-    '&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,wind_gusts_10m,weather_code,cloud_cover,precipitation,precipitation_probability'+
+    '&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,wind_gusts_10m,wind_speed_10m,wind_direction_10m,surface_pressure,visibility,weather_code,cloud_cover,precipitation,precipitation_probability'+
     '&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,snowfall_sum,uv_index_max,sunrise,sunset'+
     '&forecast_days='+DAYS+'&timezone=auto';
   const j=await fetchJSON(url);
@@ -1544,6 +1578,38 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
   // Icon for RIGHT NOW - drives the live brand bubble and the dynamic favicon.
   const nowCloud=Math.round(rH.cloud_cover[nowIdxR]??50);
   const nowIcon=skyIcon([nowCode],[nowCloud],nowP>=55?70:(nowP>=25?30:0),0,nowP,nowGust,nowFeels,nowFeels);
+  // At-a-glance extras for the stat tiles (iOS-style "current conditions" grid).
+  const cmp=dg=>dg==null?'':['N','NE','E','SE','S','SW','W','NW'][Math.round(dg/45)%8];
+  const nowXtra={
+    windMph:rH.wind_speed_10m?Math.round((rH.wind_speed_10m[nowIdxR]||0)/1.609):null,
+    windDir:rH.wind_direction_10m?cmp(rH.wind_direction_10m[nowIdxR]):'',
+    pressure:rH.surface_pressure?Math.round(rH.surface_pressure[nowIdxR]):null,
+    pressureTrend:rH.surface_pressure&&nowIdxR>=3?Math.round(rH.surface_pressure[nowIdxR]-rH.surface_pressure[nowIdxR-3]):0,
+    visKm:rH.visibility&&rH.visibility[nowIdxR]!=null?Math.round(rH.visibility[nowIdxR]/1000):null,
+    uvMax:daily.uv_index_max?Math.round(daily.uv_index_max[0]||0):null
+  };
+  // Hour-by-hour strip (next 24h), night-aware, with sunrise/sunset markers woven in - the single
+  // most-used element of the big-name weather apps, built from data we already fetch.
+  const hourStrip=[];
+  const sunByDate={}; days.forEach(d=>{sunByDate[d.date]={rise:d.sunrise,set:d.sunset};});
+  for(let k=0;k<24&&nowIdxR+k<rTime.length;k++){
+    const i=nowIdxR+k, t=rTime[i], day=t.slice(0,10), hm=t.slice(11,16), h=hourOf(t);
+    const pop=Math.round(rH.precipitation_probability?(rH.precipitation_probability[i]||0):0);
+    const gust=mph(rH.wind_gusts_10m[i]||0), feels=rH.apparent_temperature[i];
+    let ic=skyIcon([rH.weather_code[i]],[rH.cloud_cover[i]],pop>=55?70:(pop>=25?30:0),0,pop,gust,feels,feels);
+    const sun=sunByDate[day];
+    const night=sun&&sun.rise&&sun.set?(hm<sun.rise||hm>=sun.set):(h<6||h>=21);
+    if(night){if(ic==='sunny'||ic==='hot'||ic==='scorch')ic='clearnight';else if(ic==='partly')ic='partlynight';}
+    hourStrip.push({t,label:k===0?'Now':(h===0?'12am':h<12?h+'am':h===12?'12pm':(h-12)+'pm'),
+      icon:ic,temp:Math.round(rH.temperature_2m[i]),pop});
+    // weave in a sunrise/sunset marker when it falls within this hour
+    if(sun){
+      if(sun.rise&&sun.rise.slice(0,2)===t.slice(11,13))
+        hourStrip.push({marker:true,label:sun.rise,glyph:'\u{1F305}',name:'Sunrise'});
+      if(sun.set&&sun.set.slice(0,2)===t.slice(11,13))
+        hourStrip.push({marker:true,label:sun.set,glyph:'\u{1F307}',name:'Sunset'});
+    }
+  }
 
   // today rainfall mm by named model (det, 2-day)
   const today=days[0].date;
@@ -1585,7 +1651,8 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
 
   return {
     place,
-    now:{temp:nowTemp,feels:nowFeels,humid:nowHumid,gust:nowGust,cond:nowCond,code:nowCode,icon:nowIcon},
+    now:{temp:nowTemp,feels:nowFeels,humid:nowHumid,gust:nowGust,cond:nowCond,code:nowCode,icon:nowIcon,xtra:nowXtra},
+    hourStrip,
     days,skill,srcSkill:srcSkill||null,terrain:terrain||null,calib:calib||null,
     detail:{
       models:MODELS.map(m=>({nm:m.label,mm:amtBy[m.id]})),synthAmt,
@@ -1983,19 +2050,58 @@ function render(j,isGeo,keepSel){
       const pv=document.createElement('div');pv.className='pv';pv.textContent=v+'%';
       slot.appendChild(col);slot.appendChild(t);slot.appendChild(pv);tl.appendChild(slot);});
   }
-  // Next-90-minutes intensity strip: shown only when the models expect actual rain soon, so a dry
-  // day stays uncluttered.
-  const nr=$('nextrain'),nb=$('nrbars');
+  // Next-90-minutes card: its own hero-level card (shown only when the models expect actual rain
+  // soon, so dry days stay uncluttered), with the mm/h value above every bar.
+  const nr=$('nextrain'),nb=$('nrbars'),nl=$('nrlede');
   if(nr&&nb){
     const arr=dt.nextRain, any=arr&&arr.some(x=>x.mmh>0);
     if(any){
       nb.innerHTML='';
-      const mx=Math.max.apply(null,arr.map(x=>x.mmh).concat([1]));
+      const mx=Math.max.apply(null,arr.map(x=>x.mmh).concat([0.5]));
       arr.forEach(x=>{const b=document.createElement('div');b.className='nrb';b.title=x.mmh.toFixed(1)+' mm/h around '+x.t;
-        b.innerHTML='<div class="nrf" style="height:'+Math.max(3,Math.round(28*x.mmh/mx))+'px"></div><div class="nrt">'+x.t+'</div>';
+        b.innerHTML='<div class="nrv">'+(x.mmh>0?x.mmh.toFixed(1):'0')+'</div><div class="nrf" style="height:'+Math.max(3,Math.round(40*x.mmh/mx))+'px"></div><div class="nrt">'+x.t+'</div>';
         nb.appendChild(b);});
+      if(nl){
+        const heavyNow=arr[0].mmh>=2, wetNow=arr[0].mmh>=0.4;
+        const easing=wetNow&&arr[arr.length-1].mmh<arr[0].mmh*0.5;
+        const start=arr.find(x=>x.mmh>=0.4);
+        nl.textContent=wetNow?((heavyNow?'Heavy burst over you now':'Rain over you now')+(easing?' - easing over the next hour or so.':' - keeping going for now.'))
+          :(start?('Dry now - rain expected around '+start.t+'.'):'Only a few spots about in the next hour and a half.');
+      }
       nr.hidden=false;
     } else nr.hidden=true;
+  }
+  // Hour-by-hour strip (iOS-style), with sunrise/sunset woven in.
+  const hsEl=$('hourstrip');
+  if(hsEl&&j.hourStrip&&j.hourStrip.length){
+    hsEl.innerHTML='';
+    j.hourStrip.forEach((x,idx)=>{
+      const c=document.createElement('div');
+      if(x.marker){
+        c.className='hs sunmark';c.title=x.name+' '+x.label;
+        c.innerHTML='<div class="ht">'+x.label+'</div><div class="hv">'+x.glyph+'</div><div class="ht">'+x.name+'</div>';
+      }else{
+        c.className='hs'+(x.label==='Now'?' now':'');
+        c.title=x.label+' - '+x.temp+'°'+(x.pop>=20?(', '+x.pop+'% rain'):'');
+        c.innerHTML='<div class="ht">'+x.label+'</div>'+(WICONS[x.icon]||'')+'<div class="hv">'+x.temp+'&deg;</div><div class="hp">'+(x.pop>=20?x.pop+'%':'')+'</div>';
+      }
+      hsEl.appendChild(c);
+    });
+    hsEl.scrollLeft=0;
+  }
+  // At-a-glance tiles.
+  const tl3=$('tiles');
+  if(tl3){
+    const X=(j.now&&j.now.xtra)||{};
+    const tile=(k,v,s)=>'<div class="ti"><div class="tk">'+k+'</div><div class="tv">'+v+'</div>'+(s?('<div class="ts">'+s+'</div>'):'')+'</div>';
+    let html='';
+    html+=tile('Feels like',j.now.feels+'&deg;','humidity + wind adjusted');
+    if(X.windMph!=null)html+=tile('Wind',X.windMph+' mph '+(X.windDir||''),'gusts '+j.now.gust+' mph');
+    html+=tile('Humidity',j.now.humid+'%',j.now.humid>=75?'muggy-leaning':j.now.humid<=40?'dry air':'comfortable');
+    if(X.uvMax!=null)html+=tile('UV (max today)',X.uvMax,X.uvMax>=8?'very high':X.uvMax>=6?'high - cream on':X.uvMax>=3?'moderate':'low');
+    if(X.pressure!=null)html+=tile('Pressure',X.pressure+' hPa',X.pressureTrend>=2?'rising - improving':X.pressureTrend<=-2?'falling - unsettled':'steady');
+    if(X.visKm!=null)html+=tile('Visibility',X.visKm+' km',X.visKm>=20?'crystal clear':X.visKm>=8?'good':X.visKm>=2?'reduced':'poor - take care');
+    tl3.innerHTML=html;
   }
   const conf0=j.days[0].dayConfidence;
   // Agreement here is the RAW ensemble split (not the lead-weighted confidence), since this
@@ -2018,13 +2124,19 @@ function render(j,isGeo,keepSel){
 
 function renderWeek(){
   const w=$('week');w.innerHTML='';
+  // iOS-style temperature range bar: where each day's min-max sits within the whole week's span.
+  const wkMin=Math.min.apply(null,curData.days.map(d=>d.tmin));
+  const wkMax=Math.max.apply(null,curData.days.map(d=>d.tmax));
+  const span=Math.max(1,wkMax-wkMin);
   curData.days.forEach((d,i)=>{
     const s=dayShort(d.date,i);
     const rv=rainVerdict(d.pAny,d.pWet);
+    const L=Math.round((d.tmin-wkMin)/span*100), W=Math.max(8,Math.round((d.tmax-d.tmin)/span*100));
     const el=document.createElement('div');el.className='wday'+(i===selDay?' sel':'');
     el.innerHTML='<div class="wdate"><div class="wd">'+s.top+'</div><div class="wdd">'+s.bot+'</div></div>'+
       '<div class="wi">'+WICONS[d.icon]+'</div>'+
-      '<div class="wt">'+d.tmax+'&deg;<small> /'+d.tmin+'&deg;</small></div>'+
+      '<div class="wt">'+d.tmax+'&deg;<small> /'+d.tmin+'&deg;</small>'+
+      '<div class="wtr" title="'+d.tmin+'&deg; to '+d.tmax+'&deg; (week range '+wkMin+'-'+wkMax+'&deg;)"><i style="left:'+L+'%;width:'+Math.min(W,100-L)+'%"></i></div></div>'+
       '<div class="wr" style="color:'+rv.color+'">'+d.pWet+'%<span class="wl"> rain</span></div>'+
       '<div class="wc"><i style="background:'+d.dayConfidence.color+'"></i>'+d.dayConfidence.value+'%<span class="wl"> sure</span></div>';
     el.onclick=()=>selectDay(i);
@@ -2213,7 +2325,10 @@ const RELEASES=[
      'The forecast now LEARNS your patch: we compare three months of the models\' own past rain calls against years-deep official gauge records near you (Environment Agency Hydrology archive) and, where the models systematically over- or under-call rain at your spot, every rain percentage is tuned by the measured amount - capped, cached, and declared in the confidence explanation. England only for now (Scotland\'s open archive is too short).',
      'Sunrise, sunset and the moon phase now sit under each day - and the stargazing card knows a full moon washes out the stars.',
      'Air quality (European AQI) and pollen appear in the detail section, with the day\'s worst daytime values.',
-     'And a little time travel: "This day last year here" shows what the weather did exactly a year ago at your spot.'
+     'And a little time travel: "This day last year here" shows what the weather did exactly a year ago at your spot.',
+     'A proper hour-by-hour strip (swipe along it) with night-aware icons - no more beaming sun at 11pm - and sunrise and sunset woven in exactly where they happen.',
+     'The 7-day list gained temperature range bars, so you can see at a glance which day is the warm one. And "Right now at a glance" tiles: feels-like, wind with direction, humidity, UV, pressure with its trend, and visibility.',
+     'The "next 90 minutes" rain chart moved into its own card near the top with mm/h on every bar - it only appears when rain is actually close, and now it is impossible to miss.'
    ]},
   {v:'1.8', date:'17 Aug 2026', title:'Sharper words, tougher self-checks',
    notes:[
