@@ -164,6 +164,18 @@
   .nrbars .nrb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end}
   .nrbars .nrf{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#5db4ff,#2b74e0)}
   .nrbars .nrt{font-size:9.5px;color:var(--dim)}
+  .logo{position:relative}
+  .livecond{position:absolute;right:-5px;bottom:-5px;width:21px;height:21px;background:#0f2242;border:1.5px solid rgba(255,255,255,.8);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+  .livecond svg{width:14px;height:14px}
+  .sunline{margin-top:10px;font-size:12.5px;color:var(--muted)}
+  .radbars{display:flex;gap:3px;align-items:flex-end;height:44px;margin-top:10px}
+  .radbars .rb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px}
+  .radbars .rbf{width:100%;border-radius:3px 3px 0 0}
+  .radbars .rbt{font-size:9px;color:var(--dim);white-space:nowrap}
+  .radbars .rb.future .rbf{opacity:.55;outline:1px dashed rgba(255,255,255,.35)}
+  .radnow{border-left:1.5px dashed rgba(255,255,255,.45);margin:0 2px;align-self:stretch}
+  .aqline,.lastyear{margin-top:10px;font-size:12.5px;color:var(--muted)}
+  .aqline b,.lastyear b,.sunline b{color:var(--text);font-weight:600}
   .confwhy{flex-basis:100%;font-size:12px;color:var(--dim);line-height:1.4}
   .heromain{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-top:12px}
   .heronow{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
@@ -307,7 +319,8 @@
 
   <header class="top">
     <div class="brand">
-      <span class="logo" aria-hidden="true">
+      <span class="logo" id="brandLogo" aria-hidden="true">
+        <span class="livecond" id="liveCond" hidden title="Current weather at your location"></span>
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#70c4ff"/><stop offset="1" stop-color="#2b6cd6"/></linearGradient><clipPath id="lb"><rect width="100" height="100" rx="24"/></clipPath></defs><g clip-path="url(#lb)"><rect width="100" height="100" fill="url(#lsky)"/><g stroke="#ffc94b" stroke-width="6" stroke-linecap="round"><line x1="10" y1="31" x2="-1" y2="31"/><line x1="13.96" y1="18.46" x2="4.94" y2="12.19"/><line x1="22.76" y1="10.98" x2="18.14" y2="0.97"/><line x1="33.76" y1="9" x2="34.64" y2="-2"/><line x1="44.1" y1="12.74" x2="50.15" y2="3.61"/></g><circle cx="32" cy="31" r="19" fill="#ffc94b"/><circle cx="28" cy="27" r="10" fill="#ffe08c"/><g fill="#d6e6f8" transform="translate(0,2.6)"><circle cx="57" cy="58" r="25"/><circle cx="38" cy="65" r="16"/><circle cx="77" cy="61" r="18"/><circle cx="50" cy="49" r="16"/><rect x="33" y="60" width="52" height="20" rx="10"/></g><g fill="#fff"><circle cx="57" cy="58" r="25"/><circle cx="38" cy="65" r="16"/><circle cx="77" cy="61" r="18"/><circle cx="50" cy="49" r="16"/><rect x="33" y="60" width="52" height="20" rx="10"/></g><circle cx="53" cy="60" r="3" fill="#243a66"/><circle cx="68" cy="60" r="3" fill="#243a66"/><path d="M52.5 62 Q60.5 70 68.5 62" fill="none" stroke="#243a66" stroke-width="2.6" stroke-linecap="round"/></g></svg>
       </span>
       <div><h1>Hows<span class="da">Da</span>Weather</h1><div class="tag">Postcode-precise UK forecasts. Plan your day. Mostly stay dry.</div></div>
@@ -348,6 +361,7 @@
   <div class="daysum"><div class="dh" id="dayhead"></div><span class="pill" id="confpill"></span></div>
   <div class="advisories" id="advisories"></div>
   <div class="periods" id="periods"></div>
+  <div class="sunline" id="sunline" hidden></div>
   <div class="dayrainwrap" id="dayrainwrap" hidden>
     <div class="drlbl">Rain chance through the day <span class="drlbl2">(share of 156 forecasts expecting rain each hour)</span></div>
     <div class="dayrain" id="dayrain"></div>
@@ -368,6 +382,14 @@
         <div class="nrbars" id="nrbars"></div>
       </div>
       <div class="tl" id="timeline"></div>
+      <div class="lastyear" id="lastyear" hidden></div>
+      <div class="aqline" id="aqline" hidden></div>
+    </div>
+    <div class="card" id="radcard" hidden>
+      <h2>Radar - rain over your exact spot</h2>
+      <div class="lede" id="radlede"></div>
+      <div class="radbars" id="radbars"></div>
+      <div class="src" style="margin-top:8px">Live radar tiles by <a href="https://www.rainviewer.com/" target="_blank" rel="noopener" style="color:var(--sky)">RainViewer</a>. Read at your exact coordinate, ~600 m resolution.</div>
     </div>
     <div class="card">
       <h2>Model agreement - rainfall today</h2>
@@ -381,7 +403,7 @@
   </div>
 
   <div class="foot">
-    <strong>For fun, and free.</strong> Each part of the day shows the chance of <em>proper</em> rain - the share of a ~156-member ensemble (five forecasting centres: ECMWF, ICON, the US GEFS, the Canadian GEM and the UK Met Office's own MOGREPS, via Open-Meteo) whose total for that window reaches 0.5 mm, the point at which you would actually notice it. It deliberately does not headline the chance of a 0.1 mm trace: on a sunny day a lone drizzly member could push that to 25% and read like a downpour, when four-fifths of the forecasts are bone dry. Hover a period to see the expected amount in mm. <strong>Not every source is equal.</strong> The five centres do not forecast equally well, so we do not count them equally: each is weighted by decades of published verification, with ECMWF and the Met Office carrying the most and GFS the least. We also quietly score each centre against the local rain gauges over the past week or two and nudge the weights a touch toward whichever has been closest to reality near you - but only gently, and only when there have been enough real rain events to judge, because at one spot over a fortnight the sources mostly agree and a thin sample is far too easy to over-read. So the published ranking does the heavy lifting; the local check only ever leans on it. <strong>Confidence</strong> combines three things: how strongly the members agree, how far ahead the day is (forecast skill genuinely decays with range, so a unanimous six-day-out call is capped well below a unanimous one for today), and how steady the forecast has been across the last few model runs - if it has been flip-flopping between runs, we say so now rather than letting it surprise you tomorrow. Agreement is judged on rain you would actually notice (0.5 mm), not on a trace, so the figure does not swing about on drizzle. <strong>Track record:</strong> confidence is also checked against reality. Everything else here is forecasts marking their own homework, so we fetch what the model <em>predicted</em> for the last three weeks and compare it against what actually fell, using real tipping-bucket rain gauges (dead gauges are detected and skipped) - the Environment Agency network in England and SEPA in Scotland. If the models have been getting rain wrong at your spot lately, confidence is marked down. We take the median across several nearby gauges and never trust a lone one: gauges do break, and a single reading with no neighbours to check it against is indistinguishable from a fault. Scoring only counts rain the models got right or missed, never the free marks for correctly calling a dry day, so a dry spell cannot quietly inflate the figure. Where there are no gauges (Wales, Northern Ireland, and outside the UK) this term is simply left out. It is honest but coarse - a few days at one place is a nudge, not a proof, so it is capped to a few points either way and the lead-time factors still reflect published rain/no-rain skill decay. Treat confidence as an honest guide, not a guarantee. "Feels like" is the apparent temperature, factoring humidity and wind, so hot-and-muggy days read honestly. Wind, snow and heat advisories are derived from the forecast, not official Met Office warnings. Flood alerts come from the Environment Agency (England only). Temperature is corrected to your exact spot using a 90 m elevation model. <strong>Terrain:</strong> beyond plain altitude, the app reads the SHAPE of the land around your exact spot (twenty-four elevation samples in rings at 1, 2 and 5 km - the near ring catches narrow valleys like Hebden Bridge or the Ironbridge gorge whose walls sit within a kilometre) and classifies it - valley floor, deep glen, sheltered hollow, exposed top, or flat. If you are in a valley, clear calm nights are nudged colder (cold air genuinely drains into valley bottoms - the frost-hollow effect), gusts are read lower for wind blowing across the valley and a touch higher for wind funnelled along it, and a clear, calm, damp night raises a valley-fog advisory. An exposed top reads gusts higher. These are bounded, physics-based estimates gated on the conditions that make each effect real - and where the land is gentle or ambiguous (a broad lowland hollow, a hillside) the app deliberately makes no claim rather than an invented one. Search works with full postcodes too (e.g. "LL55 4TY"), pinning the forecast to within about 100 m - which matters in the hills, where the next street can be 100 m higher. Runs entirely in your browser - no server, no accounts, no tracking. Places via postcodes.io and OpenStreetMap. <span id="appver" style="color:var(--text);font-weight:600"></span> <span id="srcline"></span><br>
+    <strong>For fun, and free.</strong> Each part of the day shows the chance of <em>proper</em> rain - the share of a ~156-member ensemble (five forecasting centres: ECMWF, ICON, the US GEFS, the Canadian GEM and the UK Met Office's own MOGREPS, via Open-Meteo) whose total for that window reaches 0.5 mm, the point at which you would actually notice it. It deliberately does not headline the chance of a 0.1 mm trace: on a sunny day a lone drizzly member could push that to 25% and read like a downpour, when four-fifths of the forecasts are bone dry. Hover a period to see the expected amount in mm. <strong>Not every source is equal.</strong> The five centres do not forecast equally well, so we do not count them equally: each is weighted by decades of published verification, with ECMWF and the Met Office carrying the most and GFS the least. We also quietly score each centre against the local rain gauges over the past week or two and nudge the weights a touch toward whichever has been closest to reality near you - but only gently, and only when there have been enough real rain events to judge, because at one spot over a fortnight the sources mostly agree and a thin sample is far too easy to over-read. So the published ranking does the heavy lifting; the local check only ever leans on it. <strong>Confidence</strong> combines three things: how strongly the members agree, how far ahead the day is (forecast skill genuinely decays with range, so a unanimous six-day-out call is capped well below a unanimous one for today), and how steady the forecast has been across the last few model runs - if it has been flip-flopping between runs, we say so now rather than letting it surprise you tomorrow. Agreement is judged on rain you would actually notice (0.5 mm), not on a trace, so the figure does not swing about on drizzle. <strong>Track record:</strong> confidence is also checked against reality. Everything else here is forecasts marking their own homework, so we fetch what the model <em>predicted</em> for the last three weeks and compare it against what actually fell, using real tipping-bucket rain gauges (dead gauges are detected and skipped) - the Environment Agency network in England and SEPA in Scotland. If the models have been getting rain wrong at your spot lately, confidence is marked down. We take the median across several nearby gauges and never trust a lone one: gauges do break, and a single reading with no neighbours to check it against is indistinguishable from a fault. Scoring only counts rain the models got right or missed, never the free marks for correctly calling a dry day, so a dry spell cannot quietly inflate the figure. Where there are no gauges (Wales, Northern Ireland, and outside the UK) this term is simply left out. It is honest but coarse - a few days at one place is a nudge, not a proof, so it is capped to a few points either way and the lead-time factors still reflect published rain/no-rain skill decay. Treat confidence as an honest guide, not a guarantee. "Feels like" is the apparent temperature, factoring humidity and wind, so hot-and-muggy days read honestly. Wind, snow and heat advisories are derived from the forecast, not official Met Office warnings. Flood alerts come from the Environment Agency (England only). Temperature is corrected to your exact spot using a 90 m elevation model. <strong>Terrain:</strong> beyond plain altitude, the app reads the SHAPE of the land around your exact spot (twenty-four elevation samples in rings at 1, 2 and 5 km - the near ring catches narrow valleys like Hebden Bridge or the Ironbridge gorge whose walls sit within a kilometre) and classifies it - valley floor, deep glen, sheltered hollow, exposed top, or flat. If you are in a valley, clear calm nights are nudged colder (cold air genuinely drains into valley bottoms - the frost-hollow effect), gusts are read lower for wind blowing across the valley and a touch higher for wind funnelled along it, and a clear, calm, damp night raises a valley-fog advisory. An exposed top reads gusts higher. These are bounded, physics-based estimates gated on the conditions that make each effect real - and where the land is gentle or ambiguous (a broad lowland hollow, a hillside) the app deliberately makes no claim rather than an invented one. Search works with full postcodes too (e.g. "LL55 4TY"), pinning the forecast to within about 100 m - which matters in the hills, where the next street can be 100 m higher. <strong>Learning your patch:</strong> where England's official gauge archive allows, three months of the models' own past rain calls are compared against what the gauges actually recorded near your spot, and every rain percentage is scaled by the measured over- or under-calling ratio (capped at 25% either way, refreshed daily, and declared in the confidence explanation when it bites). Radar card reads the live rain-radar pixel over your exact coordinate - radar tiles by <a href="https://www.rainviewer.com/" style="color:var(--sky)" target="_blank" rel="noopener">RainViewer</a>. Air quality and pollen via Open-Meteo's air-quality API; a-year-ago weather via the Open-Meteo archive; gauge history via the Environment Agency Hydrology API (OGL). Runs entirely in your browser - no server, no accounts, no tracking. Places via postcodes.io and OpenStreetMap. <span id="appver" style="color:var(--text);font-weight:600"></span> <span id="srcline"></span><br>
     <span class="ios">On iPhone, tap Share then "Add to Home Screen" to install. On Android, use the Install button or your browser menu.</span> Not for safety-critical decisions - always check official <a href="https://www.metoffice.gov.uk/weather/warnings-and-advice/uk-warnings" style="color:var(--muted)">Met Office warnings</a> and <a href="https://check-for-flooding.service.gov.uk" style="color:var(--muted)">flood alerts</a>.
   </div>
 
@@ -553,7 +575,7 @@ async function fetchDeterministic(lat,lon){
 async function fetchRich(lat,lon){
   const url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
     '&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,wind_gusts_10m,weather_code,cloud_cover,precipitation,precipitation_probability'+
-    '&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,snowfall_sum,uv_index_max'+
+    '&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,snowfall_sum,uv_index_max,sunrise,sunset'+
     '&forecast_days='+DAYS+'&timezone=auto';
   const j=await fetchJSON(url);
   return {time:j.hourly.time,hourly:j.hourly,daily:j.daily,utcOffsetSeconds:j.utc_offset_seconds||0,elevation:j.elevation};
@@ -640,6 +662,104 @@ async function fetchFloods(lat,lon){
   }catch(e){return [];}
 }
 
+// ---- Air quality + pollen (Open-Meteo air-quality API, free, CORS-open) ----
+async function fetchAQ(lat,lon){
+  const j=await fetchJSON('https://air-quality-api.open-meteo.com/v1/air-quality?latitude='+lat+'&longitude='+lon+
+    '&hourly=european_aqi,pm2_5,grass_pollen,birch_pollen,mugwort_pollen,ragweed_pollen&forecast_days=1&timezone=auto',12000);
+  const H=j&&j.hourly; if(!H||!H.time)return null;
+  // daytime (07-21) worst-case values - that is what you breathe out and about
+  const idx=[];for(let i=0;i<H.time.length;i++){const h=+H.time[i].slice(11,13);if(h>=7&&h<=21)idx.push(i);}
+  const mx=k=>{const v=idx.map(i=>H[k]&&H[k][i]).filter(x=>x!=null);return v.length?Math.max.apply(null,v):null;};
+  const aqi=mx('european_aqi');
+  const pol={grass:mx('grass_pollen'),birch:mx('birch_pollen'),mugwort:mx('mugwort_pollen'),ragweed:mx('ragweed_pollen')};
+  if(aqi==null)return null;
+  const band=aqi<20?'Good':aqi<40?'Fair':aqi<60?'Moderate':aqi<80?'Poor':'Very poor';
+  // pollen severity: rough grains/m3 bands, honest "low/moderate/high"
+  const sev=v=>v==null?null:v<25?0:v<60?1:2;
+  let worst=null,worstSev=-1;
+  for(const k of Object.keys(pol)){const s=sev(pol[k]);if(s!=null&&s>worstSev){worstSev=s;worst=k;}}
+  return {aqi:Math.round(aqi),band,pollenKind:worst,pollenSev:worstSev,
+    pollenTxt:worstSev<=0?'low':worstSev===1?'moderate':'high'};
+}
+// ---- This day last year (Open-Meteo archive API, free, CORS-open; cached - history never changes)
+async function fetchLastYear(lat,lon,todayStr){
+  const y=+todayStr.slice(0,4)-1, d=y+todayStr.slice(4);
+  const key='howsdaweather_lastyr_v1';
+  try{const c=JSON.parse(localStorage.getItem(key))||{};const k=lat.toFixed(2)+','+lon.toFixed(2)+','+d;if(c[k])return c[k];}catch(e){}
+  const j=await fetchJSON('https://archive-api.open-meteo.com/v1/archive?latitude='+lat+'&longitude='+lon+
+    '&start_date='+d+'&end_date='+d+'&daily=temperature_2m_max,precipitation_sum&timezone=auto',12000);
+  const D=j&&j.daily; if(!D||D.temperature_2m_max==null||D.temperature_2m_max[0]==null)return null;
+  const out={t:Math.round(D.temperature_2m_max[0]),mm:Math.round((D.precipitation_sum[0]||0)*10)/10,date:d};
+  try{const c=JSON.parse(localStorage.getItem(key))||{};c[lat.toFixed(2)+','+lon.toFixed(2)+','+d]=out;
+    const ks=Object.keys(c);if(ks.length>20)delete c[ks[0]];localStorage.setItem(key,JSON.stringify(c));}catch(e){}
+  return out;
+}
+// ---- Radar at your exact spot (RainViewer tiles, free with attribution, CORS-open) ----
+// We read the actual radar PIXEL over the loaded coordinate for the last ~2 hours of frames (plus
+// RainViewer's short nowcast frames when they publish them). Intensity is decoded EMPIRICALLY and
+// reported only as light/moderate/heavy categories - verified against live gauges: a raining spot
+// reads alpha 140+, a dry spot reads exactly zero. ~600 m resolution at zoom 8.
+const RADCACHE=new Map();
+async function fetchRadar(lat,lon){
+  const ck=lat.toFixed(3)+','+lon.toFixed(3);
+  const hit=RADCACHE.get(ck); if(hit&&Date.now()-hit.t<5*60*1000)return hit.v;
+  const meta=await fetchJSON('https://api.rainviewer.com/public/weather-maps.json',12000);
+  if(!meta||!meta.radar||!meta.radar.past||!meta.radar.past.length)return null;
+  const Z=8,n=Math.pow(2,Z),latr=lat*Math.PI/180;
+  const xt=(lon+180)/360*n, yt=(1-Math.asinh(Math.tan(latr))/Math.PI)/2*n;
+  const tx=Math.floor(xt),ty=Math.floor(yt),px=Math.floor((xt-tx)*256),py=Math.floor((yt-ty)*256);
+  const cv=document.createElement('canvas');cv.width=cv.height=256;const g=cv.getContext('2d',{willReadFrequently:true});
+  const readFrame=f=>new Promise(res=>{
+    const img=new Image();img.crossOrigin='anonymous';
+    img.onload=()=>{try{
+      g.clearRect(0,0,256,256);g.drawImage(img,0,0);
+      let mA=0,mG=0;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+        const p=g.getImageData(Math.max(0,Math.min(255,px+dx)),Math.max(0,Math.min(255,py+dy)),1,1).data;
+        if(p[3]>mA)mA=p[3]; if(p[0]>mG)mG=p[0];
+      }
+      const cat=mA===0?0:(mG<60?1:mG<140?2:3);
+      res({time:f.time,cat});
+    }catch(e){res(null);}};
+    img.onerror=()=>res(null);
+    img.src=meta.host+f.path+'/256/'+Z+'/'+tx+'/'+ty+'/0/0_0.png';
+  });
+  const frames=meta.radar.past.slice(-12).map(f=>({...f,future:false}))
+    .concat((meta.radar.nowcast||[]).map(f=>({...f,future:true})));
+  const reads=await Promise.all(frames.map(readFrame));
+  const out=frames.map((f,i)=>reads[i]?{time:f.time,cat:reads[i].cat,future:f.future}:null).filter(Boolean);
+  if(!out.length)return null;
+  const v={frames:out};
+  RADCACHE.set(ck,{t:Date.now(),v});
+  return v;
+}
+function renderRadar(r){
+  const card=$('radcard'),bars=$('radbars'),lede=$('radlede');
+  if(!card||!bars||!lede)return;
+  if(!r||!r.frames||!r.frames.length){card.hidden=true;return;}
+  const CATCOL=['rgba(255,255,255,.08)','#5db4ff','#2b74e0','#f2a43d'];
+  const CATH=[3,14,26,38], CATNM=['dry','light','moderate','heavy'];
+  bars.innerHTML='';
+  let lastPastIdx=-1; r.frames.forEach((f,i)=>{if(!f.future)lastPastIdx=i;});
+  r.frames.forEach((f,i)=>{
+    const b=document.createElement('div');b.className='rb'+(f.future?' future':'');
+    const dt=new Date(f.time*1000);
+    const hh=('0'+dt.getHours()).slice(-2)+':'+('0'+dt.getMinutes()).slice(-2);
+    b.title=(f.future?'Projected ':'')+CATNM[f.cat]+' at '+hh;
+    b.innerHTML='<div class="rbf" style="height:'+CATH[f.cat]+'px;background:'+CATCOL[f.cat]+'"></div>'+((i%3===0||i===r.frames.length-1)?'<div class="rbt">'+hh+'</div>':'<div class="rbt">&nbsp;</div>');
+    bars.appendChild(b);
+    if(i===lastPastIdx&&i<r.frames.length-1){const sep=document.createElement('div');sep.className='radnow';sep.title='now';bars.appendChild(sep);}
+  });
+  const nowCat=r.frames[lastPastIdx]?r.frames[lastPastIdx].cat:0;
+  const anyPast=r.frames.slice(0,lastPastIdx+1).some(f=>f.cat>0);
+  const futWet=r.frames.filter(f=>f.future&&f.cat>0)[0];
+  if(nowCat>0)lede.textContent='Radar shows '+CATNM[nowCat]+' rain over you right now.';
+  else if(futWet)lede.textContent='Dry over you now - radar projects rain reaching you around '+new Date(futWet.time*1000).toTimeString().slice(0,5)+'.';
+  else if(anyPast)lede.textContent='Dry over you now - the last radar echoes have moved through.';
+  else lede.textContent='Nothing on the radar over you in the last 2 hours.';
+  card.hidden=false;
+}
+
 // ---- Observed rainfall: the only part of this app that checks the models against reality ----
 // Everything else here is forecasts grading their own homework. These are real tipping-bucket rain
 // gauges: the Environment Agency network (England, ~900 gauges, 15-min) and SEPA (Scotland,
@@ -721,6 +841,62 @@ async function fetchObserved(lat,lon,off,days){
   const order=lat>=55?[sepaObserved,eaObserved]:[eaObserved,sepaObserved];
   for(const fn of order){try{const r=await fn(lat,lon,off,days);if(r)return r;}catch(e){}}
   return null; // Wales and NI have no equivalent open network we could find - degrade quietly
+}
+
+// ---- Local calibration: frequency-bias correction from months of real gauge history ----
+// The one genuinely new thing a browser can compute that the models cannot: how often rain
+// forecasts VERIFY at this exact spot. We fetch 92 days of the five centres' own day-1 forecasts
+// (previous-runs API) and 92 days of observed daily rainfall (EA Hydrology API - years-deep
+// archive, England; skipping the last 6 days which lag QC), then compare wet-day FREQUENCIES:
+// if the blend calls rain on 32% of days here but the gauges only record it on 24%, every wet
+// probability is scaled by the measured ratio (bounded 0.75-1.25). This is the standard
+// frequency-bias correction from forecast verification - measured, bounded, cached for 24h, and
+// applied inside rainAt so the day, the periods and the verdicts all move together. Requires 40+
+// scored days, 2+ stations and a real base of wet forecasts; otherwise we change nothing.
+async function fetchCalib(lat,lon){
+  const key='howsdaweather_calib_v1', ck=lat.toFixed(2)+','+lon.toFixed(2);
+  try{const c=JSON.parse(localStorage.getItem(key))||{};const v=c[ck];if(v&&Date.now()-v.t<24*3600*1000)return v.v;}catch(e){}
+  const models=SOURCE_RUN_MODELS.map(m=>m[0]).join(',');
+  const pr=await fetchJSON('https://previous-runs-api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
+    '&hourly=precipitation_previous_day1&past_days=92&forecast_days=0&models='+models+'&timezone=GMT',15000);
+  const H=pr&&pr.hourly; if(!H||!H.time)return null;
+  const fcBy={};
+  for(let i=0;i<H.time.length;i++){
+    const d=H.time[i].slice(0,10); let s=0,n=0;
+    for(const [id] of SOURCE_RUN_MODELS){const a=H['precipitation_previous_day1_'+id];if(a&&a[i]!=null){s+=a[i];n++;}}
+    if(n)fcBy[d]=(fcBy[d]||0)+s/n;
+  }
+  const hs=await fetchJSON('https://environment.data.gov.uk/hydrology/id/stations?observedProperty=rainfall&lat='+lat.toFixed(4)+'&long='+lon.toFixed(4)+'&dist=20&_limit=6',15000);
+  const sts=(hs&&hs.items)||[]; if(!sts.length)return null;
+  const end=new Date(Date.now()-6*86400000).toISOString().slice(0,10);
+  const start=new Date(Date.now()-92*86400000).toISOString().slice(0,10);
+  const series=[];
+  for(const st of sts.slice(0,4)){
+    try{
+      const meas=await fetchJSON((st['@id']||'').replace(/^http:/,'https:')+'/measures',12000);
+      const ms=((meas&&meas.items)||[]).filter(m=>/rainfall/.test(m['@id']||''));
+      const daily=ms.find(m=>/-86400-/.test(m['@id']||'')); if(!daily)continue;
+      const rd=await fetchJSON((daily['@id']||'').replace(/^http:/,'https:')+'/readings?mineq-date='+start+'&maxeq-date='+end+'&_limit=200',12000);
+      const by={}; for(const x of ((rd&&rd.items)||[])){if(x.date&&typeof x.value==='number')by[x.date]=x.value;}
+      if(Object.keys(by).length>=40)series.push(by);
+      if(series.length>=3)break;
+    }catch(e){}
+  }
+  if(series.length<2)return null;
+  let both=0,fcWet=0,obWet=0;
+  for(const d of Object.keys(fcBy)){
+    const vals=series.map(by=>by[d]).filter(v=>v!=null);
+    if(vals.length<2)continue;
+    both++;
+    if(fcBy[d]>=0.5)fcWet++;
+    if(medianOf(vals)>=0.5)obWet++;
+  }
+  if(both<40||fcWet<6)return null;
+  let r=(obWet/both)/(fcWet/both);
+  r=Math.max(0.75,Math.min(1.25,Math.round(r*100)/100));
+  const v={r,days:both,fcFreq:Math.round(100*fcWet/both),obsFreq:Math.round(100*obWet/both),stations:series.length};
+  try{const c=JSON.parse(localStorage.getItem(key))||{};c[ck]={t:Date.now(),v};const ks=Object.keys(c);if(ks.length>15)delete c[ks[0]];localStorage.setItem(key,JSON.stringify(c));}catch(e){}
+  return v;
 }
 
 // ---- Terrain profile: does this exact spot sit in a valley, a bowl, or on an exposed top? ----
@@ -1002,6 +1178,16 @@ function chancePhrase(p){ // p is the chance of proper rain (>=0.5mm) - bands on
   if(p<68)return'often wet';
   return'wet, and probably persistently so';
 }
+// Moon phase, computed locally (no API): days since the reference new moon of 2000-01-06 18:14 UTC,
+// modulo the 29.53-day synodic month. Feeds the sun/moon line and the stargazing card.
+function moonPhaseFor(dateStr){
+  const days=(Date.parse(dateStr+'T12:00:00Z')-Date.parse('2000-01-06T18:14:00Z'))/86400000;
+  const age=((days%29.530588)+29.530588)%29.530588;
+  const idx=Math.round(age/29.530588*8)%8;
+  const emoji=['\u{1F311}','\u{1F312}','\u{1F313}','\u{1F314}','\u{1F315}','\u{1F316}','\u{1F317}','\u{1F318}'][idx];
+  const name=['New moon','Waxing crescent','First quarter','Waxing gibbous','Full moon','Waning gibbous','Last quarter','Waning crescent'][idx];
+  return {age,idx,emoji,name,full:age>=13&&age<=17,dark:age<2.5||age>27};
+}
 // Plain-language expected amount for a period, from the ensemble's own member totals. Directly
 // answers "what does the chance actually amount to": the median is the typical member, the 90th
 // the realistic worst case. On a dry day this reads "under 0.5mm - a spot at most", which is the
@@ -1169,8 +1355,11 @@ function makeHeadline(P,tonight,d){
   return h;
 }
 
-function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain){
+function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
   const off=rich.utcOffsetSeconds;
+  // Local frequency-bias factor (see fetchCalib): scales every WET probability, bounded 0.75-1.25.
+  const calibR=(calib&&calib.r)?calib.r:1;
+  const calScale=p=>Math.min(100,Math.round(p*calibR));
   // One track record per location (not per day): it describes how the model has been handling this
   // spot's weather lately, so every day's confidence is nudged by the same measured figure.
   const skill=trackRecord(prev,obs);
@@ -1188,10 +1377,12 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain){
   const dTime=det.time;
   const dGroups=idxByDate(dTime);
 
-  // mm = the total over the window a member must reach to count as "wet".
+  // mm = the total over the window a member must reach to count as "wet". WET probabilities pass
+  // through the local calibration factor so day, periods and verdicts all shift consistently.
   function rainAt(date,s,e,mm){
     const thr=mm==null?ANY_MM:mm;
-    if(useEns){const idxs=inHours(eGroups[date]||[],eTime,s,e);return rainProbTotal(members,idxs,thr,weights);}
+    const cal=p=>thr>=WET_MM?calScale(p):p;
+    if(useEns){const idxs=inHours(eGroups[date]||[],eTime,s,e);return cal(rainProbTotal(members,idxs,thr,weights));}
     // Before the ensemble loads, use the rich fetch's own 7-day hourly PoP (peak chance in the
     // window). This covers all 7 days - the 5-run fallback only spans 2 days and would force
     // days 3-7 to a false 0%. A single PoP cannot express amount, so the WET threshold is
@@ -1199,9 +1390,9 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain){
     const ridx=inHours(rGroups[date]||[],rTime,s,e);
     if(rH.precipitation_probability && ridx.length){
       const pop=Math.round(Math.max.apply(null,ridx.map(i=>rH.precipitation_probability[i]||0)));
-      return thr>ANY_MM?Math.round(pop*0.7):pop;
+      return thr>ANY_MM?cal(Math.round(pop*0.7)):pop;
     }
-    const idxs=inHours(dGroups[date]||[],dTime,s,e);return rainProbTotal(detMembers,idxs,thr);
+    const idxs=inHours(dGroups[date]||[],dTime,s,e);return cal(rainProbTotal(detMembers,idxs,thr));
   }
   // How MUCH rain, not just the chance: the median and 90th-percentile member total over a window.
   // The median is the honest "expected" amount (immune to one wild member); the 90th shows the
@@ -1318,6 +1509,8 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain){
       // Confidence is judged on WET (rain you would notice), not on trace risk; damped by how much
       // this day's call has been churning between runs, and by the model's measured local record.
       periods,pAny,pWet,dayAmt,hourlyRain,rainWindow,earlyWet,restWet,clearing,
+      sunrise:daily.sunrise?daily.sunrise[di].slice(11,16):null,
+      sunset:daily.sunset?daily.sunset[di].slice(11,16):null,
       stability:stabilityFor(prev,date),
       dayConfidence:confidenceFromProb(pWet,di,stabilityFor(prev,date),skill),tonight
     };
@@ -1327,6 +1520,9 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain){
       const restIdx=inHours(rg,rTime,9,20);
       d.icon=skyIcon(restIdx.map(i=>rH.weather_code[i]),restIdx.map(i=>rH.cloud_cover[i]),restWet,d.snowCm,rainAt(date,9,24),d.gustMph,d.feelsMax,d.feelsMin);
     }
+    // Tell the user their odds are locally calibrated (only when the factor genuinely bites).
+    if(calib&&Math.abs(1-calibR)>=0.05)
+      d.dayConfidence.why+='. Rain odds tuned '+(calibR>1?'up':'down')+' '+Math.abs(Math.round((calibR-1)*100))+'% by '+calib.days+' days of local gauge records';
     d.hazards=assessHazards(d);
     d.headline=makeHeadline(periods,tonight,d);
     // driest/wettest keyed on the honest wet number (period.peak is aliased to wet)
@@ -1345,6 +1541,9 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain){
   let word=nowTemp>=25?'Hot':nowTemp>=20?'Warm':nowTemp>=15?'Mild':nowTemp>=10?'Cool':nowTemp>=5?'Chilly':'Cold';
   const rainw=nowP<25?'dry':nowP<55?'showery':'wet';
   const nowCond=word+', '+rainw;
+  // Icon for RIGHT NOW - drives the live brand bubble and the dynamic favicon.
+  const nowCloud=Math.round(rH.cloud_cover[nowIdxR]??50);
+  const nowIcon=skyIcon([nowCode],[nowCloud],nowP>=55?70:(nowP>=25?30:0),0,nowP,nowGust,nowFeels,nowFeels);
 
   // today rainfall mm by named model (det, 2-day)
   const today=days[0].date;
@@ -1386,8 +1585,8 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain){
 
   return {
     place,
-    now:{temp:nowTemp,feels:nowFeels,humid:nowHumid,gust:nowGust,cond:nowCond,code:nowCode},
-    days,skill,srcSkill:srcSkill||null,terrain:terrain||null,
+    now:{temp:nowTemp,feels:nowFeels,humid:nowHumid,gust:nowGust,cond:nowCond,code:nowCode,icon:nowIcon},
+    days,skill,srcSkill:srcSkill||null,terrain:terrain||null,calib:calib||null,
     detail:{
       models:MODELS.map(m=>({nm:m.label,mm:amtBy[m.id]})),synthAmt,
       maxAmt:Math.max.apply(null,amts.concat([0.1])),amtMin:Math.min.apply(null,amts),amtMax:Math.max.apply(null,amts),
@@ -1527,7 +1726,12 @@ const ACTIVITIES=[
   {id:'stargaze',emoji:'✨',label:'Stargazing tonight?',fn:c=>{
     if(c.thunder) return {c:'bad',verdict:'Cloudy and stormy',meta:'Storms tonight - nothing to see but cloud. Another night.'};
     const e=c.eAny; // clear-sky odds track the WIDER rain risk (any cloud/spit), not just proper rain
-    return {c:e<25?'good':e<50?'warn':'bad',verdict:e<25?'Clear-ish skies':e<50?'Patchy cloud':'Cloud blanket',meta:(e<25?'Evening looking clear enough for a proper look up.':e<50?'Cloud coming and going - you might catch a gap.':'Probably too much cloud tonight. Save it for another night.')+((e<50&&(c.cold==='hard'||c.cold==='cold'))?' Bitter out - wrap up warm.':'')};}},
+    let base={c:e<25?'good':e<50?'warn':'bad',verdict:e<25?'Clear-ish skies':e<50?'Patchy cloud':'Cloud blanket',meta:(e<25?'Evening looking clear enough for a proper look up.':e<50?'Cloud coming and going - you might catch a gap.':'Probably too much cloud tonight. Save it for another night.')+((e<50&&(c.cold==='hard'||c.cold==='cold'))?' Bitter out - wrap up warm.':'')};
+    // The moon is half the story of a stargazing night.
+    if(base.c!=='bad'&&c.date){const mp=moonPhaseFor(c.date);
+      if(mp.full)base.meta+=' '+mp.emoji+' Near-full moon though - it will wash out the fainter stars.';
+      else if(mp.dark)base.meta+=' '+mp.emoji+' New moon - properly dark skies away from the streetlights.';}
+    return base;}},
   {id:'fishing',emoji:'🎣',label:'Off fishing?',fn:c=>{
     if(c.thunder) return {c:'bad',verdict:'Reel it in',meta:'Thunder forecast - a carbon rod is basically a lightning rod. Off the water until it passes.'};
     let base={c:c.day<33?'good':c.day<52?'warn':'bad',verdict:c.day<33?'Cast away':c.day<52?'Waterproofs on':'One for the shed',meta:c.day<22?'Settled enough for a sit by the water.':c.day<33?'Mostly dry, the odd shower possible.':c.day<52?'Showery spells likely (~'+c.day+'%) - the brolly earns its keep.':'Probably wetter than the fish (~'+c.day+'%).'};
@@ -1616,6 +1820,7 @@ function setLoading(name){
   const tl0=$('terraline');if(tl0)tl0.hidden=true;
   const dw0=$('dayrainwrap');if(dw0)dw0.hidden=true;
   const nr0=$('nextrain');if(nr0)nr0.hidden=true;
+  for(const id of ['radcard','aqline','lastyear','sunline']){const e=$(id);if(e)e.hidden=true;}
   const we=$('wordday');if(we){we.textContent='...';we.style.color='var(--muted)';}
   ['week','periods','decisions','advisories'].forEach(id=>$(id).innerHTML='');
   $('dayhead').textContent='';const cp=$('confpill');cp.textContent='';cp.style.background='transparent';
@@ -1665,11 +1870,12 @@ async function loadForecast(loc,isGeo){
     // blend for confidence and (b) score each source to gently reweight the reliable ones.
     Promise.all([
       fetchObserved(loc.lat,loc.lon,off,past),
-      fetchSourceRuns(loc.lat,loc.lon).catch(()=>null)
-    ]).then(([obs,srcRuns])=>{
-      if(seq!==loadSeq||!obs)return;
-      const srcSk=sourceSkill(srcRuns,obs);
-      const v3=synthesize(det,rich,ens,loc.name,prev,obs,srcSk,terr||terr0);
+      fetchSourceRuns(loc.lat,loc.lon).catch(()=>null),
+      fetchCalib(loc.lat,loc.lon).catch(()=>null)
+    ]).then(([obs,srcRuns,calib])=>{
+      if(seq!==loadSeq||(!obs&&!calib))return;
+      const srcSk=obs?sourceSkill(srcRuns,obs):null;
+      const v3=synthesize(det,rich,ens,loc.name,prev,obs,srcSk,terr||terr0,calib);
       const c2=CACHE.get(k)||{};CACHE.set(k,{t:Date.now(),v:v3,floods:c2.floods||[],full:!!ens});
       render({...v3,place:loc.name,floods:(CACHE.get(k)||{}).floods||[]},isGeo,true);
     }).catch(()=>{});
@@ -1680,6 +1886,27 @@ async function loadForecast(loc,isGeo){
     const c=CACHE.get(k)||{};CACHE.set(k,{t:c.t||Date.now(),v:c.v,floods:floods||[],full:c.full});
     if(curData){curData.floods=floods||[];selectDay(selDay);}
   }).catch(()=>{});
+  // Enhance 4: radar pixel over the exact spot, air quality + pollen, and this-day-last-year.
+  // All independent, all off the critical path, all quietly absent if their source is down.
+  fetchRadar(loc.lat,loc.lon).then(r=>{if(seq!==loadSeq)return;renderRadar(r);}).catch(()=>{const c=$('radcard');if(c)c.hidden=true;});
+  fetchAQ(loc.lat,loc.lon).then(aq=>{
+    if(seq!==loadSeq||!aq)return;
+    const el=$('aqline'); if(!el)return;
+    let t='Air quality today: <b>'+aq.band+'</b> (European AQI '+aq.aqi+')';
+    if(aq.pollenSev>=1&&aq.pollenKind)t+=' &middot; '+aq.pollenKind+' pollen <b>'+aq.pollenTxt+'</b>';
+    else if(aq.pollenSev===0)t+=' &middot; pollen low';
+    el.innerHTML=t; el.hidden=false;
+  }).catch(()=>{});
+  (async()=>{
+    try{
+      const today=new Date(Date.now()+((rich&&rich.utcOffsetSeconds)||0)*1000).toISOString().slice(0,10);
+      const ly=await fetchLastYear(loc.lat,loc.lon,today);
+      if(seq!==loadSeq||!ly)return;
+      const el=$('lastyear'); if(!el)return;
+      el.innerHTML='This day last year here: <b>'+ly.t+'&deg;</b> and '+(ly.mm>=0.5?('<b>'+ly.mm+'mm</b> of rain'):'<b>dry</b>')+'.';
+      el.hidden=false;
+    }catch(e){}
+  })();
 }
 
 function dayLabel(dateStr,i){
@@ -1693,8 +1920,26 @@ function dayShort(dateStr,i){
   return {top:i===0?'Today':DOW[d.getDay()],bot:d.getDate()+' '+MON[d.getMonth()]};
 }
 
+// ---- Live brand: the logo bubble and the favicon reflect the current weather at the loaded spot.
+// (The INSTALLED home-screen icon cannot change - the OS snapshots it at install time and no web
+// API can repaint it; the tab favicon and in-page logo are everything the platform allows.)
+function updateBrand(icon){
+  if(!icon||!WICONS[icon])return;
+  const lc=$('liveCond');
+  if(lc){lc.innerHTML=WICONS[icon];lc.hidden=false;}
+  try{
+    const inner=WICONS[icon].replace(/^<svg[^>]*>/,'').replace(/<\/svg>\s*$/,'');
+    const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">'+
+      '<defs><linearGradient id="fvg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#70c4ff"/><stop offset="1" stop-color="#2b6cd6"/></linearGradient></defs>'+
+      '<rect width="24" height="24" rx="5.5" fill="url(#fvg)"/>'+
+      '<g transform="translate(3,3) scale(0.75)">'+inner+'</g></svg>';
+    const link=document.querySelector('link[rel="icon"]');
+    if(link)link.href='data:image/svg+xml,'+encodeURIComponent(svg);
+  }catch(e){}
+}
 function render(j,isGeo,keepSel){
   curData=j;
+  if(j.now&&j.now.icon)updateBrand(j.now.icon);
   $('place').innerHTML=j.place+(isGeo?' <span class="cur">Your location</span>':'');
   $('placesBtnLabel').textContent=j.place;
   // hero (now)
@@ -1820,6 +2065,15 @@ function selectDay(i){
     el.title=amtHint(p);
     el.innerHTML='<div class="plbl">'+p.label+'</div><div class="pic">'+WICONS[p.icon]+'</div><div class="ptemp">'+p.temp+'&deg;</div><div class="prain" style="color:'+p.verdict.color+'">'+p.peak+'% rain</div><div class="pverd">'+p.verdict.word+'</div>';
     pr.appendChild(el);});
+  // Sun and moon for the selected day.
+  const sl=$('sunline');
+  if(sl){
+    if(d.sunrise&&d.sunset){
+      const mp=moonPhaseFor(d.date);
+      sl.innerHTML='&#9728;&#65039; Sunrise <b>'+d.sunrise+'</b> &middot; Sunset <b>'+d.sunset+'</b> &nbsp;&middot;&nbsp; '+mp.emoji+' '+mp.name;
+      sl.hidden=false;
+    } else sl.hidden=true;
+  }
   // Hour-by-hour rain chance for the SELECTED day - the graph that answers "so WHEN will it rain?"
   // (built from the same weighted ensemble as every other figure, so it can never disagree).
   const dw=$('dayrainwrap'),dr=$('dayrain');
@@ -1842,7 +2096,7 @@ function selectDay(i){
     mAny:P[0].any,aAny:P[1].any,eAny:P[2].any,dayAny:d.pAny,conf:d.dayConfidence.value,
     temp:P[1].temp,feels:d.feelsMax,humid:d.humid,gust:d.gustMph,snow:d.snowCm>0,ice:d.hazards.ice,
     heat:d.hazards.heat,wind:d.hazards.wind,cold:d.hazards.cold,uv:d.uv,thunder:d.hazards.thunder,fog:d.hazards.fog,precipSum:d.precipSum,
-    driest:d.driest,wettest:d.wettest,disagree:Math.abs(d.pWet-50)<12,isToday:i===0,label:dayLabel(d.date,i)};
+    driest:d.driest,wettest:d.wettest,disagree:Math.abs(d.pWet-50)<12,isToday:i===0,label:dayLabel(d.date,i),date:d.date};
   renderDecisions();
 }
 
@@ -1952,6 +2206,15 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>{
 // ---- release notes (pops once per update, dismissible, gone 24h after you first see it) ----
 // Newest first. Add a new entry (bump v) each release; only the latest ever pops.
 const RELEASES=[
+  {v:'1.9', date:'28 Aug 2026', title:'Radar eyes, a live logo, and a forecast that learns your patch',
+   notes:[
+     'The logo is alive: the little badge in the corner (and your browser-tab icon) now shows the current weather at your loaded location. Sadly the icon on your phone\'s home screen is frozen by the operating system at install time - no app can change that one, so ours stays a smiling cloud.',
+     'REAL RADAR, at your exact spot: a new card reads the actual rain radar pixel over your coordinate (about 600 m across) for the last two hours - so "is that rain band on me or not?" gets answered by radar, not a model. When RainViewer publishes short-term projections, you get those too. Radar tiles by RainViewer.com.',
+     'The forecast now LEARNS your patch: we compare three months of the models\' own past rain calls against years-deep official gauge records near you (Environment Agency Hydrology archive) and, where the models systematically over- or under-call rain at your spot, every rain percentage is tuned by the measured amount - capped, cached, and declared in the confidence explanation. England only for now (Scotland\'s open archive is too short).',
+     'Sunrise, sunset and the moon phase now sit under each day - and the stargazing card knows a full moon washes out the stars.',
+     'Air quality (European AQI) and pollen appear in the detail section, with the day\'s worst daytime values.',
+     'And a little time travel: "This day last year here" shows what the weather did exactly a year ago at your spot.'
+   ]},
   {v:'1.8', date:'17 Aug 2026', title:'Sharper words, tougher self-checks',
    notes:[
      'The Word for the Day now judges the day the way you live it: morning and afternoon carry full weight, and evening only 60%. A soaked morning brands the day; rain that only turns up after dinner no longer spoils a decent one - and a grey, drizzly morning can no longer sneak a "STUNNER" past us just because the afternoon clears.',
@@ -2053,6 +2316,7 @@ function openDiff(){
       const src=(curData.srcSkill&&curData.srcSkill.src)||(curData.skill&&curData.skill.src);
       if(g)bits.push('checked against '+g+' real rain gauges ('+(src||'').replace(' rain gauges','')+')');
       if(curData.terrain&&curData.terrain.cls!=='flat'){const n={deep:'deep-valley',valley:'valley',hollow:'sheltered-hollow',exposed:'exposed-hilltop'}[curData.terrain.cls];bits.push(n+' terrain factored in');}
+      if(curData.calib&&Math.abs(1-curData.calib.r)>=0.05)bits.push('rain odds calibrated by '+curData.calib.days+' days of local gauge history');
     }
     el.textContent=bits.length?('Live right now for '+(curData.place||'this spot')+': '+bits.join(' · ')+'.'):'Load a place and this line will show what is in play for it.';
   }
