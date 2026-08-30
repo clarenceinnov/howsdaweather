@@ -183,6 +183,7 @@
   .tiles .ti .tv{font-size:16px;font-weight:700;margin-top:3px}
   .tiles .ti .ts{font-size:10.5px;color:var(--muted);margin-top:2px}
   @media(max-width:600px){.wday .wt{min-width:88px}.hourcard{padding-left:12px}.tiles{grid-template-columns:1fr 1fr}}
+  .period.done{opacity:.5}
   .logo{position:relative}
   .livecond{position:absolute;right:-5px;bottom:-5px;width:21px;height:21px;background:#0f2242;border:1.5px solid rgba(255,255,255,.8);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.35)}
   .livecond svg{width:14px;height:14px}
@@ -1245,9 +1246,14 @@ function amtHint(p){
 function wordForDay(d){
   // The word describes the day AS PEOPLE EXPERIENCE IT, so morning and afternoon carry full
   // weight and the evening only 60%: a soaking morning must never be shrugged off, but rain that
-  // only arrives after dinner should not brand an otherwise fine day.
-  const Pd=d.periods||[];
-  const rain=Pd.length===3?Math.max(Pd[0].wet,Pd[1].wet,Math.round(Pd[2].wet*0.6)):d.pWet;
+  // only arrives after dinner should not brand an otherwise fine day. For TODAY, periods that have
+  // already fully passed are excluded - at 3pm the word is about the rest of the day, not a
+  // morning forecast that history has already marked.
+  const PdAll=d.periods||[];
+  const Pd=PdAll.filter(p=>!p.done);
+  const rain=PdAll.length===3
+    ?(Pd.length?Math.max.apply(null,Pd.map(p=>p.key==='evening'?Math.round(p.wet*0.6):p.wet)):Math.round((PdAll[2]?PdAll[2].wet:d.pWet)*0.6))
+    :d.pWet;
   const h=d.hazards||{}, feels=d.feelsMax, t=d.tmax, sum=d.precipSum||0, gust=d.gustMph||0, coldMin=d.feelsMin;
   const C={bad:'var(--bad)',warn:'var(--warn)',sky:'var(--sky)',good:'var(--good)',sun:'var(--sun)',ice:'#8fd3ff',mix:'var(--accent)',mystery:'#c3b5ff'};
   const seed=parseInt(String(d.date).replace(/-/g,''),10)||0;
@@ -1263,7 +1269,13 @@ function wordForDay(d){
   // of meaningful rain (>=0.5mm), so this fires on real doubt about getting wet, not on trace spits:
   // a bone-dry Bath that used to read "MYSTERY" off a 45% trace figure now sails past this.
   if(rain>40 && rain<62) return pick(['???','IDK','MYSTERY','DUNNO','TOSS-UP','WILDCARD','CHANCY','WHO KNOWS'],C.mystery);
-  if(rain>=70||sum>=8) return pick(['SOAKED','DRENCHED','WASHOUT','BIBLICAL'],C.sky);
+  // SOAKED-class words demand VOLUME, not just likelihood: a near-certain 2mm day is DRIZZLY, not
+  // a WASHOUT (caught by a real report - "WASHOUT, 90%+" on a day the models only carried ~3mm).
+  if(rain>=70||sum>=8){
+    const med=d.dayAmt&&d.dayAmt.med!=null?d.dayAmt.med:null;
+    if(med==null||med>=4||sum>=8) return pick(['SOAKED','DRENCHED','WASHOUT','BIBLICAL'],C.sky);
+    return pick(['DRIZZLY','SPLASHY','DAMP','SPITTING'],C.sky);
+  }
   if(rain>=45||sum>=3) return pick(['DRIZZLY','SPLASHY','DAMP','SPITTING'],C.sky);
   // Showery band (chance of proper rain ~26-40%, e.g. a wet morning that clears). This used to be
   // a GAP: too low for the mystery/drizzly buckets, and the day icon is 'showers', which the
@@ -1279,7 +1291,9 @@ function wordForDay(d){
   // (Measured: Bath read STUNNER on a 100%-cloud drizzle morning because only the day icon was
   // checked.) Evening is ignored here - evening sun rescues nothing, evening cloud spoils nothing.
   const okIc=ic=>ic==='sunny'||ic==='partly'||ic==='hot'||ic==='scorch';
-  const bright=okIc(d.icon) && (Pd.length!==3 || (okIc(Pd[0].icon||d.icon)&&okIc(Pd[1].icon||d.icon)));
+  // bright = morning AND afternoon look decent, skipping any period that has already passed today
+  const dayParts=PdAll.slice(0,2).filter(p=>!p.done);
+  const bright=okIc(d.icon) && (PdAll.length!==3 || dayParts.every(p=>okIc(p.icon||d.icon)));
   if(rain<18 && t>=22 && bright) return pick(['GLORIOUS','CRACKING','STUNNER','LUSH','A BEAUT'],C.sun);
   if(rain<22 && t>=16 && bright) return pick(['LOVELY','GRAND','PLEASANT','DECENT','TIDY'],C.good);
   if(rain<26 && t<=10 && bright) return pick(['CRISP','FRESH','BRIGHT','NIPPY'],C.sky);
@@ -1334,9 +1348,8 @@ function assessHazards(d){
   return {heat,cold,wind,snow:snow>0,ice,uv,thunder,fog,adv};
 }
 
-// How steady has this day's rain/dry call been across the last few model runs?
-// 1.0 = every recent run said the same thing; ~0.66 = it keeps flip-flopping.
-function stabilityFor(prev,date){
+// Daily rain totals from the current run and the 1/2/3-runs-ago runs, newest first.
+function runTotalsFor(prev,date){
   if(!prev||!prev.hourly||!prev.time)return null;
   const idx=[];
   for(let i=0;i<prev.time.length;i++){const t=prev.time[i];if(t.slice(0,10)===date){const h=+t.slice(11,13);if(h>=6&&h<24)idx.push(i);}}
@@ -1344,11 +1357,29 @@ function stabilityFor(prev,date){
   const keys=['precipitation','precipitation_previous_day1','precipitation_previous_day2','precipitation_previous_day3'];
   const totals=[];
   for(const k of keys){const a=prev.hourly[k];if(!a)continue;let t=0,seen=false;for(const i of idx){if(a[i]!=null){t+=a[i];seen=true;}}if(seen)totals.push(t);}
-  if(totals.length<2)return null;
+  return totals.length>=2?totals:null;
+}
+// How steady has this day's rain/dry call been across the last few model runs?
+// 1.0 = every recent run said the same thing; ~0.66 = it keeps flip-flopping.
+function stabilityFor(prev,date){
+  const totals=runTotalsFor(prev,date);
+  if(!totals)return null;
   const call=v=>v>=WET_MM;
   const now=call(totals[0]);
   const agree=totals.filter(v=>call(v)===now).length/totals.length;
   return 0.55+0.45*agree;
+}
+// The stability term's blind spot, caught by a real incident: a day's forecast collapsed 8.3mm ->
+// 7.9 -> 5.1 -> 2.6mm across four runs, yet stability read "steady" because every run still said
+// "wet" - the BINARY call never flipped while the AMOUNT quietly evaporated. This watches the
+// amounts: a strong monotone trim (latest <= 60% of the recent peak, peak >= 2mm) is a known
+// precursor of a downgraded rain day and now damps confidence and says so.
+function trendFor(prev,date){
+  const totals=runTotalsFor(prev,date);
+  if(!totals||totals.length<3)return null;
+  const priorMax=Math.max.apply(null,totals.slice(1));
+  if(priorMax>=2&&totals[0]<=0.6*priorMax)return {shrinking:true,from:Math.round(priorMax),to:Math.round(totals[0]*10)/10};
+  return null;
 }
 function makeHeadline(P,tonight,d){
   // p.peak is the chance of PROPER rain (>=0.5mm) now, so these bands are on the wet scale: a day
@@ -1357,7 +1388,13 @@ function makeHeadline(P,tonight,d){
   const hz=d.hazards; const [m,a,e]=P.map(p=>p.peak);
   const t=d.tmax, sunny=(d.icon==='sunny'||d.icon==='hot'||d.icon==='scorch'), bright=(sunny||d.icon==='partly'), cloudy=d.icon==='cloudy', foggy=(d.icon==='fog'||d.icon==='mist');
   const maxP=Math.max(m,a,e), minP=Math.min(m,a,e);
-  const wettest=[{k:'morning',p:m},{k:'afternoon',p:a},{k:'evening',p:e}].sort((x,y)=>y.p-x.p)[0];
+  // "Wettest" is judged by AMOUNT when we have it (a 97%-chance drizzle afternoon must not
+  // outrank a 9mm evening), by chance otherwise - and never by a period that has already passed.
+  const cand=[{k:'morning',p:m,i:0},{k:'afternoon',p:a,i:1},{k:'evening',p:e,i:2}]
+    .filter(x=>!(P[x.i]&&P[x.i].done))
+    .map(x=>({...x,amt:P[x.i]&&P[x.i].amt&&P[x.i].amt.med!=null?P[x.i].amt.med:null}));
+  const useAmt=cand.length&&cand.every(x=>x.amt!=null);
+  const wettest=(cand.length?cand:[{k:'evening',p:e}]).sort((x,y)=>useAmt?(y.amt-x.amt):(y.p-x.p))[0];
   const fmtH=x=>{x=((x%24)+24)%24;return x===0?'midnight':x===12?'noon':x<12?x+'am':(x-12)+'pm';};
   const win=d.rainWindow;
   let h;
@@ -1563,6 +1600,22 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
     // Tell the user their odds are locally calibrated (only when the factor genuinely bites).
     if(calib&&Math.abs(1-calibR)>=0.05)
       d.dayConfidence.why+='. Rain odds tuned '+(calibR>1?'up':'down')+' '+Math.abs(Math.round((calibR-1)*100))+'% by '+calib.days+' days of local gauge records';
+    // Amount-trend early warning: the runs still say "wet" but keep trimming HOW wet - damp
+    // confidence and say so, instead of reporting a collapsing forecast as "steady".
+    const tr=trendFor(prev,date);
+    if(tr&&tr.shrinking){
+      d.dayConfidence.value=Math.max(50,Math.round(d.dayConfidence.value*0.92));
+      d.dayConfidence.why+='. The models have been trimming this day\'s rain run after run ('+tr.from+'mm a few runs ago, '+tr.to+'mm now) - treat the wet look with some salt';
+      d.trend=tr;
+    }
+    // TODAY only: mark periods that have fully passed and compute the rest-of-day rain chance,
+    // so the word and the week strip describe the day still ahead, not hours already lived.
+    if(di===0){
+      const nh=hourOf(rTime[nowIdxR]);
+      d.nowHour=nh;
+      d.periods.forEach((p,pi)=>{p.done=PERIODS[pi]&&PERIODS[pi].e<=nh;});
+      d.pWetRest=nh>=23?0:rainAt(date,Math.max(6,nh),24,WET_MM);
+    }
     d.hazards=assessHazards(d);
     d.headline=makeHeadline(periods,tonight,d);
     // driest/wettest keyed on the honest wet number (period.peak is aliased to wet)
@@ -2136,14 +2189,17 @@ function renderWeek(){
   const span=Math.max(1,wkMax-wkMin);
   curData.days.forEach((d,i)=>{
     const s=dayShort(d.date,i);
-    const rv=rainVerdict(d.pAny,d.pWet,d.dayAmt);
+    // Today shows the REST-of-day chance once hours have passed - a wet morning that is over (or
+    // never happened) must not keep the whole day looking doomed at teatime.
+    const shownWet=(i===0&&d.pWetRest!=null)?d.pWetRest:d.pWet;
+    const rv=rainVerdict(d.pAny,shownWet,d.dayAmt);
     const L=Math.round((d.tmin-wkMin)/span*100), W=Math.max(8,Math.round((d.tmax-d.tmin)/span*100));
     const el=document.createElement('div');el.className='wday'+(i===selDay?' sel':'');
     el.innerHTML='<div class="wdate"><div class="wd">'+s.top+'</div><div class="wdd">'+s.bot+'</div></div>'+
       '<div class="wi">'+WICONS[d.icon]+'</div>'+
       '<div class="wt">'+d.tmax+'&deg;<small> /'+d.tmin+'&deg;</small>'+
       '<div class="wtr" title="'+d.tmin+'&deg; to '+d.tmax+'&deg; (week range '+wkMin+'-'+wkMax+'&deg;)"><i style="left:'+L+'%;width:'+Math.min(W,100-L)+'%"></i></div></div>'+
-      '<div class="wr" style="color:'+rv.color+'">'+d.pWet+'%<span class="wl"> rain</span></div>'+
+      '<div class="wr" style="color:'+rv.color+'">'+shownWet+'%<span class="wl"> rain</span></div>'+
       '<div class="wc"><i style="background:'+d.dayConfidence.color+'"></i>'+d.dayConfidence.value+'%<span class="wl"> sure</span></div>';
     el.onclick=()=>selectDay(i);
     w.appendChild(el);
@@ -2179,9 +2235,9 @@ function selectDay(i){
   // periods. The big number is now the chance of PROPER rain (>=0.5mm); a hover shows the expected
   // amount, which is the honest reply to "25% - but the only wet member was 0.1mm".
   const pr=$('periods');pr.innerHTML='';
-  d.periods.forEach(p=>{const el=document.createElement('div');el.className='period';
-    el.title=amtHint(p);
-    el.innerHTML='<div class="plbl">'+p.label+'</div><div class="pic">'+WICONS[p.icon]+'</div><div class="ptemp">'+p.temp+'&deg;</div><div class="prain" style="color:'+p.verdict.color+'">'+p.peak+'% rain</div><div class="pverd">'+p.verdict.word+'</div>';
+  d.periods.forEach(p=>{const el=document.createElement('div');el.className='period'+(p.done?' done':'');
+    el.title=(p.done?'This part of the day has passed. ':'')+amtHint(p);
+    el.innerHTML='<div class="plbl">'+p.label+(p.done?' &middot; gone':'')+'</div><div class="pic">'+WICONS[p.icon]+'</div><div class="ptemp">'+p.temp+'&deg;</div><div class="prain" style="color:'+p.verdict.color+'">'+p.peak+'% rain</div><div class="pverd">'+p.verdict.word+'</div>';
     pr.appendChild(el);});
   // Sun and moon for the selected day.
   const sl=$('sunline');
@@ -2335,7 +2391,10 @@ const RELEASES=[
      'A proper hour-by-hour strip (swipe along it) with night-aware icons - no more beaming sun at 11pm - and sunrise and sunset woven in exactly where they happen.',
      'The 7-day list gained temperature range bars, so you can see at a glance which day is the warm one. And "Right now at a glance" tiles: feels-like, wind with direction, humidity, UV, pressure with its trend, and visibility.',
      'The "next 90 minutes" rain chart moved into its own card near the top with mm/h on every bar - it only appears when rain is actually close, and now it is impossible to miss.',
-     'Icons now grade by how MUCH, not just how likely: a near-certain drizzle no longer wears the heavy three-stroke rain icon a downpour gets, and a drizzly day is called "Drizzly" instead of "Wet".'
+     'Icons now grade by how MUCH, not just how likely: a near-certain drizzle no longer wears the heavy three-stroke rain icon a downpour gets, and a drizzly day is called "Drizzly" instead of "Wet".',
+     'Today now means the REST of today: once a part of the day has passed, it fades out and stops colouring the word, the day\'s rain figure and the headline - at teatime the app describes your evening, not a morning that already happened.',
+     'The forecast refreshes itself: pick your phone up hours later and the app quietly refetches instead of showing you the morning\'s view of the afternoon.',
+     'A new early-warning: when the models keep the "rain" label but quietly trim the amount run after run (8mm... 5mm... 3mm), confidence is marked down and the trimming is called out - a collapsing forecast no longer counts as "steady". And a WASHOUT now requires actual volume: a near-certain 2mm day reads DRIZZLY.'
    ]},
   {v:'1.8', date:'17 Aug 2026', title:'Sharper words, tougher self-checks',
    notes:[
@@ -2464,6 +2523,21 @@ if(lastLoc){
 }
 const av=$('appver');if(av&&RELEASES[0])av.textContent='App version '+RELEASES[0].v+' ('+RELEASES[0].date+').';
 setTimeout(maybeShowRelease,800);
+// ---- Keep the DATA fresh, not just the code ----
+// A phone that resumes the app hours later was still showing the morning's forecast - the morning
+// run's view of the afternoon can be long dead by then. If the loaded forecast is older than
+// ~25 minutes when the app returns to the foreground (or on a half-hourly tick), refetch it.
+function maybeRefreshData(){
+  try{
+    if(!current||!curData||!curData.issued)return;
+    if(Date.now()-new Date(curData.issued).getTime()>25*60*1000){
+      CACHE.delete(ckey(current.lat,current.lon));
+      loadForecast(current,currentIsGeo);
+    }
+  }catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)maybeRefreshData();});
+setInterval(maybeRefreshData,10*60*1000);
 </script>
 </body>
 </html>
