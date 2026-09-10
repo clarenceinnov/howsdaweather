@@ -1,5 +1,5 @@
 // HowsDaWeather service worker - offline app shell, live data over network.
-const CACHE = 'howsdaweather-v34';
+const CACHE = 'howsdaweather-v35';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './favicon.svg',
   './fredoka-500.woff2', './fredoka-600.woff2',

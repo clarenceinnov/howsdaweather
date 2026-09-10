@@ -395,7 +395,7 @@
   <div class="periods" id="periods"></div>
   <div class="sunline" id="sunline" hidden></div>
   <div class="dayrainwrap" id="dayrainwrap" hidden>
-    <div class="drlbl">Rain chance through the day <span class="drlbl2">(share of 156 forecasts expecting rain each hour)</span></div>
+    <div class="drlbl">Rain chance through the day <span class="drlbl2">(share of 156 forecasts expecting noticeable rain that hour)</span></div>
     <div class="dayrain" id="dayrain"></div>
     <div class="drhours"><span>midnight</span><span>6am</span><span>noon</span><span>6pm</span><span></span></div>
   </div>
@@ -1418,7 +1418,7 @@ function makeHeadline(P,tonight,d){
   else h='Likely wet at times, and the '+wettest.k+' looks the soggiest.';
   // WHEN the rain is coming - the single most useful sentence on a mixed day. Only shown when the
   // ensemble concentrates the rain into one window worth planning around (not a wall-to-wall day).
-  if(!d.clearing && win && maxP>=22 && win.hours<=10 && (win.e-win.s)<=9)
+  if(!d.clearing && win && win.hours>=2 && maxP>=22 && win.hours<=10 && (win.e-win.s)<=9)
     h+=' Rain most likely '+(win.s<=6&&win.e<=9?'before '+fmtH(win.e):fmtH(win.s)+' to '+fmtH(win.e))+'.';
   if(tonight>=52 && maxP<32) h+=' Rain probably moving in overnight.';
   else if(tonight>=62) h+=' Likely wet overnight too.';
@@ -1542,11 +1542,15 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
       hourlyRain=[];
       for(const i of idxs){
         const h=hourOf(eTime[i]); let w=0,aw=0;
-        for(let k=0;k<members.length;k++){const wt=weights?weights[k]:1;aw+=wt;const v=members[k][i];if(v!=null&&v>=0.1)w+=wt;}
+        // 0.2mm/h = rain you would notice if out in it for the hour. The first release of this
+        // graph counted 0.1mm traces and quietly re-created the app's most famous old bug: bars
+        // (and the "Rain most likely X to Y" windows built on them) read 2-3x the honest chance.
+        for(let k=0;k<members.length;k++){const wt=weights?weights[k]:1;aw+=wt;const v=members[k][i];if(v!=null&&v>=0.2)w+=wt;}
         if(aw)hourlyRain.push({h,p:Math.round(100*w/aw)});
       }
       hourlyRain.sort((a,b)=>a.h-b.h);
-      const wetH=hourlyRain.filter(x=>x.p>=40).map(x=>x.h);
+      // 30% on the noticeable-rain series ~= the old 40% on the trace series this replaced.
+      const wetH=hourlyRain.filter(x=>x.p>=30).map(x=>x.h);
       if(wetH.length){
         let bs=wetH[0],be=wetH[0],cs=wetH[0],ce=wetH[0];
         for(let i=1;i<wetH.length;i++){if(wetH[i]===ce+1)ce=wetH[i];else{if(ce-cs>be-bs){bs=cs;be=ce;}cs=ce=wetH[i];}}
@@ -1649,11 +1653,16 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
   };
   // Hour-by-hour strip (next 24h), night-aware, with sunrise/sunset markers woven in - the single
   // most-used element of the big-name weather apps, built from data we already fetch.
+  // Its percentages are the app's OWN noticeable-rain share from the weighted ensemble (same
+  // series as the day graph) - NOT the provider's raw PoP, which counts 0.1mm traces and reads
+  // 2-3x higher. Before the ensemble lands, PoP*0.7 approximates it, exactly as rainAt does.
   const hourStrip=[];
+  const wetShareBy={}; days.forEach(d=>{(d.hourlyRain||[]).forEach(x=>{wetShareBy[d.date+'|'+x.h]=x.p;});});
   const sunByDate={}; days.forEach(d=>{sunByDate[d.date]={rise:d.sunrise,set:d.sunset};});
   for(let k=0;k<24&&nowIdxR+k<rTime.length;k++){
     const i=nowIdxR+k, t=rTime[i], day=t.slice(0,10), hm=t.slice(11,16), h=hourOf(t);
-    const pop=Math.round(rH.precipitation_probability?(rH.precipitation_probability[i]||0):0);
+    const es=wetShareBy[day+'|'+h];
+    const pop=es!=null?es:Math.round(0.7*(rH.precipitation_probability?(rH.precipitation_probability[i]||0):0));
     const gust=mph(rH.wind_gusts_10m[i]||0), feels=rH.apparent_temperature[i];
     let ic=skyIcon([rH.weather_code[i]],[rH.cloud_cover[i]],pop>=55?70:(pop>=25?30:0),0,pop,gust,feels,feels,rH.precipitation?(rH.precipitation[i]||0):null,1.2);
     const sun=sunByDate[day];
@@ -2199,7 +2208,7 @@ function renderWeek(){
       '<div class="wi">'+WICONS[d.icon]+'</div>'+
       '<div class="wt">'+d.tmax+'&deg;<small> /'+d.tmin+'&deg;</small>'+
       '<div class="wtr" title="'+d.tmin+'&deg; to '+d.tmax+'&deg; (week range '+wkMin+'-'+wkMax+'&deg;)"><i style="left:'+L+'%;width:'+Math.min(W,100-L)+'%"></i></div></div>'+
-      '<div class="wr" style="color:'+rv.color+'">'+shownWet+'%<span class="wl"> rain</span></div>'+
+      '<div class="wr" style="color:'+rv.color+'" title="'+(i===0&&d.periods&&d.periods.some(p=>p.done)?'Chance of noticeable rain in the rest of today':'Chance of noticeable rain')+'">'+shownWet+'%<span class="wl">'+(i===0&&d.periods&&d.periods.some(p=>p.done)?' later':' rain')+'</span></div>'+
       '<div class="wc"><i style="background:'+d.dayConfidence.color+'"></i>'+d.dayConfidence.value+'%<span class="wl"> sure</span></div>';
     el.onclick=()=>selectDay(i);
     w.appendChild(el);
@@ -2380,6 +2389,12 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>{
 // ---- release notes (pops once per update, dismissible, gone 24h after you first see it) ----
 // Newest first. Add a new entry (bump v) each release; only the latest ever pops.
 const RELEASES=[
+  {v:'1.9.1', date:'10 Sep 2026', title:'We un-fixed our most famous fix. Now re-fixed.',
+   notes:[
+     'Confession time. Our proudest old repair was killing the "45% rain on a bone-dry day" trick, where a 0.1mm trace got dressed up as proper rain. Then we shipped three shiny new features - the hourly strip, the rain-through-the-day graph, and the "rain most likely 2pm to 6pm" windows - and every one of them quietly used trace-level odds again. The big day number stayed honest while the new bits above it shouted numbers two to three times higher. If the app felt suddenly rain-obsessed and wrong, that was why. All three now speak the same language as the rest of the app: the chance of rain you would actually notice.',
+     'We checked whether the forecasts themselves had gone off: scored against the local rain gauges, the past week\'s day-ahead calls came out 3 hits, 0 misses and 1 marginal false alarm, including a 10mm soaker called a day out. The engine was fine - the new dashboard needles were mislabelled. Sorry, and thanks to the reader who noticed.',
+     'Small print made less small: once part of today has already happened, today\'s tile says "X% later" instead of a bare percentage, so an evening glance is not confused by a morning that already did its raining.'
+   ]},
   {v:'1.9', date:'28 Aug 2026', title:'Radar eyes, a live logo, and a forecast that learns your patch',
    notes:[
      'The logo is alive: the little badge in the corner (and your browser-tab icon) now shows the current weather at your loaded location. Sadly the icon on your phone\'s home screen is frozen by the operating system at install time - no app can change that one, so ours stays a smiling cloud.',
