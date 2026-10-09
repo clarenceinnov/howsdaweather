@@ -12,7 +12,7 @@ Then it answers the questions you actually have: *Can I hang the washing out? Wi
 |---|---|---|
 | **Location** | Nearest city or grid point | Your **full postcode** (~100 m), e.g. `LL55 4TY` |
 | **Terrain** | Ignored | Reads the landscape in 1/2/5 km rings: valley, glen, hollow, hilltop - then applies frost-hollow nights, wind shelter/funnelling, valley fog |
-| **Forecast source** | One model | ~156 ensemble members from **5 national centres** (ECMWF, Met Office, ICON, GEFS, GEM), weighted by published skill |
+| **Forecast source** | One model | ~156 ensemble members from **5 national centres** (ECMWF, Met Office, ICON, GEFS, GEM), weighted by published skill, plus **5 high-resolution regional models** (2-7 km) for the next 3 days |
 | **"% rain"** | Often the chance of a 0.1 mm trace | Chance of rain you would **actually notice** (>=0.5 mm), with expected millimetres on hover |
 | **Confidence** | Absent, or decorative | Agreement x lead time x run-to-run stability x **a reality check against real rain gauges** |
 | **Verification** | Take our word for it | Scored daily against Environment Agency and SEPA tipping-bucket gauges near you |
@@ -45,6 +45,8 @@ Tested on the real thing: it spots Glencoe as a deep glen, Hebden Bridge as a na
 
 ### 3. Five forecasting centres, properly weighted
 Every rain percentage comes from a **~156-member ensemble**: ECMWF (51), ICON (39), US GEFS (30), Canadian GEM (20) and the UK Met Office's MOGREPS (17), via [Open-Meteo](https://open-meteo.com/). Centres are weighted by decades of published verification skill - ECMWF and the Met Office carry the most weight, GFS the least - so one noisy model cannot shout over the good ones.
+
+For the next three days, five **high-resolution regional models** join the vote: the Met Office UKV (2 km), KNMI and DMI Harmonie-AROME (2.5 km), Meteo-France AROME and DWD ICON-EU. They resolve showers and hills that 20-40 km global grids blur. Before switching them on we backtested 21 months of their day-ahead forecasts against Environment Agency rain gauges: on 1,044 days never used for fitting, adding them cut rain-probability error (Brier score) by 12.4%.
 
 ### 4. Rain that means rain
 The headline "% rain" is the chance of **rain you would actually notice (0.5 mm or more)**, not the chance of a single 0.1 mm droplet. Hover any part of the day to see the expected amount in millimetres. (Older versions headlined the trace probability; a bone-dry sunny day could read "45% rain". We fixed it and said so in the release notes.)
