@@ -12,11 +12,15 @@
 <meta property="og:title" content="HowsDaWeather - Postcode-Precise UK Weather Forecast">
 <meta property="og:description" content="A free UK weather app that forecasts for your full postcode, reads the terrain around your exact spot, blends 156 forecasts from 5 national weather centres, and checks itself against real rain gauges. Plus a Word for the Day.">
 <meta property="og:url" content="https://howsdaweather.netlify.app/">
-<meta property="og:image" content="https://howsdaweather.netlify.app/icon-512.png">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://howsdaweather.netlify.app/og-image.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="HowsDaWeather - weather for your exact UK postcode. Free, no ads, no sign-up.">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="HowsDaWeather - Postcode-Precise UK Weather Forecast">
 <meta name="twitter:description" content="Free, postcode-precise, terrain-aware UK weather - 5 national forecast centres, verified against real rain gauges. No ads, no tracking.">
-<meta name="twitter:image" content="https://howsdaweather.netlify.app/icon-512.png">
+<meta name="twitter:image" content="https://howsdaweather.netlify.app/og-image.jpg">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -137,8 +141,7 @@
   .herohead{padding:20px 22px}
   .placerow{display:flex;justify-content:space-between;align-items:center;gap:10px}
   .place{font-size:14px;color:var(--muted);font-weight:600;min-width:0}
-  .sharebtn{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;background:rgba(93,180,255,.12);border:1px solid rgba(93,180,255,.38);color:var(--text);border-radius:999px;padding:7px 13px;font:600 13px var(--font);cursor:pointer}
-  .sharebtn:hover{background:rgba(93,180,255,.22)}
+  .sharebtn{display:inline-flex;align-items:center;gap:6px}
   .sharebtn:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
   .cur{display:inline-block;font-size:11px;color:#9beecb;background:rgba(61,220,151,.14);border:1px solid rgba(61,220,151,.35);padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;font-weight:600}
   .savetoggle{cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--text);padding:7px 12px;border-radius:999px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-family:inherit;flex:none}
@@ -197,6 +200,8 @@
   .radbars .rbt{font-size:11px;color:var(--dim);white-space:nowrap}
   .radbars .rb.future .rbf{opacity:.55;outline:1px dashed rgba(255,255,255,.35)}
   .radnow{border-left:1.5px dashed rgba(255,255,255,.45);margin:0 2px;align-self:stretch}
+  .radnext{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+  .radnext .lede{margin-top:4px}
   .aqline,.lastyear{margin-top:10px;font-size:12.5px;color:var(--muted)}
   .aqline b,.lastyear b,.sunline b{color:var(--text);font-weight:600}
   .confwhy{flex-basis:100%;font-size:12px;color:var(--dim);line-height:1.4}
@@ -354,6 +359,10 @@
         <span id="placesBtnLabel">Places</span>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="#9db0ca" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
+      <button class="btn sharebtn" id="shareBtn" type="button" aria-label="Share HowsDaWeather with a friend">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 15V3.5M7.5 8 12 3.5 16.5 8" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 11H6.5A1.5 1.5 0 0 0 5 12.5v7A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5H16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+        <span>Share app</span>
+      </button>
       <button class="btn" id="install" hidden>Install</button>
     </div>
   </header>
@@ -361,13 +370,8 @@
   <div class="geonote" id="geonote" style="display:none"><span id="geomsg"></span><span class="cl" id="geoclose">Dismiss</span></div>
 
   <div class="card herohead">
-    <div class="placerow"><div class="place" id="place" title="Change location">Loading...</div>
-      <button class="sharebtn" id="shareBtn" type="button" aria-label="Share this forecast" hidden>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 15V3.5M7.5 8 12 3.5 16.5 8" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 11H6.5A1.5 1.5 0 0 0 5 12.5v7A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5H16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
-        <span>Share</span>
-      </button>
-    </div>
-    <div class="nowtag"><span class="livedot"></span>Live &middot; conditions right now</div>
+    <div class="placerow"><div class="place" id="place" title="Change location">Loading...</div></div>
+    <div class="nowtag"><span class="livedot"></span><span id="nowtagTxt">Live &middot; conditions right now</span></div>
     <div class="heromain">
       <div class="heronow">
         <div class="hero-temp" id="herotemp">--&deg;</div>
@@ -420,11 +424,18 @@
       <div class="tl" id="timeline"></div>
       <div class="lastyear" id="lastyear" hidden></div>
       <div class="aqline" id="aqline" hidden></div>
+      <div class="aqline" id="riverline" hidden></div>
     </div>
     <div class="card" id="radcard" hidden>
       <h2>Radar - rain over your exact spot</h2>
       <div class="lede" id="radlede"></div>
       <div class="radbars" id="radbars"></div>
+      <div class="radnext" id="radnext" hidden>
+        <div class="drlbl">Next hour <span class="drlbl2">(radar projection)</span></div>
+        <div class="lede" id="radnextLede"></div>
+        <div class="radbars" id="radnextBars"></div>
+        <div class="drlbl2" id="radnextNote" style="margin-top:8px;font-size:12px;line-height:1.45"></div>
+      </div>
       <div class="src" style="margin-top:8px">Live radar tiles by <a href="https://www.rainviewer.com/" target="_blank" rel="noopener" style="color:var(--sky)">RainViewer</a>. Read at your exact coordinate, about 760 m resolution.</div>
     </div>
     <div class="card">
@@ -759,6 +770,37 @@ async function fetchLastYear(lat,lon,todayStr){
     const ks=Object.keys(c);if(ks.length>20)delete c[ks[0]];localStorage.setItem(key,JSON.stringify(c));}catch(e){}
   return out;
 }
+// ---- Nearest river level (Environment Agency, England, OGL, CORS-open) ----
+// The closest river gauge within 5 km, compared with that gauge's own typical range, plus its
+// 3-hour trend. The reading and the scale must share a datum: a few stations publish a scale
+// that disagrees with their live reading, so a reading outside the station's recorded extremes is
+// treated as unusable and the next-nearest gauge is tried instead.
+async function fetchRiver(lat,lon){
+  const s=await fetchJSON('https://environment.data.gov.uk/flood-monitoring/id/stations?parameter=level&lat='+lat.toFixed(4)+'&long='+lon.toFixed(4)+'&dist=5',10000);
+  const cands=((s&&s.items)||[]).filter(it=>it.lat!=null&&it.long!=null&&it.stationReference)
+    .map(it=>({it,km:kmApart(lat,lon,it.lat,it.long)})).sort((a,b)=>a.km-b.km).slice(0,3);
+  for(const c of cands){
+    try{
+      const d=await fetchJSON('https://environment.data.gov.uk/flood-monitoring/id/stations/'+encodeURIComponent(c.it.stationReference),10000);
+      const st=d&&d.items;if(!st)continue;
+      const sc=st.stageScale&&typeof st.stageScale==='object'?st.stageScale:null;
+      if(!sc||typeof sc.typicalRangeLow!=='number'||typeof sc.typicalRangeHigh!=='number')continue;
+      const m=(Array.isArray(st.measures)?st.measures:[st.measures]).find(x=>x&&x.parameter==='level'&&x.qualifier==='Stage'&&/^m(ASD)?$/.test(x.unitName||'')&&x.latestReading&&typeof x.latestReading.value==='number');
+      if(!m)continue;
+      const v=m.latestReading.value,lo=sc.typicalRangeLow,hi=sc.typicalRangeHigh;
+      const minR=sc.minOnRecord&&sc.minOnRecord.value,maxR=sc.maxOnRecord&&sc.maxOnRecord.value;
+      if((typeof minR==='number'&&v<minR-0.5)||(typeof maxR==='number'&&v>maxR+0.5))continue;
+      if(Date.now()-Date.parse(m.latestReading.dateTime)>6*3600e3)continue;
+      let trend=null;
+      const since=new Date(Date.now()-3.5*3600e3).toISOString().slice(0,19)+'Z';
+      const rd=await fetchJSON(String(m['@id']).replace(/^http:/,'https:')+'/readings?_sorted&since='+since,10000);
+      const its=((rd&&rd.items)||[]).filter(x=>typeof x.value==='number');
+      if(its.length>=4){const dv=its[0].value-its[its.length-1].value;trend=dv>0.05?'rising':dv<-0.05?'falling':'steady';}
+      return {river:st.riverName||c.it.riverName||'',label:st.label||c.it.label||'',km:c.km,v,lo,hi,trend,state:v<lo?'low':v>hi?'high':'normal'};
+    }catch(e){}
+  }
+  return null;
+}
 // ---- Radar at your exact spot (RainViewer tiles, free for personal use with attribution) ----
 // We read the actual radar PIXEL over the loaded coordinate for the last ~2 hours of frames.
 // Since 1 Jan 2026 RainViewer's free tiles stop at zoom 7 and only the "Universal Blue" scheme is
@@ -789,6 +831,83 @@ function radDbz(r,g,b,a){
 // hourly threshold), 2.5 and 7.5 mm/h are the usual light/moderate/heavy boundaries.
 const radRate=dbz=>Math.pow(Math.pow(10,dbz/10)/200,1/1.6);
 const radCat=dbz=>{if(dbz==null||dbz<12)return 0;const r=radRate(dbz);return r<2.5?1:r<7.5?2:3;};
+// ---- Radar projection: where is the rain heading over the next hour? ----
+// RainViewer dropped its own short-term projections in Jan 2026, so we make ours. Block matching
+// (optical flow in its simplest, most robust form): find the one shift that best lines up the rain
+// field 20 minutes ago with the field now, over a ~195 km square around you, then look that far
+// upwind for each of the next six 10-minute steps. Before anything is shown, the same method is
+// re-run one hour back in time (track 80->60 minutes ago, project 60->0 minutes ago) and checked
+// against what actually crossed your pixel. The projection only appears when that self-check got
+// at least 5 of its 6 steps right, so an erratic or developing sky gets silence, not a guess.
+const RAD_KMPX=lat=>156.54303*Math.cos(lat*Math.PI/180)/Math.pow(2,RAD_Z);
+const RADDBZ=new Map();
+function radDbzFast(r,g,b,a){
+  if(a===0)return null;
+  const k=r*16777216+g*65536+b*256+a; let v=RADDBZ.get(k);
+  if(v===undefined){v=radDbz(r,g,b,a);RADDBZ.set(k,v);}
+  return v;
+}
+// 256x256 window of dBZ centred on global pixel (gx,gy), stitched from up to 2x2 tiles.
+async function radWindow(meta,f,gx,gy){
+  const W=256,x0=Math.floor(gx)-128,y0=Math.floor(gy)-128;
+  const cv=document.createElement('canvas');cv.width=cv.height=W;const g=cv.getContext('2d',{willReadFrequently:true});
+  const jobs=[];
+  for(let ty=Math.floor(y0/256);ty<=Math.floor((y0+W-1)/256);ty++)for(let tx=Math.floor(x0/256);tx<=Math.floor((x0+W-1)/256);tx++)
+    jobs.push(new Promise(res=>{const img=new Image();img.crossOrigin='anonymous';
+      img.onload=()=>{try{g.drawImage(img,tx*256-x0,ty*256-y0);res(true);}catch(e){res(false);}};img.onerror=()=>res(false);
+      img.src=meta.host+f.path+'/256/'+RAD_Z+'/'+tx+'/'+ty+'/2/0_0.png';}));
+  if((await Promise.all(jobs)).some(ok=>!ok))return null;
+  const d=g.getImageData(0,0,W,W).data,field=new Float32Array(W*W);let wet=0,bad=0;
+  for(let i=0;i<W*W;i++){const k=i*4,z=radDbzFast(d[k],d[k+1],d[k+2],d[k+3]);
+    if(z==null)continue;if(Number.isNaN(z)){bad++;continue;}if(z>=12){field[i]=z;wet++;}}
+  return bad>W*W*0.01?null:{field,wet,time:f.time};
+}
+// Best shift (px over the interval) carrying field A onto later field B; null if too little rain.
+function radMotion(A,B){
+  if(!A||!B||A.wet<150||B.wet<150)return null;
+  const W=256,n=64,ds=F=>{const o=new Float32Array(n*n);for(let y=0;y<W;y++)for(let x=0;x<W;x++)o[(y>>2)*n+(x>>2)]+=F[y*W+x];return o;};
+  const sse=(fa,fb,size,dx,dy,m)=>{let s=0;for(let y=m;y<size-m;y++){const ya=y-dy;for(let x=m;x<size-m;x++){const e=fb[y*size+x]-fa[ya*size+x-dx];s+=e*e;}}return s;};
+  const a=ds(A.field),b=ds(B.field),R=12;let best=[0,0],bc=Infinity;
+  for(let dy=-R;dy<=R;dy++)for(let dx=-R;dx<=R;dx++){const c=sse(a,b,n,dx,dy,R);if(c<bc){bc=c;best=[dx,dy];}}
+  let fx=best[0]*4,fy=best[1]*4,fc=Infinity,out=[fx,fy];
+  for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const c=sse(A.field,B.field,W,fx+dx,fy+dy,4*R+4);if(c<fc){fc=c;out=[fx+dx,fy+dy];}}
+  return {dx:out[0],dy:out[1]};
+}
+// dBZ (3x3 max) at the spot `lead` minutes after field F's time, moving at v px per 20 min.
+// undefined = the upwind point has left the window, so the projection stops there.
+function radProject(F,v,lead){
+  const sx=Math.round(128-v.dx*lead/20),sy=Math.round(128-v.dy*lead/20);
+  if(sx<1||sy<1||sx>254||sy>254)return undefined;
+  let mx=null;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const z=F.field[(sy+dy)*256+sx+dx];if(z>0&&(mx==null||z>mx))mx=z;}
+  return mx;
+}
+async function radNowcast(meta,lat,lon,series){
+  const past=meta.radar.past;if(past.length<10)return null;
+  const n=Math.pow(2,RAD_Z),gx=(lon+180)/360*n*256,gy=(1-Math.asinh(Math.tan(lat*Math.PI/180))/Math.PI)/2*n*256;
+  // Motion is measured over 20 minutes: long enough to be stable, short enough that rain moving
+  // at up to ~110 km/h stays inside the search range (a 30-minute gap clipped fast autumn showers).
+  const L=past.length-1;
+  const [w0,w2,w6,w8]=await Promise.all([L,L-2,L-6,L-8].map(i=>radWindow(meta,past[i],gx,gy)));
+  if(!w0||!w2)return null;
+  const kmpx=RAD_KMPX(lat),reachKm=Math.round(128*kmpx);
+  // Clear sky for ~95 km in every direction: nothing can drift in within the hour.
+  if(w0.wet===0&&w2.wet===0)return {dry:true,reachKm,steps:[1,2,3,4,5,6].map(k=>({time:w0.time+k*600,dbz:null}))};
+  const v=radMotion(w2,w0);if(!v)return null;
+  // Self-check on the previous hour.
+  const vh=radMotion(w8,w6);if(!vh)return null;
+  // A dry self-check proves little about motion, so the flow must also be steady hour to hour.
+  if(Math.hypot(v.dx-vh.dx,v.dy-vh.dy)>Math.max(6,0.35*Math.hypot(v.dx,v.dy)))return {failed:true,unsteady:true};
+  // Judged on the same 3x3-pixel neighbourhood the projection reads, so the check is like-for-like.
+  const obsAt=t=>{const f=series.find(s=>Math.abs(s.time-t)<=90);return f?f.nearCat>0:undefined;};
+  let checked=0,right=0;
+  for(let k=1;k<=6;k++){const p=radProject(w6,vh,k*10),o=obsAt(w6.time+k*600);if(p===undefined||o===undefined)continue;checked++;if((radCat(p)>0)===o)right++;}
+  if(checked<5||right<checked-1)return {failed:true,checked,right};
+  const steps=[];for(let k=1;k<=6;k++){const p=radProject(w0,v,k*10);if(p===undefined)break;steps.push({time:w0.time+k*600,dbz:p});}
+  if(steps.length<3)return null;
+  const speed=Math.round(Math.hypot(v.dx,v.dy)*kmpx*3);
+  const from=['north','north-east','east','south-east','south','south-west','west','north-west'][Math.round(((Math.atan2(-v.dx,v.dy)*180/Math.PI)+360)%360/45)%8];
+  return {steps,speed,from,checked,right};
+}
 const RADCACHE=new Map();
 async function fetchRadar(lat,lon){
   const ck=lat.toFixed(3)+','+lon.toFixed(3);
@@ -822,7 +941,9 @@ async function fetchRadar(lat,lon){
   const out=reads.filter(Boolean);
   // Most frames unreadable = the tile format changed under us. Show nothing rather than guess.
   if(out.length<Math.ceil(frames.length*0.75))return null;
-  const v={frames:out};
+  let nowcast=null;
+  try{nowcast=await radNowcast(meta,lat,lon,out);}catch(e){}
+  const v={frames:out,nowcast};
   RADCACHE.set(ck,{t:Date.now(),v});
   return v;
 }
@@ -848,6 +969,26 @@ function renderRadar(r){
   else if(last.nearCat>0)lede.textContent='Dry right over you, but radar shows rain within about a kilometre.';
   else if(anyPast)lede.textContent='Dry over you now - the last rain on the radar passed at '+hhmm(lastWet.time)+'.';
   else lede.textContent='Nothing on the radar over you in the last 2 hours.';
+  // Next-hour projection (only present when it passed its own self-check).
+  const nx=$('radnext'),nc=r.nowcast;
+  if(nx){
+    if(nc&&nc.steps&&!nc.failed){
+      const nb=$('radnextBars');nb.innerHTML='';
+      nc.steps.forEach(s=>{const c=radCat(s.dbz);const b=document.createElement('div');b.className='rb future';
+        b.title=(c?CATNM[c]+' rain likely, about '+radRate(s.dbz).toFixed(1)+' mm/h':'dry')+' around '+hhmm(s.time);
+        b.innerHTML='<div class="rbf" style="height:'+CATH[c]+'px;background:'+CATCOL[c]+'"></div><div class="rbt">'+hhmm(s.time)+'</div>';nb.appendChild(b);});
+      const wetNow=last.cat>0, firstWet=nc.steps.find(s=>radCat(s.dbz)>0), firstDry=nc.steps.find(s=>radCat(s.dbz)===0);
+      let t;
+      if(nc.dry)t='No rain on the radar within about '+nc.reachKm+' km - dry for at least the next hour.';
+      else if(wetNow&&firstDry)t='Rain moving through from the '+nc.from+' at about '+nc.speed+' km/h - should ease off around '+hhmm(firstDry.time)+'.';
+      else if(wetNow)t='Rain moving in from the '+nc.from+' at about '+nc.speed+' km/h - more to come for at least the next hour.';
+      else if(firstWet)t='Rain heading your way from the '+nc.from+' at about '+nc.speed+' km/h - likely to reach you around '+hhmm(firstWet.time)+'.';
+      else t='Nothing heading your way in the next hour - the rain about is moving '+(nc.speed>=5?'past':'slowly')+'.';
+      $('radnextLede').textContent=t;
+      $('radnextNote').textContent=nc.dry?'Based on the latest radar image.':'Tracks the rain\'s movement over the last 20 minutes. Before showing this, the same method was tested on the previous hour and got '+nc.right+' of '+nc.checked+' ten-minute steps right at your spot.';
+      nx.hidden=false;
+    } else nx.hidden=true;
+  }
   card.hidden=false;
 }
 
@@ -1443,7 +1584,11 @@ function makeHeadline(P,tonight,d){
   // before it could read "hit-and-miss" off a trace figure inflated by a few drizzly members.
   const hz=d.hazards; const [m,a,e]=P.map(p=>p.peak);
   const t=d.tmax, sunny=(d.icon==='sunny'||d.icon==='hot'||d.icon==='scorch'), bright=(sunny||d.icon==='partly'), cloudy=d.icon==='cloudy', foggy=(d.icon==='fog'||d.icon==='mist');
-  const maxP=Math.max(m,a,e), minP=Math.min(m,a,e);
+  // Today, the headline describes the hours still to come: periods already lived are left out.
+  const live=P.filter(p=>!p.done).map(p=>p.peak), span=live.length?live:[e];
+  const maxP=Math.max.apply(null,span), minP=Math.min.apply(null,span);
+  // A "rain first thing" story is only news before the rain has been and gone.
+  const clearing=d.clearing&&!(d.nowHour!=null&&d.nowHour>=10);
   // "Wettest" is judged by AMOUNT when we have it (a 97%-chance drizzle afternoon must not
   // outrank a 9mm evening), by chance otherwise - and never by a period that has already passed.
   const cand=[{k:'morning',p:m,i:0},{k:'afternoon',p:a,i:1},{k:'evening',p:e,i:2}]
@@ -1454,7 +1599,7 @@ function makeHeadline(P,tonight,d){
   const fmtH=x=>{x=((x%24)+24)%24;return x===0?'midnight':x===12?'noon':x<12?x+'am':(x-12)+'pm';};
   const win=d.rainWindow;
   let h;
-  if(d.clearing){
+  if(clearing){
     // Wet early, then it comes good - say so, instead of branding the whole day wet.
     h='Rain first thing'+(win&&win.e<=12?' (clearing by about '+fmtH(win.e)+')':'')+', then drying out - '+
       (bright?'a decent, brighter day from mid-morning.':'staying mostly dry from mid-morning.');
@@ -1474,7 +1619,7 @@ function makeHeadline(P,tonight,d){
   else h='Likely wet at times, and the '+wettest.k+' looks the soggiest.';
   // WHEN the rain is coming - the single most useful sentence on a mixed day. Only shown when the
   // ensemble concentrates the rain into one window worth planning around (not a wall-to-wall day).
-  if(!d.clearing && win && win.hours>=2 && maxP>=22 && win.hours<=10 && (win.e-win.s)<=9)
+  if(!clearing && win && win.hours>=2 && maxP>=22 && win.hours<=10 && (win.e-win.s)<=9)
     h+=' Rain most likely '+(win.s<=6&&win.e<=9?'before '+fmtH(win.e):fmtH(win.s)+' to '+fmtH(win.e))+'.';
   if(tonight>=52 && maxP<32) h+=' Rain probably moving in overnight.';
   else if(tonight>=62) h+=' Likely wet overnight too.';
@@ -1623,7 +1768,9 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
       }
       hourlyRain.sort((a,b)=>a.h-b.h);
       // 30% on the noticeable-rain series ~= the old 40% on the trace series this replaced.
-      const wetH=hourlyRain.filter(x=>x.p>=30).map(x=>x.h);
+      // Today's window only looks at hours still to come, so a 3pm glance never reads "11am to 4pm".
+      const fromH=di===0?hourOf(rTime[nowIdxR]):-1;
+      const wetH=hourlyRain.filter(x=>x.p>=30&&x.h>=fromH).map(x=>x.h);
       if(wetH.length){
         let bs=wetH[0],be=wetH[0],cs=wetH[0],ce=wetH[0];
         for(let i=1;i<wetH.length;i++){if(wetH[i]===ce+1)ce=wetH[i];else{if(ce-cs>be-bs){bs=cs;be=ce;}cs=ce=wetH[i];}}
@@ -2019,6 +2166,19 @@ if(firstRun){saved=[{name:'London',lat:51.51,lon:-0.13},{name:'Manchester',lat:5
 const LSLAST='howsdaweather_last_v1';
 function storeLast(loc){try{localStorage.setItem(LSLAST,JSON.stringify({name:loc.name,lat:loc.lat,lon:loc.lon}));}catch(e){}}
 function loadLast(){try{const v=JSON.parse(localStorage.getItem(LSLAST));return v&&v.lat!=null&&v.lon!=null?v:null;}catch(e){return null;}}
+// The last complete forecast, kept on the device so the app opens instantly (and still shows
+// something useful offline) while the fresh one loads. Only reused for the same spot, the same
+// calendar day, and for up to six hours; it is always labelled as such until replaced.
+const LSFC='howsdaweather_lastfc_v1';
+const localDate=()=>{const n=new Date();return n.getFullYear()+'-'+('0'+(n.getMonth()+1)).slice(-2)+'-'+('0'+n.getDate()).slice(-2);};
+function storeLastForecast(k,v,floods){
+  try{if(!v||!v.days||!v.days[0])return;localStorage.setItem(LSFC,JSON.stringify({k,t:Date.now(),date:v.days[0].date,v,floods:floods||[]}));}catch(e){}
+}
+function loadLastForecast(k){
+  try{const s=JSON.parse(localStorage.getItem(LSFC));
+    if(!s||s.k!==k||!s.v||Date.now()-s.t>6*3600e3||s.date!==localDate())return null;
+    return s;}catch(e){return null;}
+}
 let current=null,currentIsGeo=false;
 let curData=null,selDay=0,loadSeq=0;
 
@@ -2029,7 +2189,7 @@ function setLoading(name){
   const tl0=$('terraline');if(tl0)tl0.hidden=true;
   const dw0=$('dayrainwrap');if(dw0)dw0.hidden=true;
   const nr0=$('nextrain');if(nr0)nr0.hidden=true;
-  for(const id of ['radcard','aqline','lastyear','sunline']){const e=$(id);if(e)e.hidden=true;}
+  for(const id of ['radcard','aqline','lastyear','sunline','riverline']){const e=$(id);if(e)e.hidden=true;}
   const we=$('wordday');if(we){we.textContent='...';we.style.color='var(--muted)';}
   ['week','periods','decisions','advisories'].forEach(id=>$(id).innerHTML='');
   $('dayhead').textContent='';const cp=$('confpill');cp.textContent='';cp.style.background='transparent';
@@ -2046,18 +2206,26 @@ async function loadForecast(loc,isGeo){
     render({...cached.v,place:loc.name,floods:cached.floods||[]},isGeo);
     renderSaved();updateSaveToggle();return;
   }
-  setLoading(loc.name);renderSaved();updateSaveToggle();
+  // Open instantly from the last complete forecast for this spot, clearly labelled, while the
+  // fresh one loads. The crude first-paint stage is then skipped so it never replaces a better one.
+  const saved=loadLastForecast(k);
+  if(saved)render({...saved.v,place:loc.name,floods:saved.floods||[],staleAt:saved.t},isGeo);
+  else setLoading(loc.name);
+  renderSaved();updateSaveToggle();
   let det,rich;
   try{[det,rich]=await Promise.all([fetchDeterministic(loc.lat,loc.lon),fetchRich(loc.lat,loc.lon)]);}
-  catch(e){if(seq===loadSeq){$('place').textContent='Could not load '+loc.name;$('herotemp').innerHTML='&middot;';$('herocond').textContent='Check your connection and try again.';}return;}
+  catch(e){
+    if(seq!==loadSeq)return;
+    if(saved){const ntt=$('nowtagTxt');if(ntt)ntt.textContent='Offline · your forecast from '+new Date(saved.t).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});return;}
+    $('place').textContent='Could not load '+loc.name;$('herotemp').innerHTML='&middot;';$('herocond').textContent='Check your connection and try again.';return;
+  }
   if(seq!==loadSeq)return; // a newer request superseded this one
   // Terrain profile is location-static and cached forever, so a repeat visit gets valley/hilltop
   // adjustments from the very first paint; a first visit picks them up with the enhancement pass.
   const terr0=terrCacheGet(loc.lat,loc.lon);
   const v1=synthesize(det,rich,null,loc.name,null,null,null,terr0); // first paint, 5-run fallback for rain
   CACHE.set(k,{t:Date.now(),v:v1,floods:[],full:false});
-  render({...v1,place:loc.name,floods:[]},isGeo);
-  renderSaved();updateSaveToggle();
+  if(!saved){render({...v1,place:loc.name,floods:[]},isGeo);renderSaved();updateSaveToggle();}
   // Enhance 1: 156-member ensemble -> sharper rain%, previous runs -> churn, terrain -> local shape.
   Promise.all([
     fetchEnsemble(loc.lat,loc.lon).catch(()=>null),
@@ -2065,11 +2233,13 @@ async function loadForecast(loc,isGeo){
     fetchTerrain(loc.lat,loc.lon).catch(()=>null),
     fetchRegional(loc.lat,loc.lon).catch(()=>null)
   ]).then(([ens,prev,terr,regional])=>{
-    if(seq!==loadSeq||(!ens&&!prev&&!terr))return;
+    if(seq!==loadSeq)return;
+    if(!ens&&!prev&&!terr){if(saved){render({...v1,place:loc.name,floods:[]},isGeo,true);renderSaved();updateSaveToggle();}return;}
     if(ens&&regional)ens.regional=regional;
     const v2=synthesize(det,rich,ens,loc.name,prev,null,null,terr||terr0);
     const c=CACHE.get(k)||{};CACHE.set(k,{t:Date.now(),v:v2,floods:c.floods||[],full:!!ens});
     render({...v2,place:loc.name,floods:(CACHE.get(k)||{}).floods||[]},isGeo,true);
+    if(ens)storeLastForecast(k,v2,c.floods);
     // Enhance 2: score those past runs against real rain gauges. Needs `prev`, is the slowest
     // fetch in the app (the EA station lookup alone is ~7s across several calls), and only ever
     // nudges confidence by a few points - so it runs last, off the critical path, and the app is
@@ -2089,6 +2259,7 @@ async function loadForecast(loc,isGeo){
       const v3=synthesize(det,rich,ens,loc.name,prev,obs,srcSk,terr||terr0,calib);
       const c2=CACHE.get(k)||{};CACHE.set(k,{t:Date.now(),v:v3,floods:c2.floods||[],full:!!ens});
       render({...v3,place:loc.name,floods:(CACHE.get(k)||{}).floods||[]},isGeo,true);
+      if(ens)storeLastForecast(k,v3,c2.floods);
     }).catch(()=>{});
   }).catch(()=>{});
   // Enhance 3: official EA flood alerts (slow endpoint, so never on the critical path).
@@ -2100,6 +2271,16 @@ async function loadForecast(loc,isGeo){
   // Enhance 4: radar pixel over the exact spot, air quality + pollen, and this-day-last-year.
   // All independent, all off the critical path, all quietly absent if their source is down.
   fetchRadar(loc.lat,loc.lon).then(r=>{if(seq!==loadSeq)return;renderRadar(r);}).catch(()=>{const c=$('radcard');if(c)c.hidden=true;});
+  fetchRiver(loc.lat,loc.lon).then(rv=>{
+    const el=$('riverline');if(!el||seq!==loadSeq)return;
+    if(!rv){el.hidden=true;return;}
+    const col=rv.state==='high'?'var(--warn)':rv.state==='low'?'var(--muted)':'var(--good)';
+    const word=rv.state==='high'?'high - above its usual range':rv.state==='low'?'low for this spot':'normal for this spot';
+    const name=(rv.river&&rv.label?rv.river+' at '+rv.label:(rv.label||rv.river)).replace(/</g,'&lt;');
+    el.innerHTML='River nearby: '+name+' ('+rv.km.toFixed(1)+' km) is <b style="color:'+col+'">'+word+'</b>'+
+      ' - '+rv.v.toFixed(2)+' m, usually '+rv.lo.toFixed(2)+'-'+rv.hi.toFixed(2)+' m'+(rv.trend?', '+rv.trend:'')+'.';
+    el.hidden=false;
+  }).catch(()=>{});
   fetchAQ(loc.lat,loc.lon).then(aq=>{
     if(seq!==loadSeq||!aq)return;
     const el=$('aqline'); if(!el)return;
@@ -2150,6 +2331,8 @@ function updateBrand(icon){
 }
 function render(j,isGeo,keepSel){
   curData=j;
+  const ntt=$('nowtagTxt');
+  if(ntt)ntt.textContent=j.staleAt?('Your forecast from '+new Date(j.staleAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+' · refreshing…'):'Live · conditions right now';
   if(j.now&&j.now.icon)updateBrand(j.now.icon);
   $('place').innerHTML=j.place+(isGeo?' <span class="cur">Your location</span>':'');
   $('placesBtnLabel').textContent=j.place;
@@ -2294,8 +2477,6 @@ function renderWeek(){
 function selectDay(i){
   if(!curData||!curData.days[i])return;
   selDay=i;
-  const sb=$('shareBtn');if(sb)sb.hidden=false;
-  prepareShareCard();
   const d=curData.days[i];
   // highlight
   Array.prototype.forEach.call($('week').children,(c,k)=>c.classList.toggle('sel',k===i));
@@ -2442,89 +2623,15 @@ window.addEventListener('appinstalled',()=>{$('install').hidden=true;});
 // browser to re-check sw.js; (2) when a new version has installed, a small toast invites a
 // one-tap reload (the page itself is network-first, so the reload fetches fresh code); (3) a
 // visible version stamp in the footer so anyone can tell at a glance what they are running.
-// ---- Share: sends the selected day to a chat as a picture card plus one line of text, through
-// the phone's own share sheet. Privacy: only the AREA leaves the device - "Somewhere - AB1 2CD"
-// goes out as "Somewhere", and a typed full postcode as its outward district ("AB1").
-// iOS Safari only lets share() run straight from a tap, so the card is drawn in advance whenever
-// a day is shown; the tap then shares instantly with no awaited work in between.
+// ---- Share the app: one tap opens the phone's own share sheet (WhatsApp, Messages, email...)
+// with a short invitation and the link; the link preview comes from the page's og: tags.
+// Computers without a share sheet get the same text copied to the clipboard.
 const APP_URL='https://howsdaweather.netlify.app/';
-let shareCard=null, shareTimer=null;
+const SHARE_TEXT='HowsDaWeather - free weather forecasts for your exact UK postcode, checked against real rain gauges. No ads, no sign-up.';
 function toast(msg){
   const old=document.getElementById('appToast');if(old)old.remove();
   const t=document.createElement('div');t.id='appToast';t.className='updtoast';t.setAttribute('role','status');t.textContent=msg;
   document.body.appendChild(t);setTimeout(()=>{if(t.parentNode)t.remove();},2800);
-}
-function shareArea(name){
-  const s=String(name||'').trim();
-  if(s.includes(' - '))return s.split(' - ')[0].trim();
-  const m=s.toUpperCase().match(/^([A-Z]{1,2}\d[A-Z\d]?)\s*\d[A-Z]{2}$/);
-  return m?m[1]:s;
-}
-function shareSummary(){
-  if(!curData||!curData.days||!curData.days[selDay])return null;
-  const d=curData.days[selDay], wd=wordForDay(d);
-  const area=shareArea(curData.place||(current&&current.name));
-  const when=dayLabel(d.date,selDay);
-  const later=selDay===0&&d.pWetRest!=null&&d.periods.some(p=>p.done);
-  const rain=later?d.pWetRest:d.pWet;
-  const text=area+', '+when+': '+wd.word+'. '+d.headline+' '+d.tmax+'°/'+d.tmin+'°, '+rain+'% chance of rain'+(later?' for the rest of the day':'')+'.';
-  return {key:selDay+'|'+text,d,wd,area,when,rain,text};
-}
-const cssColor=c=>{const m=/^var\((--[\w-]+)\)$/.exec(c||'');return m?getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim():(c||'#eaf1fb');};
-function wrapLines(g,text,maxW,maxLines){
-  const words=String(text).split(/\s+/),lines=[];let line='';
-  for(const w of words){const t=line?line+' '+w:w;if(g.measureText(t).width>maxW&&line){lines.push(line);line=w;}else line=t;}
-  if(line)lines.push(line);
-  if(lines.length>maxLines){lines.length=maxLines;lines[maxLines-1]=lines[maxLines-1].replace(/\s*\S*$/,'')+'…';}
-  return lines;
-}
-async function drawShareCard(s){
-  const W=1080,H=1080,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
-  try{await Promise.all([document.fonts.load('600 64px Fredoka'),document.fonts.load('500 40px Fredoka')]);}catch(e){}
-  const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#16365f');bg.addColorStop(1,'#0a1120');
-  g.fillStyle=bg;g.fillRect(0,0,W,H);
-  const brand="'Fredoka',-apple-system,'Segoe UI',Roboto,Arial,sans-serif", body="-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
-  g.textBaseline='alphabetic';
-  // brand line
-  g.font='600 46px '+brand;g.fillStyle='#eaf1fb';g.fillText('Hows',72,112);
-  let x=72+g.measureText('Hows').width;g.fillStyle='#5db4ff';g.fillText('Da',x,112);
-  x+=g.measureText('Da').width;g.fillStyle='#eaf1fb';g.fillText('Weather',x,112);
-  // place + day
-  g.font='500 40px '+brand;g.fillStyle='#9db0ca';
-  wrapLines(g,s.area+' · '+s.when,620,2).forEach((l,i)=>g.fillText(l,72,190+i*50));
-  // weather icon, drawn from the app's own SVG set
-  try{
-    let svg=WICONS[s.d.icon]||WICONS.cloud;
-    if(!/xmlns=/.test(svg))svg=svg.replace('<svg','<svg xmlns="http://www.w3.org/2000/svg"');
-    svg=svg.replace(/width="\d+"/,'width="300"').replace(/height="\d+"/,'height="300"');
-    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);});
-    g.drawImage(img,W-72-300,150,300,300);
-  }catch(e){}
-  // the word for the day, sized to fit
-  let fs=150;g.font='600 '+fs+'px '+brand;
-  while(g.measureText(s.wd.word).width>W-144&&fs>70){fs-=6;g.font='600 '+fs+'px '+brand;}
-  g.fillStyle=cssColor(s.wd.color);g.fillText(s.wd.word,72,600);
-  // temperatures and rain chance
-  g.font='600 72px '+brand;g.fillStyle='#eaf1fb';
-  const temps=s.d.tmax+'° / '+s.d.tmin+'°';g.fillText(temps,72,712);
-  const rx=72+g.measureText(temps).width+56;
-  g.font='600 44px '+body;g.fillStyle='#5db4ff';g.fillText(s.rain+'% rain',rx,706);
-  // headline
-  g.font='400 38px '+body;g.fillStyle='#c9d6ea';
-  wrapLines(g,s.d.headline,W-144,4).forEach((l,i)=>g.fillText(l,72,800+i*52));
-  // footer
-  g.fillStyle='rgba(255,255,255,.12)';g.fillRect(72,H-118,W-144,2);
-  g.font='500 32px '+brand;g.fillStyle='#9db0ca';g.fillText('howsdaweather.netlify.app',72,H-60);
-  g.font='400 28px '+body;g.fillStyle='#6d80a0';const tag='Postcode-precise UK forecasts';g.fillText(tag,W-72-g.measureText(tag).width,H-60);
-  const blob=await new Promise(res=>c.toBlob(res,'image/png'));
-  return blob?new File([blob],'howsdaweather-forecast.png',{type:'image/png'}):null;
-}
-function prepareShareCard(){
-  clearTimeout(shareTimer);
-  shareTimer=setTimeout(async()=>{
-    const s=shareSummary();if(!s||(shareCard&&shareCard.key===s.key))return;
-    try{const file=await drawShareCard(s);if(file)shareCard={key:s.key,file};}catch(e){}
-  },400);
 }
 // Copy synchronously inside the tap first (works everywhere a tap is still "fresh"); the async
 // Clipboard API is the backup, raced against a timeout because a pending permission prompt can
@@ -2534,25 +2641,15 @@ async function copyText(t){
     document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();if(ok)return true;}catch(e){}
   try{await Promise.race([navigator.clipboard.writeText(t),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),1500))]);return true;}catch(e){return false;}
 }
-function shareForecast(){
-  const s=shareSummary();if(!s)return;
-  const msg=s.text+' '+APP_URL;
-  const file=shareCard&&shareCard.key===s.key?shareCard.file:null;
-  let data=null;
+function shareApp(){
+  const copyFallback=()=>copyText(SHARE_TEXT+' '+APP_URL).then(ok=>toast(ok?'Link copied - paste it to a friend':'Copy this link: '+APP_URL));
   if(navigator.share){
-    if(file&&navigator.canShare&&navigator.canShare({files:[file]}))data={files:[file],title:'HowsDaWeather',text:msg};
-    else data={title:'HowsDaWeather',text:s.text,url:APP_URL};
-  }
-  if(data){
-    navigator.share(data).catch(err=>{
-      if(err&&err.name==='AbortError')return;
-      copyText(msg).then(ok=>toast(ok?'Forecast copied - paste it into any chat':'Sharing is not available here'));
-    });
+    navigator.share({title:'HowsDaWeather',text:SHARE_TEXT,url:APP_URL}).catch(err=>{if(!err||err.name!=='AbortError')copyFallback();});
     return;
   }
-  copyText(msg).then(ok=>toast(ok?'Forecast copied - paste it into any chat':'Sharing is not available here'));
+  copyFallback();
 }
-$('shareBtn').addEventListener('click',shareForecast);
+$('shareBtn').addEventListener('click',shareApp);
 function showUpdateToast(){
   if(document.getElementById('updToast'))return;
   const t=document.createElement('div');t.id='updToast';t.className='updtoast';
@@ -2578,11 +2675,15 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>{
 // ---- release notes (pops once per update, dismissible, gone 24h after you first see it) ----
 // Newest first. Add a new entry (bump v) each release; only the latest ever pops.
 const RELEASES=[
-  {v:'1.10', date:'9 Oct 2026', title:'Sharper eyes, a fixed radar, and a Share button',
+  {v:'1.10', date:'9 Oct 2026', title:'Sharper eyes, a radar that looks ahead, and an app that opens instantly',
    notes:[
      'Five more forecasters joined the vote. Alongside the big global models we now ask five high-resolution regional ones (the Met Office\'s 2 km UK model, two Dutch and Danish 2.5 km models, Meteo-France\'s AROME and Germany\'s ICON-EU) about the next three days. They see showers and hills the global models blur over. Before switching them on we scored 21 months of their past forecasts against real rain gauges at towns from Cornwall to Cumbria: rain predictions came out about 12% more accurate on days the test had never seen.',
      'Confession: the radar card was broken. Our radar provider quietly stopped serving close-up map tiles in January and started sending a "Zoom Level Not Supported" picture instead. Our card read that picture as weather. About one place in five was told "light rain over you" forever; everyone else was told "nothing on the radar" even mid-downpour. It now reads the provider\'s supported tiles, decodes every pixel against their official colour chart, and was checked against gauges that were recording rain at that very moment. If the format ever changes again, the card hides itself rather than make things up.',
-     'New Share button, top right of the forecast. On a phone it opens your normal share sheet with a picture of the day\'s forecast and a line of text, ready for WhatsApp, Messages or anywhere else. It shares your area, never your full postcode.',
+     'The radar now looks ahead. It tracks which way the rain on the radar is moving and how fast, then tells you whether it is heading for you and roughly when it arrives or clears. It marks its own homework first: the same method is re-run on the previous hour and checked against what actually fell on your spot, and the projection only appears if it got at least five of six ten-minute steps right. Tested at ten rainy places across England, it called 82% of ten-minute steps right, against 63% for simply assuming the rain stays where it is.',
+     'Opens instantly. The app keeps your last forecast on your phone, so it appears straight away (clearly labelled with its time) while the fresh one loads - and you still see something useful with no signal.',
+     'New: the nearest river. In England, if there is a river gauge within 5 km, you see whether the river is low, normal or high for that spot and whether it is rising or falling (Environment Agency data).',
+     'The headline now talks about the rest of today. At teatime it no longer tells you "rain most likely 11am to 4pm" or "rain first thing" about hours that have already happened.',
+     'New Share app button, at the top next to Places. It opens your phone\'s share sheet with a link to HowsDaWeather, so you can pass the app to friends in WhatsApp, Messages or anywhere else. On a computer it copies the link instead.',
      'The small print got bigger: every label in the app is now at least 11px, so the hour-by-hour times and the week details are easier to read on a phone.'
    ]},
   {v:'1.9.1', date:'10 Sep 2026', title:'We un-fixed our most famous fix. Now re-fixed.',
@@ -2741,7 +2842,7 @@ setTimeout(maybeShowRelease,800);
 // ~25 minutes when the app returns to the foreground (or on a half-hourly tick), refetch it.
 function maybeRefreshData(){
   try{
-    if(!current||!curData||!curData.issued)return;
+    if(!current||!curData||!curData.issued||curData.staleAt)return;
     if(Date.now()-new Date(curData.issued).getTime()>25*60*1000){
       CACHE.delete(ckey(current.lat,current.lon));
       loadForecast(current,currentIsGeo);
