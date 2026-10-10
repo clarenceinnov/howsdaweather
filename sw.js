@@ -1,5 +1,5 @@
 // HowsDaWeather service worker - offline app shell, live data over network.
-const CACHE = 'howsdaweather-v37';
+const CACHE = 'howsdaweather-v38';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './favicon.svg',
   './fredoka-500.woff2', './fredoka-600.woff2',
@@ -23,8 +23,10 @@ self.addEventListener('fetch', e => {
     // Network-first for the page, so a redeploy shows up immediately; cache as offline fallback.
     e.respondWith(
       fetch(e.request).then(resp => {
-        const copy = resp.clone();
-        caches.open(CACHE).then(c => c.put('./index.html', copy));
+        // Only a good copy of the app page itself may become the offline copy (a 404 or another
+        // page must never overwrite it).
+        const appPage = url.pathname === '/' || url.pathname.endsWith('/index.html');
+        if (resp.ok && appPage) { const copy = resp.clone(); caches.open(CACHE).then(c => c.put('./index.html', copy)); }
         return resp;
       }).catch(() => caches.match('./index.html'))
     );
@@ -33,8 +35,7 @@ self.addEventListener('fetch', e => {
   // Cache-first for static assets (icons, font, manifest).
   e.respondWith(
     caches.match(e.request).then(hit => hit || fetch(e.request).then(resp => {
-      const copy = resp.clone();
-      caches.open(CACHE).then(c => c.put(e.request, copy));
+      if (resp.ok) { const copy = resp.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); }
       return resp;
     }).catch(() => caches.match('./index.html')))
   );

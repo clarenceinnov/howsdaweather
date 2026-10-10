@@ -142,6 +142,30 @@
   .placerow{display:flex;justify-content:space-between;align-items:center;gap:10px}
   .place{font-size:14px;color:var(--muted);font-weight:600;min-width:0}
   .sharebtn{display:inline-flex;align-items:center;gap:6px}
+  .herofoot{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-top:10px}
+  .herofoot .difflink{margin-top:0}
+  .mixbtn{flex:none;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;padding:2px;color:var(--muted);cursor:pointer;font:600 11px var(--font);border-radius:10px}
+  .mixbtn:hover .mixcap{color:var(--text)}
+  .mixbtn:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+  .mixmini{display:block;width:56px;height:56px}
+  .mixmini svg,.mixbig svg,.mixpart svg{display:block}
+  .mixseg{transition:opacity .15s}
+  .mixseg:hover{opacity:.8}
+  .mixmodal{max-width:520px}
+  .mixbig{display:flex;justify-content:center}
+  .mixlegend{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+  .mixlegend li{display:grid;grid-template-columns:14px 1fr auto;gap:4px 10px;align-items:baseline}
+  .mixlegend .sw{width:12px;height:12px;border-radius:3px;align-self:center}
+  .mixlegend .nm{font-weight:600;font-size:14px}
+  .mixlegend .pc{font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;text-align:right}
+  .mixlegend .mn{grid-column:2 / 4;font-size:12.5px;color:var(--muted)}
+  .mixparts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;border-top:1px solid var(--line);padding-top:14px}
+  .mixpart{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;min-width:0}
+  .mixpart .pl{font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+  .mixpart .pt{font-size:12px;color:var(--text)}
+  .mixpart.done{opacity:.55}
+  .mixnote{margin:0;font-size:12px;color:var(--dim);line-height:1.5}
+  @media (prefers-reduced-motion:reduce){.mixseg{transition:none}}
   .sharebtn:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
   .cur{display:inline-block;font-size:11px;color:#9beecb;background:rgba(61,220,151,.14);border:1px solid rgba(61,220,151,.35);padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;font-weight:600}
   .savetoggle{cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--text);padding:7px 12px;border-radius:999px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-family:inherit;flex:none}
@@ -384,7 +408,13 @@
     </div>
     <div class="heroconf"><span>Today's forecast confidence</span><span class="pill" id="heroConf">-</span><span class="confwhy" id="heroConfWhy"></span></div>
     <div class="terraline" id="terraline" hidden></div>
-    <button class="difflink" id="diffBtn">&#10024; What makes this forecast different?</button>
+    <div class="herofoot">
+      <button class="difflink" id="diffBtn">&#10024; What makes this forecast different?</button>
+      <button class="mixbtn" id="mixBtn" type="button" hidden>
+        <span class="mixmini" id="mixMini" aria-hidden="true"></span>
+        <span class="mixcap">Today's mix</span>
+      </button>
+    </div>
   </div>
 
   <div class="card nextrain" id="nextrain" hidden>
@@ -484,7 +514,7 @@
 
   <!-- Release notes: pops once after an update, dismissible, gone after 24h -->
   <div class="modal-backdrop" id="relModal" hidden>
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="What is new in HowsDaWeather">
       <div class="modal-head">
         <h3 id="relTitle">What's new</h3>
         <button class="modal-close" id="relClose" aria-label="Close">&times;</button>
@@ -497,6 +527,21 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="mixModal" hidden>
+    <div class="modal mixmodal" role="dialog" aria-modal="true" aria-labelledby="mixTitle">
+      <div class="modal-head">
+        <h3 id="mixTitle">Today's weather mix</h3>
+        <button class="modal-close" id="mixClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="relmeta" id="mixSub"></div>
+        <div class="mixbig" id="mixBig"></div>
+        <ul class="mixlegend" id="mixLegend"></ul>
+        <div class="mixparts" id="mixParts"></div>
+        <p class="mixnote">How it is worked out: each hour from 6am to midnight is split by its forecast. The chance of rain in that hour goes to the rain types (heavy if 4 mm an hour or more), and the rest of the hour goes to its dry-weather type, picked in this order: windy, hot, fog, frost, then by cloud cover. So the slices are the share of the day you can expect each kind of weather.</p>
+      </div>
+    </div>
+  </div>
   <div class="modal-backdrop" id="diffModal" hidden>
     <div class="modal" role="dialog" aria-label="What makes this forecast different">
       <div class="modal-head">
@@ -509,7 +554,7 @@
           <li><b>Your postcode, not your nearest city.</b> Search a full postcode (or tap Locate me) and the forecast is pinned to about 100 m - in the hills, the next street can be 100 m higher and get different weather.</li>
           <li><b>It knows your terrain.</b> The land around your exact spot is profiled in 1, 2 and 5 km rings: valley floors get frost-hollow nights and sheltered or funnelled wind, exposed tops read gustier, and a clear calm damp night in a valley raises a fog heads-up.</li>
           <li><b>Five national forecast centres, not one.</b> Every rain figure blends ~156 forecasts from ECMWF, the Met Office, ICON, the US GEFS and the Canadian GEM - each weighted by decades of published skill.</li>
-          <li><b>Rain means rain.</b> The percentage is the chance of rain you would actually notice (0.5 mm+), never a 0.1 mm technicality. Hold any part of the day to see expected millimetres.</li>
+          <li><b>Rain means rain.</b> The percentage is the chance of rain you would actually notice (0.5 mm+), never a 0.1 mm technicality. When rain is likely, each part of the day also shows the expected millimetres.</li>
           <li><b>It checks itself against reality.</b> Recent forecasts are scored against real Environment Agency and SEPA rain gauges near you; if the models have been wrong here lately, confidence is marked down and says so.</li>
           <li><b>Honest by rule.</b> Icons can never contradict the number beside them, and where the data cannot support a claim, the app stays quiet rather than guessing.</li>
         </ul>
@@ -522,6 +567,9 @@
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
+// Escape anything that came from outside the app (place names from OpenStreetMap or postcodes.io,
+// Environment Agency text) before it goes into innerHTML: anyone can edit an OSM place name.
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 const pad2=n=>String(n).padStart(2,'0');
 const hourOf=t=>parseInt(t.slice(11,13),10);
@@ -584,8 +632,8 @@ function skyIcon(codes,clouds,wetProb,snowCm,anyProb,gustMph,feelsHi,feelsLo,rai
   const p=wetProb||0, any=anyProb==null?p:anyProb, g=gustMph||0;
   const fh=(feelsHi==null?null:feelsHi), fl=(feelsLo==null?null:feelsLo);
   if(codes.some(c=>c>=95)) return 'thunder';
-  if((snowCm||0)>0 || codes.some(c=>(c>=71&&c<=77)||c===85||c===86))
-    return ((snowCm||0)>=3 || g>=WIND_STRONG) ? 'blizzard' : 'snow'; // heavy or wind-driven -> blizzard
+  if((snowCm||0)>=0.2 || codes.some(c=>(c>=71&&c<=77)||c===85||c===86))
+    return g>=WIND_STRONG ? 'blizzard' : 'snow'; // a blizzard needs wind; heavy calm snow is still snow
   if(g>=WIND_GALE) return 'gale';  // a gale dominates even heavy rain - it is the dangerous story
   // Likelihood decides WHETHER a rain icon shows; intensity decides WHICH. A 90% chance of drizzle
   // must not wear the heavy three-stroke icon a downpour gets: when the expected amount is known
@@ -625,16 +673,27 @@ async function fetchDeterministic(lat,lon){
   const url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
     '&hourly=temperature_2m,precipitation&models='+ids+'&minutely_15=precipitation&forecast_days=2&timezone=auto';
   const j=await fetchJSON(url);
+  if(!j||!j.hourly||!j.hourly.time)throw new Error('incomplete forecast');
   const perModel={};
-  for(const m of MODELS) perModel[m.id]={temp:j.hourly['temperature_2m_'+m.id]||[],precip:j.hourly['precipitation_'+m.id]||[]};
-  return {time:j.hourly.time,perModel,minutely:j.minutely_15||null,utcOffsetSeconds:j.utc_offset_seconds||0};
+  for(const m of MODELS) perModel[m.id]={temp:j.hourly['temperature_2m_'+m.id]||[],precip:shiftAcc(j.hourly['precipitation_'+m.id]||[])};
+  const mn=j.minutely_15||null;
+  if(mn)for(const k of Object.keys(mn))if(/^precipitation/.test(k))mn[k]=shiftAcc(mn[k]);
+  return {time:j.hourly.time,perModel,minutely:mn,utcOffsetSeconds:j.utc_offset_seconds||0};
 }
+// Open-Meteo stamps ACCUMULATED values at the END of their interval: precipitation, its
+// probability and snowfall at 14:00 describe 13:00-14:00 ("preceding hour sum", per the docs;
+// minutely_15 likewise). This app reads every hourly value as the hour AHEAD (a period 6-12 is the
+// hours stamped 06..11), so accumulated series are shifted one step earlier where they arrive.
+// Before this, every rain window, period and "raining now" ran one hour late.
+const shiftAcc=a=>Array.isArray(a)?a.slice(1).concat([null]):a;
 async function fetchRich(lat,lon){
   const url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+
-    '&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,wind_gusts_10m,wind_speed_10m,wind_direction_10m,surface_pressure,visibility,weather_code,cloud_cover,precipitation,precipitation_probability'+
+    '&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,dew_point_2m,wind_gusts_10m,wind_speed_10m,wind_direction_10m,surface_pressure,visibility,weather_code,cloud_cover,precipitation,precipitation_probability,snowfall'+
     '&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,snowfall_sum,uv_index_max,sunrise,sunset'+
     '&forecast_days='+DAYS+'&timezone=auto';
   const j=await fetchJSON(url);
+  if(!j||!j.hourly||!j.hourly.time||!j.daily||!j.daily.time)throw new Error('incomplete forecast');
+  for(const k of ['precipitation','precipitation_probability','snowfall'])j.hourly[k]=shiftAcc(j.hourly[k]);
   return {time:j.hourly.time,hourly:j.hourly,daily:j.daily,utcOffsetSeconds:j.utc_offset_seconds||0,elevation:j.elevation};
 }
 // What the SAME model said for these same hours 1/2/3 runs ago. This one call does two jobs:
@@ -702,7 +761,7 @@ async function fetchEnsemble(lat,lon){
     '&hourly=precipitation&models='+ENSEMBLE_MODELS+'&forecast_days='+DAYS+'&timezone=auto';
   const j=await fetchJSON(url);
   const keys=Object.keys(j.hourly).filter(k=>/member\d/.test(k));
-  const members=keys.map(k=>j.hourly[k]);
+  const members=keys.map(k=>shiftAcc(j.hourly[k]));
   const centres=keys.map(centreOf);            // parallel array: which centre each member is from
   return {time:j.hourly.time,members,centres,utcOffsetSeconds:j.utc_offset_seconds||0};
 }
@@ -722,7 +781,7 @@ async function fetchRegional(lat,lon){
     '&hourly=precipitation&models='+REGIONAL_MODELS.join(',')+'&forecast_days=3&timezone=auto',12000);
   if(!j||!j.hourly||!j.hourly.time)return null;
   const series={};
-  for(const m of REGIONAL_MODELS){const a=j.hourly['precipitation_'+m];if(a&&a.some(v=>v!=null))series[m]=a;}
+  for(const m of REGIONAL_MODELS){const a=j.hourly['precipitation_'+m];if(a&&a.some(v=>v!=null))series[m]=shiftAcc(a);}
   return Object.keys(series).length?{time:j.hourly.time,series}:null;
 }
 async function fetchFloods(lat,lon){
@@ -904,7 +963,7 @@ async function radNowcast(meta,lat,lon,series){
   if(checked<5||right<checked-1)return {failed:true,checked,right};
   const steps=[];for(let k=1;k<=6;k++){const p=radProject(w0,v,k*10);if(p===undefined)break;steps.push({time:w0.time+k*600,dbz:p});}
   if(steps.length<3)return null;
-  const speed=Math.round(Math.hypot(v.dx,v.dy)*kmpx*3);
+  const speed=Math.round(Math.hypot(v.dx,v.dy)*kmpx*3/1.609); // mph, like every other wind figure
   const from=['north','north-east','east','south-east','south','south-west','west','north-west'][Math.round(((Math.atan2(-v.dx,v.dy)*180/Math.PI)+360)%360/45)%8];
   return {steps,speed,from,checked,right};
 }
@@ -980,9 +1039,9 @@ function renderRadar(r){
       const wetNow=last.cat>0, firstWet=nc.steps.find(s=>radCat(s.dbz)>0), firstDry=nc.steps.find(s=>radCat(s.dbz)===0);
       let t;
       if(nc.dry)t='No rain on the radar within about '+nc.reachKm+' km - dry for at least the next hour.';
-      else if(wetNow&&firstDry)t='Rain moving through from the '+nc.from+' at about '+nc.speed+' km/h - should ease off around '+hhmm(firstDry.time)+'.';
-      else if(wetNow)t='Rain moving in from the '+nc.from+' at about '+nc.speed+' km/h - more to come for at least the next hour.';
-      else if(firstWet)t='Rain heading your way from the '+nc.from+' at about '+nc.speed+' km/h - likely to reach you around '+hhmm(firstWet.time)+'.';
+      else if(wetNow&&firstDry)t='Rain moving through from the '+nc.from+' at about '+nc.speed+' mph - should ease off around '+hhmm(firstDry.time)+'.';
+      else if(wetNow)t='Rain moving in from the '+nc.from+' at about '+nc.speed+' mph - more to come for at least the next hour.';
+      else if(firstWet)t='Rain heading your way from the '+nc.from+' at about '+nc.speed+' mph - likely to reach you around '+hhmm(firstWet.time)+'.';
       else t='Nothing heading your way in the next hour - the rain about is moving '+(nc.speed>=5?'past':'slowly')+'.';
       $('radnextLede').textContent=t;
       $('radnextNote').textContent=nc.dry?'Based on the latest radar image.':'Tracks the rain\'s movement over the last 20 minutes. Before showing this, the same method was tested on the previous hour and got '+nc.right+' of '+nc.checked+' ten-minute steps right at your spot.';
@@ -1054,23 +1113,29 @@ async function eaObserved(lat,lon,off,days){
   const live=series.filter(s=>s&&s.length>=24).slice(0,GAUGE_N);
   return foldGauges(live,off,days,'Environment Agency rain gauges');
 }
-function sepaTime(s){const m=/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})/.exec(s||'');return m?m[3]+'-'+m[2]+'-'+m[1]+'T'+m[4]+':'+m[5]+':00Z':null;}
+// SEPA retired its old rainfall API (www2.sepa.org.uk/rainfall/api now redirects to a website with
+// no CORS, so Scottish verification had silently stopped). The same gauges' hourly totals are served
+// by SEPA's KiWIS time-series service, which is CORS-open: one call lists every rain gauge's
+// "Hour.Total" series with its position, one call per gauge returns the readings.
+const SEPA_KIWIS='https://timeseries.sepa.org.uk/KiWIS/KiWIS?service=kisters&type=queryServices&datasource=0&format=json';
 async function sepaObserved(lat,lon,off,days){
-  const all=await fetchJSON('https://www2.sepa.org.uk/rainfall/api/Stations',12000);
-  if(!Array.isArray(all))return null;
-  const near=all.map(x=>({x,d:kmApart(lat,lon,+x.station_latitude,+x.station_longitude)}))
-    .filter(o=>isFinite(o.d)&&o.d<=GAUGE_KM).sort((a,b)=>a.d-b.d).slice(0,GAUGE_CAND);
+  const list=await fetchJSON(SEPA_KIWIS+'&request=getTimeseriesList&ts_name=Hour.Total&parametertype_name=Precip&returnfields=station_no,station_latitude,station_longitude,ts_id',12000);
+  if(!Array.isArray(list)||list.length<2)return null;
+  const near=list.slice(1).map(r=>({ts:r[3],d:kmApart(lat,lon,+r[1],+r[2])}))
+    .filter(o=>o.ts&&isFinite(o.d)&&o.d<=GAUGE_KM).sort((a,b)=>a.d-b.d).slice(0,GAUGE_CAND);
   if(near.length<MIN_GAUGES)return null;
+  const from=days[0]+'T00:00:00Z', to=new Date().toISOString().slice(0,19)+'Z';
   const series=await Promise.all(near.map(o=>
-    fetchJSON('https://www2.sepa.org.uk/rainfall/api/Hourly/'+o.x.station_no+'?all=true',12000)
-      .then(r=>Array.isArray(r)?r.map(v=>[sepaTime(v.Timestamp),+v.Value]):null).catch(()=>null)));
+    fetchJSON(SEPA_KIWIS+'&request=getTimeseriesValues&ts_id='+encodeURIComponent(o.ts)+'&from='+from+'&to='+to,12000)
+      .then(r=>Array.isArray(r)&&r[0]&&Array.isArray(r[0].data)?r[0].data.map(v=>[v[0],v[1]==null?null:+v[1]]):null).catch(()=>null)));
   const live=series.filter(s=>s&&s.length>=24).slice(0,GAUGE_N); // drop dead stations, keep nearest live
   return foldGauges(live,off,days,'SEPA rain gauges');
 }
 // The border is not a latitude line, so try the likelier network first and fall back to the other.
 // (SEPA answers in ~250ms; the EA station lookup is ~7s and returns nothing north of the border.)
 async function fetchObserved(lat,lon,off,days){
-  const order=lat>=55?[sepaObserved,eaObserved]:[eaObserved,sepaObserved];
+  // SEPA only has gauges within reach of Scottish locations: skip it entirely further south.
+  const order=lat>=55?[sepaObserved,eaObserved]:lat>=54.4?[eaObserved,sepaObserved]:[eaObserved];
   for(const fn of order){try{const r=await fn(lat,lon,off,days);if(r)return r;}catch(e){}}
   return null; // Wales and NI have no equivalent open network we could find - degrade quietly
 }
@@ -1451,37 +1516,50 @@ function wordForDay(d){
   const rain=PdAll.length===3
     ?(Pd.length?Math.max.apply(null,Pd.map(p=>p.key==='evening'?Math.round(p.wet*0.6):p.wet)):Math.round((PdAll[2]?PdAll[2].wet:d.pWet)*0.6))
     :d.pWet;
-  const h=d.hazards||{}, feels=d.feelsMax, t=d.tmax, sum=d.precipSum||0, gust=d.gustMph||0, coldMin=d.feelsMin;
+  // Today, once parts of the day have passed, amounts are the REST of the day's (not the whole day's).
+  const anyDone=PdAll.some(p=>p.done);
+  const amtObj=anyDone?d.restAmt:d.dayAmt;
+  const h=d.hazards||{}, feels=d.feelsMax, t=d.tmax, gust=d.gustMph||0, coldMin=d.feelsMin;
+  const sum=anyDone?(amtObj&&amtObj.med!=null?amtObj.med:0):(d.precipSum||0);
+  const spit=Pd.length?Math.max.apply(null,Pd.map(p=>p.any)):d.pAny;
   const C={bad:'var(--bad)',warn:'var(--warn)',sky:'var(--sky)',good:'var(--good)',sun:'var(--sun)',ice:'#8fd3ff',mix:'var(--accent)',mystery:'#c3b5ff'};
   const seed=parseInt(String(d.date).replace(/-/g,''),10)||0;
   const pick=(arr,col)=>({word:arr[seed%arr.length],color:col});
   if(h.thunder) return pick(['STORMY','THUNDERY','ELECTRIC','RUMBLING'],C.bad);
-  if(h.snow||h.ice){ if(h.ice||d.tmin<=0) return pick(['FROZEN','ICY','BALTIC','ARCTIC'],C.ice); return pick(['SNOWY','WINTRY','WHITE-OUT'],C.ice); }
-  if(feels>=32||t>=30) return pick(['SCORCHED','SCORCHIO','ROASTING','SWELTERING','MELTING'],C.bad);
-  if(gust>=45) return pick(['BATTERED','WILD','HOWLING'],C.bad);
-  // Wet before breakfast, decent after: the day's story is the recovery, not the rain. (Verified
-  // case: rain over by 7am then wall-to-wall sun must never read SOAKED - or STUNNER.)
-  if(d.clearing) return pick(['CLEARING','BRIGHTENING','ON THE UP','COMES GOOD'],C.mix);
-  // Genuine coin-flip on PROPER rain - own the uncertainty with a laugh. `rain` is now the chance
-  // of meaningful rain (>=0.5mm), so this fires on real doubt about getting wet, not on trace spits:
-  // a bone-dry Bath that used to read "MYSTERY" off a 45% trace figure now sails past this.
-  if(rain>40 && rain<62) return pick(['???','IDK','MYSTERY','DUNNO','TOSS-UP','WILDCARD','CHANCY','WHO KNOWS'],C.mystery);
+  if(h.snow||(h.ice&&d.snowCm>0)){ if(h.ice||d.tmin<=0) return pick(['FROZEN','ICY','BALTIC','ARCTIC'],C.ice); return pick(['SNOWY','WINTRY','WHITE-OUT'],C.ice); }
+  if(feels>=HEAT_SCORCH||t>=30) return pick(['SCORCHED','SCORCHIO','ROASTING','SWELTERING','MELTING'],C.bad);
+  if(gust>=WIND_GALE) return pick(['BATTERED','WILD','HOWLING'],C.bad);
+  // Wet early, decent after: the day's story is the recovery, not the rain. (Verified cases: rain
+  // over by 7am, and rain until 11am, each followed by sunshine, must never read SOAKED or STUNNER.)
+  if(d.clearing&&!(d.nowHour!=null&&d.nowHour>=d.clearFrom+1)) return pick(['CLEARING','BRIGHTENING','ON THE UP','COMES GOOD'],C.mix);
+  // A genuine coin-flip on PROPER rain, where the model runs themselves keep changing their minds.
+  // Ordinary scattered-shower days (a steady 40-50%) are showery, not a mystery.
+  const unsettled=(d.stability!=null&&d.stability<0.85)||!!d.trend;
+  if(rain>=45 && rain<=58 && unsettled) return pick(['???','IDK','MYSTERY','DUNNO','TOSS-UP','WILDCARD','CHANCY','WHO KNOWS'],C.mystery);
   // SOAKED-class words demand VOLUME, not just likelihood: a near-certain 2mm day is DRIZZLY, not
   // a WASHOUT (caught by a real report - "WASHOUT, 90%+" on a day the models only carried ~3mm).
-  if(rain>=70||sum>=8){
-    const med=d.dayAmt&&d.dayAmt.med!=null?d.dayAmt.med:null;
-    if(med==null||med>=4||sum>=8) return pick(['SOAKED','DRENCHED','WASHOUT','BIBLICAL'],C.sky);
+  // Volume comes from the same ensemble median the icon uses (the single-model daily total used to
+  // say SOAKED under a showers icon); the model total only decides when no ensemble is loaded.
+  const med=amtObj&&amtObj.med!=null?amtObj.med:null;
+  const soaked=med!=null?med>=4:sum>=8;
+  if(rain>=70||soaked){
+    if(soaked) return pick(['SOAKED','DRENCHED','WASHOUT','BIBLICAL'],C.sky);
     return pick(['DRIZZLY','SPLASHY','DAMP','SPITTING'],C.sky);
   }
-  if(rain>=45||sum>=3) return pick(['DRIZZLY','SPLASHY','DAMP','SPITTING'],C.sky);
+  if(rain>=26) return pick(['SHOWERY','HIT-AND-MISS','ON-OFF','CATCHY'],C.sky);
+  // Drizzle words never sit under a bright icon (long-range trace odds are noisy).
+  const brightIc=['sunny','partly','hot','scorch'].indexOf((anyDone&&d.restIcon)?d.restIcon:d.icon)>=0;
+  if((sum>=3||spit>=80)&&!brightIc) return pick(['DRIZZLY','SPLASHY','DAMP','SPITTING'],C.sky);
   // Showery band (chance of proper rain ~26-40%, e.g. a wet morning that clears). This used to be
   // a GAP: too low for the mystery/drizzly buckets, and the day icon is 'showers', which the
   // sunny/partly/cloudy fallbacks below do not handle - so these days fell through to "STEADY",
   // which read completely wrong for a morning of rain. Now they get a proper showery word.
   if(rain>=26) return pick(['SHOWERY','HIT-AND-MISS','ON-OFF','CATCHY','BRISK'],C.sky);
-  if(gust>=32) return pick(['BLUSTERY','GUSTY','BLOWY'],C.warn);
-  if(h.heat==='danger') return pick(['MUGGY','CLAMMY','STICKY'],C.warn);
-  if(h.fog) return pick(['MURKY','FOGGY','MISTY'],C.warn);
+  if(gust>=WIND_STRONG) return pick(['BLUSTERY','GUSTY','BLOWY'],C.warn);
+  // Muggy means humid heat (dew point 16+), not merely warm.
+  if(h.heat==='caution'&&d.dewMax!=null&&d.dewMax>=16) return pick(['MUGGY','CLAMMY','STICKY'],C.warn);
+  // Fog words only when the fog is the day; a foggy start that burns off is handled by the headline.
+  if(h.fog&&!d.fogMorning) return pick(['MURKY','FOGGY','MISTY'],C.warn);
   if(coldMin<=-2) return pick(['BITTER','BALTIC','PARKY','FREEZING'],C.ice);
   // "Bright" must hold for the parts of the day people live in: a grey, drizzly morning bars the
   // sunny words even if the afternoon clears enough to drag the daily cloud average down.
@@ -1490,22 +1568,26 @@ function wordForDay(d){
   const okIc=ic=>ic==='sunny'||ic==='partly'||ic==='hot'||ic==='scorch';
   // bright = morning AND afternoon look decent, skipping any period that has already passed today
   const dayParts=PdAll.slice(0,2).filter(p=>!p.done);
-  const bright=okIc(d.icon) && (PdAll.length!==3 || dayParts.every(p=>okIc(p.icon||d.icon)));
+  const dIcon=(anyDone&&d.restIcon)?d.restIcon:d.icon;
+  // A foggy start that burns off judges brightness on the periods after it.
+  const brightParts=d.fogMorning?dayParts.filter(p=>p.key!=='morning'):dayParts;
+  const bright=(okIc(dIcon)||(d.fogMorning&&(dIcon==='fog'||dIcon==='mist'))) && (PdAll.length!==3 || brightParts.every(p=>okIc(p.icon||dIcon)));
   if(rain<18 && t>=22 && bright) return pick(['GLORIOUS','CRACKING','STUNNER','LUSH','A BEAUT'],C.sun);
   if(rain<22 && t>=16 && bright) return pick(['LOVELY','GRAND','PLEASANT','DECENT','TIDY'],C.good);
   if(rain<26 && t<=10 && bright) return pick(['CRISP','FRESH','BRIGHT','NIPPY'],C.sky);
+  if(rain<22 && bright) return pick(['FAIR','FINE','PLEASANT','BRIGHT'],C.good);
   // Safety net: whatever the exact numbers, a distinctive-condition icon must never read "settled".
-  if(d.icon==='wet'||d.icon==='showers') return pick(['SHOWERY','HIT-AND-MISS','ON-OFF','CATCHY'],C.sky);
-  if(d.icon==='gale') return pick(['BATTERED','WILD','HOWLING'],C.bad);
-  if(d.icon==='windy') return pick(['BLUSTERY','GUSTY','BLOWY'],C.warn);
-  if(d.icon==='breezy') return pick(['BREEZY','FRESH','BRISK','BLOWY'],C.sky);
-  if(d.icon==='scorch') return pick(['SCORCHED','ROASTING','MELTING','BLAZING'],C.bad);
-  if(d.icon==='hot') return pick(['BALMY','TOASTY','WARM','BASKING'],C.sun);
-  if(d.icon==='frost') return pick(['FROSTY','ICY','NIPPY','FROZEN'],C.ice);
-  if(d.icon==='blizzard') return pick(['BLIZZARD','WHITE-OUT','SNOWED-IN'],C.ice);
-  if(d.icon==='mist') return pick(['MISTY','HAZY','MURKY'],C.warn);
-  if(d.icon==='cloudy') return pick(['GREY','DULL','DREICH','CLAGGY','MEH'],C.warn);
-  if(d.icon==='partly') return pick(['MIXED','PATCHY','CHANGEABLE','SO-SO'],C.mix);
+  if(dIcon==='wet'||dIcon==='showers') return pick(['SHOWERY','HIT-AND-MISS','ON-OFF','CATCHY'],C.sky);
+  if(dIcon==='gale') return pick(['BATTERED','WILD','HOWLING'],C.bad);
+  if(dIcon==='windy') return pick(['BLUSTERY','GUSTY','BLOWY'],C.warn);
+  if(dIcon==='breezy') return pick(['BREEZY','FRESH','BRISK','BLOWY'],C.sky);
+  if(dIcon==='scorch') return pick(['SCORCHED','ROASTING','MELTING','BLAZING'],C.bad);
+  if(dIcon==='hot') return pick(['BALMY','TOASTY','WARM','BASKING'],C.sun);
+  if(dIcon==='frost') return pick(['FROSTY','ICY','NIPPY','FROZEN'],C.ice);
+  if(dIcon==='blizzard') return pick(['BLIZZARD','WHITE-OUT','SNOWED-IN'],C.ice);
+  if(dIcon==='mist') return pick(['MISTY','HAZY','MURKY'],C.warn);
+  if(dIcon==='cloudy') return pick(['GREY','DULL','DREICH','CLAGGY','MEH'],C.warn);
+  if(dIcon==='partly') return pick(['MIXED','PATCHY','CHANGEABLE','SO-SO'],C.mix);
   return pick(['MILD','SETTLED','STEADY','FINE'],C.good);
 }
 function findNowIdx(time,off){const l=new Date(Date.now()+off*1000);const t=l.getUTCFullYear()+'-'+pad2(l.getUTCMonth()+1)+'-'+pad2(l.getUTCDate())+'T'+pad2(l.getUTCHours())+':00';const i=time.indexOf(t);return i>=0?i:0;}
@@ -1527,7 +1609,10 @@ function assessHazards(d){
   // because 'breezy' did not even start until 30 and the first advisory needed 40. Real perception:
   // ~22 mph gusts is a noticeable breeze, ~33 is properly windy, ~45+ is disruptive.
   const wind = gust>=45?'severe':gust>=33?'high':gust>=22?'breezy':'calm';
-  const ice = snow>0 && tmin<=1;
+  // Snow counts from 0.5 cm (a 0.2 cm dusting at 3am no longer shuts the golf course). Frost is its
+  // own flag; ice = snow near freezing, or a frost on ground that is likely to be wet.
+  const snowy=snow>=0.5, frost=tmin<=0;
+  const ice = (snowy && tmin<=1) || (frost && (d.pAny>=40||rh>=90));
   const adv=[];
   if(thunder) adv.push({sev:'bad',icon:'⛈️',title:'Thunderstorms likely',text:'Thunder and lightning possible. When you hear it, head indoors - stay off open ground, hilltops and open water, and away from tall trees.',src:'HowsDaWeather advisory - from the forecast, not an official Met Office warning'});
   if(heat==='danger'){const muggy=rh>=55;adv.push({sev:'bad',icon:'🥵',title:'Heat-health caution',text:'Feels like '+Math.round(feels)+'° at the hottest point'+(muggy?', and muggy at '+rh+'% humidity - draining in the sun':' - a fierce, dry heat')+'. Go easy in the midday sun, keep water on you, and check on anyone vulnerable.',src:'HowsDaWeather advisory - from the forecast, not an official Met Office warning'});}
@@ -1535,14 +1620,18 @@ function assessHazards(d){
   if(wind==='severe') adv.push({sev:'bad',icon:'🌬️',title:'Severe gusts',text:'Gusts up to '+gust+' mph. Secure loose items; disruption to travel and exposed activities is likely.',src:'HowsDaWeather advisory - not an official Met Office warning'});
   else if(wind==='high') adv.push({sev:'warn',icon:'🌬️',title:'Strong wind',text:'Gusts up to '+gust+' mph - blustery for cycling, high-sided vehicles, brollies and tents.',src:'HowsDaWeather advisory - from the forecast'});
   else if(wind==='breezy') adv.push({sev:'warn',icon:'🍃',title:'Breezy',text:'Gusts up to '+gust+' mph - noticeably breezy. Fine for most, but the brolly and anything loose in the garden might have other ideas.',src:'HowsDaWeather advisory - from the forecast'});
-  if(snow>0) adv.push({sev:(ice?'bad':'warn'),icon:'❄️',title:(ice?'Snow and ice':'Snow'),text:(snow>=1?Math.round(snow):'A little')+' cm of snow'+(ice?', with ice likely on untreated paths and roads. Take real care underfoot and on the drive.':' possible - wrap up and allow extra time.'),src:'HowsDaWeather advisory - from the forecast'});
+  if(snowy) adv.push({sev:(ice?'bad':'warn'),icon:'❄️',title:(ice?'Snow and ice':'Snow'),text:(snow>=1?'About '+Math.round(snow)+' cm of snow':'A dusting of snow')+(ice?', with ice likely on untreated paths and roads. Take real care underfoot and on the drive.':' possible - wrap up and allow extra time.'),src:'HowsDaWeather advisory - from the forecast'});
+  else if(ice) adv.push({sev:'warn',icon:'🧊',title:'Icy patches',text:'Down to '+Math.round(tmin)+'° on ground that may be wet - icy patches likely on untreated paths and roads, especially early on.',src:'HowsDaWeather advisory - from the forecast'});
   else if(cold==='hard') adv.push({sev:'warn',icon:'🥶',title:'Bitterly cold',text:'Feels like '+Math.round(feelsMin)+'° at its coldest. Wrap up well and watch for ice on untreated surfaces.',src:'HowsDaWeather advisory - from the forecast'});
+  // Heavy rain: the expected (median) total for the day still to come, from the ensemble.
+  const amtH=(d.restAmt&&d.periods&&d.periods.some(p=>p.done))?d.restAmt:d.dayAmt;
+  if(amtH&&amtH.med>=15) adv.push({sev:amtH.med>=30?'bad':'warn',icon:'🌧️',title:'Heavy rain',text:'Around '+Math.round(amtH.med)+' mm expected'+(amtH.p90>amtH.med*1.3?' (up to '+Math.round(amtH.p90)+' mm in the wetter forecasts)':'')+' - surface water, spray and possible flooding on low roads.',src:'HowsDaWeather advisory - from the forecast, not an official Met Office warning'});
   if(uv>=6) adv.push({sev:'warn',icon:'😎',title:'High UV ('+Math.round(uv)+')',text:'Strong sun - sunscreen, hat and shade if you are out for a while, even if it feels breezy.',src:'HowsDaWeather advisory - from the forecast'});
-  else if(fog) adv.push({sev:'warn',icon:'🌫️',title:'Fog about',text:'Patchy fog is likely to cut visibility - allow extra time and use fog lights on the roads.',src:'HowsDaWeather advisory - from the forecast'});
+  if(fog) adv.push({sev:'warn',icon:'🌫️',title:d.fogMorning?'Foggy start':'Fog about',text:(d.fogMorning?'Fog is likely first thing, cutting visibility on the morning roads - allow extra time and use dipped headlights.':'Patchy fog is likely to cut visibility - allow extra time and use fog lights on the roads.'),src:'HowsDaWeather advisory - from the forecast'});
   // Valley fog: clear + calm + very humid night at a spot the terrain profile says is a valley
   // bottom. The grid forecast often misses this - it is a terrain effect, not a weather one.
   if(!fog&&d.valleyFog) adv.push({sev:'warn',icon:'🌫️',title:'Valley fog possible',text:'A clear, calm and damp night in a valley spot - fog may pool overnight and linger past dawn, even if the wider forecast looks clear.',src:'HowsDaWeather terrain estimate - from the shape of the land, not an official warning'});
-  return {heat,cold,wind,snow:snow>0,ice,uv,thunder,fog,adv};
+  return {heat,cold,wind,snow:snowy,ice,frost,uv,thunder,fog,adv};
 }
 
 // Daily rain totals from the current run and the 1/2/3-runs-ago runs, newest first.
@@ -1579,56 +1668,91 @@ function trendFor(prev,date){
   return null;
 }
 function makeHeadline(P,tonight,d){
-  // p.peak is the chance of PROPER rain (>=0.5mm) now, so these bands are on the wet scale: a day
-  // whose wettest period only has a single-figure chance of real rain reads "Sunny and dry", where
-  // before it could read "hit-and-miss" off a trace figure inflated by a few drizzly members.
-  const hz=d.hazards; const [m,a,e]=P.map(p=>p.peak);
-  const t=d.tmax, sunny=(d.icon==='sunny'||d.icon==='hot'||d.icon==='scorch'), bright=(sunny||d.icon==='partly'), cloudy=d.icon==='cloudy', foggy=(d.icon==='fog'||d.icon==='mist');
-  // Today, the headline describes the hours still to come: periods already lived are left out.
-  const live=P.filter(p=>!p.done).map(p=>p.peak), span=live.length?live:[e];
+  // p.peak is the chance of PROPER rain (>=0.5mm), so these bands are on the wet scale. Today, the
+  // headline describes only the hours still to come (passed periods, amounts and sky are excluded).
+  const hz=d.hazards; const e=P[2].peak;
+  const anyDone=P.some(p=>p.done);
+  const ic=(anyDone&&d.restIcon)?d.restIcon:d.icon;
+  const t=d.tmax, sunny=(ic==='sunny'||ic==='hot'||ic==='scorch'), bright=(sunny||ic==='partly'), cloudy=ic==='cloudy',
+    foggy=(ic==='fog'||ic==='mist')&&!d.fogMorning;
+  const livePs=P.filter(p=>!p.done), useP=livePs.length?livePs:[P[2]], span=useP.map(p=>p.peak);
   const maxP=Math.max.apply(null,span), minP=Math.min.apply(null,span);
+  const spit=Math.max.apply(null,useP.map(p=>p.any));
   // A "rain first thing" story is only news before the rain has been and gone.
-  const clearing=d.clearing&&!(d.nowHour!=null&&d.nowHour>=10);
-  // "Wettest" is judged by AMOUNT when we have it (a 97%-chance drizzle afternoon must not
-  // outrank a 9mm evening), by chance otherwise - and never by a period that has already passed.
-  const cand=[{k:'morning',p:m,i:0},{k:'afternoon',p:a,i:1},{k:'evening',p:e,i:2}]
-    .filter(x=>!(P[x.i]&&P[x.i].done))
-    .map(x=>({...x,amt:P[x.i]&&P[x.i].amt&&P[x.i].amt.med!=null?P[x.i].amt.med:null}));
-  const useAmt=cand.length&&cand.every(x=>x.amt!=null);
-  const wettest=(cand.length?cand:[{k:'evening',p:e}]).sort((x,y)=>useAmt?(y.amt-x.amt):(y.p-x.p))[0];
+  const clearing=d.clearing&&!(d.nowHour!=null&&d.nowHour>=(d.clearFrom||9)+1);
+  // "Wettest" is ranked by CHANCE; amounts only decide it when one period carries real rain
+  // (median 0.5 mm+). Ranking by amount alone tied at 0 on most days and always named the morning.
+  const cand=[{k:'morning',i:0},{k:'afternoon',i:1},{k:'evening',i:2}].filter(x=>!P[x.i].done)
+    .map(x=>({k:x.k,p:P[x.i].peak,amt:P[x.i].amt&&P[x.i].amt.med!=null?P[x.i].amt.med:0}));
+  const maxAmt=cand.length?Math.max.apply(null,cand.map(x=>x.amt)):0;
+  const wettest=(cand.length?cand:[{k:'evening',p:e,amt:0}]).sort((x,y)=>maxAmt>=0.5?(y.amt-x.amt):(y.p-x.p))[0];
+  const amt=anyDone?d.restAmt:d.dayAmt, med=amt&&amt.med!=null?amt.med:null;
+  const mmTxt=med!=null&&med>=1?' (around '+Math.round(med)+' mm)':'';
+  const thunderP=livePs.filter(p=>p.icon==='thunder').map(p=>p.key);
+  const snowAny=useP.some(p=>p.icon==='snow'||p.icon==='blizzard');
   const fmtH=x=>{x=((x%24)+24)%24;return x===0?'midnight':x===12?'noon':x<12?x+'am':(x-12)+'pm';};
   const win=d.rainWindow;
-  let h;
-  if(clearing){
+  let h, timed=false, ledWind=false, ledSnow=false, ledFog=false;
+  if(hz.thunder&&thunderP.length){
+    // Storms lead the headline, and say WHEN: an evening storm must not brand a fine day.
+    const onlyEve=thunderP.length===1&&thunderP[0]==='evening'&&livePs.length>1;
+    const dryBefore=onlyEve&&livePs.filter(p=>p.key!=='evening').every(p=>p.peak<25);
+    h=dryBefore?'Fine and mostly dry until the evening, when thunderstorms are likely.':
+      onlyEve?'Showery at times, with thunderstorms likely in the evening.':
+      'Thunderstorms likely, especially in the '+(thunderP.indexOf(wettest.k)>=0?wettest.k:thunderP[0])+'.';
+  }
+  else if(clearing){
     // Wet early, then it comes good - say so, instead of branding the whole day wet.
-    h='Rain first thing'+(win&&win.e<=12?' (clearing by about '+fmtH(win.e)+')':'')+', then drying out - '+
-      (bright?'a decent, brighter day from mid-morning.':'staying mostly dry from mid-morning.');
+    const early=(d.clearFrom||9)===9;
+    h=(early?'Rain first thing':'A wet morning')+(win&&win.e<=13?' (clearing by about '+fmtH(win.e)+')':'')+', then drying out - '+
+      (bright?(early?'a decent, brighter day from mid-morning.':'a brighter afternoon and evening.'):(early?'staying mostly dry from mid-morning.':'staying mostly dry after lunch.'));
+    timed=true;
+  }
+  else if(minP>=65&&useP.length>=2){
+    // Likely wet in every part of the (remaining) day. This used to read "showery on and off".
+    const rest=anyDone?' for the rest of the day':' all day';
+    if(snowAny){h='Snowy at times'+rest+(d.snowCm>=1?', with about '+Math.round(d.snowCm)+' cm':'')+'.';ledSnow=true;}
+    else if(med!=null&&med<2&&spit>=80) h='Damp and drizzly'+rest+' - more of a nuisance than a soaking.';
+    else if(med!=null&&med>=10) h=(anyDone?'Wet for the rest of the day':'A wet day throughout')+', heavy at times'+mmTxt+'.';
+    else h='Wet on and off'+rest+mmTxt+'.';
+    timed=true;
   }
   else if(maxP<12){
-    // genuinely dry - vary the flavour by warmth and sky so no two read the same
-    if(foggy) h='Dry, but grey and murky.';
-    else if(sunny) h = t>=24?'Bags of sunshine and dry.':t>=16?'Sunny and dry - crack on.':'Bright and dry, but on the cool side.';
-    else if(bright) h = t>=16?'Dry with some sunny spells.':'Dry with sunny spells, but cool.';
-    else if(cloudy) h = t>=16?'Dry, but rather cloudy.':'Grey and cool, but staying dry.';
-    else h='A dry day - crack on.';
+    const rest=anyDone?' for the rest of the day':'';
+    if(hz.wind==='severe'){h='Dry'+rest+', but wild and windy - take care out there.';ledWind=true;}
+    else if(hz.wind==='high'&&!anyDone){h='Dry but blustery.';ledWind=true;}
+    else if(ic==='frost'&&!anyDone) h='Crisp and dry, with a hard frost.';
+    else if(ic==='breezy'||ic==='windy') h=anyDone?'Dry and breezy for the rest of the day.':'Dry and breezy.';
+    else if(d.fogMorning&&!anyDone){h='A foggy start, then '+(bright?'brighter and dry':'dry')+'.';ledFog=true;}
+    else if(spit>=60) h=anyDone?'Mostly dry for the rest of the day, but damp at times.':'Mostly dry, but damp with the odd spot of drizzle.';
+    else if(foggy) h='Dry'+rest+', but grey and murky.';
+    else if(sunny) h=anyDone?'Dry and bright for the rest of the day.':(t>=24?'Bags of sunshine and dry.':t>=16?'Sunny and dry - crack on.':'Bright and dry, but on the cool side.');
+    else if(bright) h=anyDone?'Dry with some sunny spells for the rest of the day.':(t>=16?'Dry with some sunny spells.':'Dry with sunny spells, but cool.');
+    else if(cloudy) h=anyDone?'Dry but cloudy for the rest of the day.':(t>=16?'Dry, but rather cloudy.':'Grey and cool, but staying dry.');
+    else h=anyDone?'Dry for the rest of the day.':'A dry day - crack on.';
   }
-  else if(maxP<24) h='Mostly dry, with just a slim chance of a shower'+(wettest.p>=16?' in the '+wettest.k:'')+'.';
-  else if(maxP<36) h='Largely dry but a touch hit-and-miss - the odd shower possible, most likely in the '+wettest.k+'.';
-  else if(minP>=33) h='A showery one on and off through the day - keep the brolly handy.';
+  else if(maxP<24) h='Mostly dry, with just a slim chance of a shower'+(wettest.p>=16&&maxP-minP>=8?' in the '+wettest.k:'')+'.';
+  else if(maxP<36) h='Largely dry but a touch hit-and-miss - the odd shower possible'+(maxP-minP>=8?', most likely in the '+wettest.k:' at any time')+'.';
+  else if(livePs.length>=2&&!P[2].done&&P[2].peak>=36&&livePs.filter(p=>p.key!=='evening').every(p=>p.peak<20))
+    h='Dry for most of the day, then rain arriving in the evening.';
+  else if(minP>=33) h=snowAny?'Wintry on and off through the day - wrap up.':'A showery one on and off through the day - keep the brolly handy.';
   else if(maxP<52) h='Turning showery, with the wettest spell probably the '+wettest.k+'.';
   else h='Likely wet at times, and the '+wettest.k+' looks the soggiest.';
   // WHEN the rain is coming - the single most useful sentence on a mixed day. Only shown when the
   // ensemble concentrates the rain into one window worth planning around (not a wall-to-wall day).
-  if(!clearing && win && win.hours>=2 && maxP>=22 && win.hours<=10 && (win.e-win.s)<=9)
-    h+=' Rain most likely '+(win.s<=6&&win.e<=9?'before '+fmtH(win.e):fmtH(win.s)+' to '+fmtH(win.e))+'.';
-  if(tonight>=52 && maxP<32) h+=' Rain probably moving in overnight.';
-  else if(tonight>=62) h+=' Likely wet overnight too.';
+  if(!timed && win && win.hours>=2 && maxP>=22 && win.hours<=10 && (win.e-win.s)<=9)
+    h+=' '+(thunderP.length?'Most likely ':'Rain most likely ')+(win.s<=6&&win.e<=9?'before '+fmtH(win.e):fmtH(win.s)+' to '+fmtH(win.e))+'.';
+  if(tonight>=52 && maxP<32) h+=snowAny?' More snow likely overnight.':' Rain probably moving in overnight.';
+  else if(tonight>=62) h+=snowAny?' More snow likely overnight.':' Likely wet overnight too.';
   if(hz.heat==='danger') h+=' A proper scorcher - keep cool and hydrated.';
-  else if(hz.snow) h+=' Snow about - wrap up.';
-  else if(hz.wind==='severe') h+=' Wild and windy.';
+  else if(hz.snow&&!ledSnow&&!snowAny) h+=' Snow about - wrap up.';
+  else if(hz.wind==='severe'&&!ledWind) h+=' Wild and windy.';
   else if(hz.heat==='caution') h+=' Warm out - take it steady.';
-  else if(hz.wind==='high') h+=' Blustery out.';
+  else if(hz.wind==='high'&&!ledWind) h+=' Blustery out.';
+  else if(hz.ice) h+=' Watch for icy patches.';
   else if(hz.cold==='hard') h+=' Bitterly cold.';
+  else if(hz.frost&&!anyDone) h+=' Frosty start.';
+  if(hz.fog&&d.fogMorning&&!ledFog&&!anyDone) h+=' Foggy first thing.';
   return h;
 }
 
@@ -1700,6 +1824,35 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
     return {med:q(0.5),p90:q(0.9)};
   }
 
+  // The day's weather MIX (see MIX_CATS): each hour from 6am to midnight is split by its forecast.
+  // Its chance of noticeable rain goes to the rain types (heavy at 4 mm/h+, thunder or snow when
+  // the weather code says so); the rest of the hour goes to ONE dry-weather type, picked in the
+  // same order the day icon uses (windy, hot, fog, frost, then cloud cover). Summed, the slices are
+  // the expected share of the day for each kind of weather. Uses the same weighted ensemble rain
+  // share as the hourly strip and graph (PoP x 0.7 before the ensemble lands), so they all agree.
+  function weatherMix(date,hourly,wF){
+    const byH={};(hourly||[]).forEach(x=>{byH[x.h]=x;});
+    const hours=[];
+    for(const i of (rGroups[date]||[])){
+      const h=hourOf(rTime[i]);if(h<6)continue;
+      const code=rH.weather_code[i],cc=rH.cloud_cover[i]??50,t=rH.temperature_2m[i],fl=rH.apparent_temperature[i];
+      const gust=mph(rH.wind_gusts_10m[i]||0)*(wF||1);
+      const vis=rH.visibility?rH.visibility[i]:null,mm=rH.precipitation?(rH.precipitation[i]||0):0;
+      let w,hv;
+      if(byH[h]){w=byH[h].p/100;hv=Math.min(w,(byH[h].ph||0)/100);}
+      else{w=Math.min(1,0.7*(rH.precipitation_probability?(rH.precipitation_probability[i]||0):0)/100);hv=mm>=4?w:0;}
+      const parts={},add=(k,v)=>{if(v>0.001)parts[k]=(parts[k]||0)+v;};
+      if(code>=95)add('thunder',w);
+      else if((code>=71&&code<=77)||code===85||code===86||(t!=null&&t<=1))add('snow',w);
+      else{add('heavy',hv);add('showers',w-hv);}
+      add(gust>=WIND_STRONG?'windy':(fl!=null&&fl>=HEAT_WARM)?'heat':(code===45||code===48||(vis!=null&&vis<1000))?'fog':
+        (t!=null&&t<=0)?'frost':cc<30?'clear':cc<70?'partly':'cloudy',1-w);
+      hours.push({h,parts});
+    }
+    const sum=hs=>{const o={};hs.forEach(x=>{for(const k in x.parts)o[k]=(o[k]||0)+x.parts[k];});return o;};
+    return {hours:hours.length,total:sum(hours),
+      periods:PERIODS.map(P=>{const hs=hours.filter(x=>x.h>=P.s&&x.h<P.e);return {key:P.key,label:P.label,hours:hs.length,total:sum(hs)};})};
+  }
   const nowIdxR=findNowIdx(rTime,off);
   const days=[];
   const dates=daily.time.slice(0,DAYS);
@@ -1739,8 +1892,20 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
       // trace probability; it now reads "7% rain / Odd spot". `peak` is aliased to `wet` so every
       // downstream reader (display, week strip, driest/wettest window, activities) uses the honest
       // number. The icon keys off `wet`, plus gust and feels-like so the dominant condition wins.
-      const icon=skyIcon(tIdx.map(i=>rH.weather_code[i]),tIdx.map(i=>rH.cloud_cover[i]),wet,daily.snowfall_sum[di]||0,any,pGust,pFeelsHi,pFeelsLo,amt?amt.med:null,2);
-      return {key:P.key,label:P.label,peak:wet,any,wet,amt,temp,gust:pGust,verdict:rainVerdict(any,wet,amt),icon};
+      // Snow per PERIOD from the hourly series (the daily total put 3am snow on every period's icon).
+      const pSnow=rH.snowfall?tIdx.reduce((a,i)=>a+(rH.snowfall[i]||0),0):0;
+      let icon=skyIcon(tIdx.map(i=>rH.weather_code[i]),tIdx.map(i=>rH.cloud_cover[i]),wet,pSnow,any,pGust,pFeelsHi,pFeelsLo,amt?amt.med:null,2);
+      // The evening runs 6pm-midnight. Once more than half of it is after THAT day's sunset (most of
+      // the year in the UK), a clear evening is a clear night: moon, not sun. A June evening, with
+      // sunset near 9:30pm, keeps its sun.
+      if(P.key==='evening'&&daily.sunset&&daily.sunset[di]){
+        const ss=daily.sunset[di].slice(11,16),ssH=+ss.slice(0,2)+(+ss.slice(3,5))/60;
+        if(Math.max(0,24-Math.max(ssH,P.s))/(P.e-P.s)>=0.5){
+          if(icon==='sunny'||icon==='hot'||icon==='scorch')icon='clearnight';else if(icon==='partly')icon='partlynight';}
+      }
+      const snowy=icon==='snow'||icon==='blizzard';
+      const verdict=snowy&&wet>=25?{word:'Snowy',color:'#8fd3ff',icon}:rainVerdict(any,wet,amt);
+      return {key:P.key,label:P.label,peak:wet,any,wet,amt,temp,gust:pGust,verdict,icon};
     });
     const pAny=rainAt(date,6,24);                 // trace over the whole day (kept for internal use)
     // The day's headline chance of rain = the wettest single period's chance of proper rain. Summing
@@ -1759,12 +1924,13 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
       const idxs=eGroups[date]||[];
       hourlyRain=[];
       for(const i of idxs){
-        const h=hourOf(eTime[i]); let w=0,aw=0;
+        const h=hourOf(eTime[i]); let w=0,aw=0,wh=0;
         // 0.2mm/h = rain you would notice if out in it for the hour. The first release of this
         // graph counted 0.1mm traces and quietly re-created the app's most famous old bug: bars
         // (and the "Rain most likely X to Y" windows built on them) read 2-3x the honest chance.
-        for(let k=0;k<members.length;k++){const wt=weights?weights[k]:1;aw+=wt;const v=members[k][i];if(v!=null&&v>=0.2)w+=wt;}
-        if(aw)hourlyRain.push({h,p:regionalBlend(Math.round(100*w/aw),[i],0.2)});
+        // ph = chance of HEAVY rain that hour (>=4 mm/h, the Met Office's "heavy"), for the day mix.
+        for(let k=0;k<members.length;k++){const wt=weights?weights[k]:1;aw+=wt;const v=members[k][i];if(v!=null&&v>=0.2){w+=wt;if(v>=4)wh+=wt;}}
+        if(aw)hourlyRain.push({h,p:regionalBlend(Math.round(100*w/aw),[i],0.2),ph:regionalBlend(Math.round(100*wh/aw),[i],4)});
       }
       hourlyRain.sort((a,b)=>a.h-b.h);
       // 30% on the noticeable-rain series ~= the old 40% on the trace series this replaced.
@@ -1779,11 +1945,20 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
       }
     }
     const earlyWet=rainAt(date,6,9,WET_MM), restWet=rainAt(date,9,24,WET_MM);
-    const clearing=earlyWet>=50&&restWet<18;
-    // overnight into next day
+    // "Comes good" days: rain over by ~9am, OR a wet morning followed by a dry afternoon and evening
+    // (rain until 11am then sunshine used to read BIBLICAL with a wet icon).
+    const clearEarly=earlyWet>=50&&restWet<18;
+    const clearMorning=!clearEarly&&periods[0].wet>=50&&periods[1].wet<18&&periods[2].wet<18;
+    const clearing=clearEarly||clearMorning, clearFrom=clearEarly?9:12;
+    // Overnight into the next day, on the same noticeable-rain scale as everything else (it was a
+    // 0.1 mm trace over nine hours, which put "rain probably moving in overnight" on most days).
     let tonight=0;
     const next=dates[di+1];
-    if(next){const a=inHours(useEns?(eGroups[date]||[]):(dGroups[date]||[]),useEns?eTime:dTime,21,24);const b=inHours(useEns?(eGroups[next]||[]):(dGroups[next]||[]),useEns?eTime:dTime,0,6);tonight=rainProb(useEns?members:detMembers,a.concat(b),0.1);}
+    if(next){const a=inHours(useEns?(eGroups[date]||[]):(dGroups[date]||[]),useEns?eTime:dTime,21,24);const b=inHours(useEns?(eGroups[next]||[]):(dGroups[next]||[]),useEns?eTime:dTime,0,6);
+      tonight=useEns?rainProbTotal(members,a.concat(b),WET_MM,weights):rainProbTotal(detMembers,a.concat(b),WET_MM);}
+    // Night sky for stargazing: mean cloud 9pm-2am (rain chance is not a cloud forecast).
+    const nightIdx=inHours(rg,rTime,21,24).concat(next?inHours(rGroups[next]||[],rTime,0,2):[]);
+    const nightCloud=nightIdx.length?Math.round(nightIdx.reduce((a,i)=>a+(rH.cloud_cover[i]??50),0)/nightIdx.length):null;
     const dayIdx=inHours(rg,rTime,6,21);
     // Humidity that PAIRS with the heat: RH at the hottest (peak feels-like) hour, not the
     // daily max - which lands at the cool, damp dawn and misrepresents a hot, dry afternoon.
@@ -1794,6 +1969,17 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
     const dayCodes=skyIdx.map(i=>rH.weather_code[i]);
     const dayClouds=skyIdx.map(i=>rH.cloud_cover[i]);
     const fogN=dayCodes.filter(c=>c===45||c===48).length;
+    // Morning fog that burns off is still the commute's story: 2+ foggy hours from 6 to 11am.
+    const isFogAt=i=>rH.weather_code[i]===45||rH.weather_code[i]===48||(rH.visibility&&rH.visibility[i]!=null&&rH.visibility[i]<1000);
+    const fogMorning=inHours(rg,rTime,6,11).filter(isFogAt).length>=2;
+    // Thunder anywhere in the day people live in, 6am to midnight (it stopped at 7pm).
+    const wakeIdx=inHours(rg,rTime,6,24);
+    const thunderDay=wakeIdx.some(i=>rH.weather_code[i]!=null&&rH.weather_code[i]>=95);
+    // Gusts over the waking day: a 3am gale no longer brands the whole day "BATTERED".
+    const wakeG=wakeIdx.map(i=>rH.wind_gusts_10m[i]).filter(v=>v!=null);
+    const dayGust=wakeG.length?Math.round(mph(Math.max.apply(null,wakeG))*wF):Math.round(mph(daily.wind_gusts_10m_max[di])*wF);
+    const dews=dayIdx.map(i=>rH.dew_point_2m?rH.dew_point_2m[i]:null).filter(v=>v!=null);
+    const dewMax=dews.length?Math.round(Math.max.apply(null,dews)):null;
     // Terrain-adjusted numbers: a valley-bottom night can genuinely read colder than the grid
     // forecast (cold pooling), and its gusts sheltered or funnelled; an exposed top gusts higher.
     const tminDelta=tAdj?tAdj.tminDelta:0;
@@ -1801,14 +1987,14 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
       date,idx:di,
       tmax:Math.round(daily.temperature_2m_max[di]),tmin:Math.round(daily.temperature_2m_min[di]+tminDelta),
       feelsMax:daily.apparent_temperature_max[di],feelsMin:daily.apparent_temperature_min[di]+tminDelta,
-      humid:humid,gustMph:Math.round(mph(daily.wind_gusts_10m_max[di])*wF),snowCm:daily.snowfall_sum[di]||0,
+      humid:humid,dewMax,nightCloud,fogMorning,gustMph:dayGust,snowCm:daily.snowfall_sum[di]||0,
       valleyFog:!!(tAdj&&tAdj.fog),terrain:terrain&&terrain.cls!=='flat'?{cls:terrain.cls,windFactor:wF,tminDelta}:null,
       uv:daily.uv_index_max[di]||0,weatherCode:daily.weather_code[di],precipSum:daily.precipitation_sum[di]||0,
-      thunder:dayCodes.some(c=>c!=null&&c>=95),
-      fog:dayCodes.length?fogN>=Math.max(2,Math.ceil(dayCodes.length*0.4)):false,
+      thunder:thunderDay,
+      fog:fogMorning||(dayCodes.length?fogN>=Math.max(2,Math.ceil(dayCodes.length*0.4)):false),
       // Confidence is judged on WET (rain you would notice), not on trace risk; damped by how much
       // this day's call has been churning between runs, and by the model's measured local record.
-      periods,pAny,pWet,dayAmt,hourlyRain,rainWindow,earlyWet,restWet,clearing,
+      periods,pAny,pWet,dayAmt,hourlyRain,rainWindow,earlyWet,restWet,clearing,clearFrom,
       sunrise:daily.sunrise?daily.sunrise[di].slice(11,16):null,
       sunset:daily.sunset?daily.sunset[di].slice(11,16):null,
       stability:stabilityFor(prev,date),
@@ -1817,9 +2003,14 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
     d.icon=skyIcon(dayCodes,dayClouds,pWet,d.snowCm,pAny,d.gustMph,d.feelsMax,d.feelsMin,dayAmt?dayAmt.med:null,4);
     // A clearing day's face should be the day AFTER the early rain, not the pre-breakfast soaking.
     if(clearing){
-      const restIdx=inHours(rg,rTime,9,20);
-      const restAmt=rainAmt(date,9,24);
-      d.icon=skyIcon(restIdx.map(i=>rH.weather_code[i]),restIdx.map(i=>rH.cloud_cover[i]),restWet,d.snowCm,rainAt(date,9,24),d.gustMph,d.feelsMax,d.feelsMin,restAmt?restAmt.med:null,3);
+      const restIdx=inHours(rg,rTime,clearFrom,20);
+      const restAmt=rainAmt(date,clearFrom,24);
+      d.icon=skyIcon(restIdx.map(i=>rH.weather_code[i]),restIdx.map(i=>rH.cloud_cover[i]),rainAt(date,clearFrom,24,WET_MM),0,rainAt(date,clearFrom,24),d.gustMph,d.feelsMax,d.feelsMin,restAmt?restAmt.med:null,3);
+    }
+    // A foggy start that lifts: the day's face is what comes after the fog.
+    else if(fogMorning&&fogN<Math.max(2,Math.ceil(dayCodes.length*0.4))){
+      const afterIdx=inHours(rg,rTime,11,20);
+      if(afterIdx.length)d.icon=skyIcon(afterIdx.map(i=>rH.weather_code[i]),afterIdx.map(i=>rH.cloud_cover[i]),pWet,d.snowCm,pAny,d.gustMph,d.feelsMax,d.feelsMin,dayAmt?dayAmt.med:null,4);
     }
     // Tell the user their odds are locally calibrated (only when the factor genuinely bites).
     if(calib&&Math.abs(1-calibR)>=0.05)
@@ -1839,6 +2030,16 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
       d.nowHour=nh;
       d.periods.forEach((p,pi)=>{p.done=PERIODS[pi]&&PERIODS[pi].e<=nh;});
       d.pWetRest=nh>=23?0:rainAt(date,Math.max(6,nh),24,WET_MM);
+      // Rest-of-day amount, sky and storms, so today's word, headline and advisories describe the
+      // hours still ahead (9pm after a wet day read "WASHOUT - A dry day - crack on").
+      if(d.periods.some(p=>p.done)){
+        const from=Math.max(6,nh),ri=inHours(rg,rTime,from,24);
+        d.restAmt=rainAmt(date,from,24);
+        if(ri.length)d.restIcon=skyIcon(ri.map(i=>rH.weather_code[i]),ri.map(i=>rH.cloud_cover[i]),d.pWetRest,0,rainAt(date,from,24),d.gustMph,d.feelsMax,d.feelsMin,d.restAmt?d.restAmt.med:null,3);
+        d.thunder=ri.some(i=>rH.weather_code[i]!=null&&rH.weather_code[i]>=95);
+        if(nh>=11&&d.fogMorning&&fogN<Math.max(2,Math.ceil(dayCodes.length*0.4)))d.fog=false;
+      }
+      d.mix=weatherMix(date,hourlyRain,wF);
     }
     d.hazards=assessHazards(d);
     d.headline=makeHeadline(periods,tonight,d);
@@ -1854,7 +2055,12 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
   const nowHumid=Math.round(rH.relative_humidity_2m[nowIdxR]??days[0].humid);
   const nowGust=mph(rH.wind_gusts_10m[nowIdxR]);
   const nowCode=rH.weather_code[nowIdxR];
-  const nowP=useEns?rainProb(members,[findNowIdx(eTime,off)],0.1):rainProb(detMembers,[findNowIdx(dTime,off)],0.1);
+  // Hourly chance of NOTICEABLE rain (the hour-strip and graph series), so the hero, the 6-hour
+  // timeline and the strip all quote one number for the same hour (they used 0.1 mm traces).
+  const shareAt=i=>{const tt=rTime[i];if(!tt)return 0;const dd=days.find(x=>x.date===tt.slice(0,10));
+    const x=dd&&dd.hourlyRain&&dd.hourlyRain.find(y=>y.h===hourOf(tt));
+    return x?x.p:Math.round(0.7*(rH.precipitation_probability?(rH.precipitation_probability[i]||0):0));};
+  const nowP=shareAt(nowIdxR);
   let word=nowTemp>=25?'Hot':nowTemp>=20?'Warm':nowTemp>=15?'Mild':nowTemp>=10?'Cool':nowTemp>=5?'Chilly':'Cold';
   const rainw=nowP<25?'dry':nowP<55?'showery':'wet';
   const nowCond=word+', '+rainw;
@@ -1907,9 +2113,7 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
   let aw=0,at=0;for(const m of MODELS){aw+=amtBy[m.id]*m.weight;at+=m.weight;} const synthAmt=Math.round(aw/at*10)/10;
 
   // 6h nowcast timeline (ensemble aligned)
-  const nowIdxE=useEns?findNowIdx(eTime,off):findNowIdx(dTime,off);
-  const tlMembers=useEns?members:detMembers, tlTime=useEns?eTime:dTime;
-  const tl=[];for(let k=0;k<=6;k++){const i=nowIdxE+k;tl.push(i<tlTime.length?rainProb(tlMembers,[i],0.1):0);}
+  const tl=[];for(let k=0;k<=6;k++)tl.push(shareAt(nowIdxR+k));
   // Next 90 minutes at 15-minute resolution - the finest timing the free data allows (true
   // 5-minute lines need radar, the designed-but-not-built upgrade). Mean across the deterministic
   // models' minutely_15 series. NOTE: with models= the API returns precipitation_<model> keys, so
@@ -1957,148 +2161,270 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
 // Each activity checks its RELEVANT hazards in priority order: safety-first blockers
 // (thunder, ice, severe wind, extreme heat) can override the base rain verdict with a
 // bespoke pun; medium-relevance hazards append a practical note. See ACTIVITY-WEATHER-MATRIX.md.
+// Context helpers. c.per = the three periods {key,label,wet,any,temp,icon,done}; c.live = the ones
+// still to come (all three for future days). Activities judge only the parts of the day that are
+// still ahead, and storms only in the periods they are forecast for.
+const pv=(c,key)=>{const p=c.per.find(x=>x.key===key);return p&&!p.done?p.wet:null;};
+const liveOf=(c,keys)=>c.live.filter(p=>keys.indexOf(p.key)>=0);
+const minW=ps=>ps.length?Math.min.apply(null,ps.map(p=>p.wet)):null;
+const maxW=ps=>ps.length?Math.max.apply(null,ps.map(p=>p.wet)):null;
+// Driest period; a tie goes to the most comfortable one (nearest 15 degrees), so a frosty day
+// suggests the afternoon and a hot one the morning, instead of always the first period.
+const driestOf=ps=>ps.reduce((x,y)=>y.wet<x.wet||(y.wet===x.wet&&Math.abs(y.temp-15)<Math.abs(x.temp-15))?y:x);
+const stormDuring=(c,keys)=>c.thunder&&c.stormIn.some(k=>keys.indexOf(k)>=0);
+const stormList=c=>c.stormIn.join(' and ');
+// The first live period from which everything stays dry (wet < t), or null. "Wait for it to clear".
+const dryFrom=(c,t)=>{for(let i=0;i<c.live.length;i++){if(c.live.slice(i).every(p=>p.wet<t))return c.live[i];}return null;};
 const ACTIVITIES=[
   {id:'washing',emoji:'🧺',label:'Washing out?',fn:c=>{
     if(c.snow) return {c:'bad',verdict:'Not a chance',meta:'Snow and damp air - it will freeze on the line before it dries. Airer by the radiator.'};
-    const windy=c.wind==='high'||c.wind==='severe';
-    const dry=[]; if(c.m<22)dry.push('morning'); if(c.a<22)dry.push('afternoon'); if(c.e<22)dry.push('evening');
-    if(dry.length===3){let m=(c.day<9?'Line-drying weather dawn to dusk. ':'Should stay dry enough all day. ')+(windy?'Breezy too, so it dries fast - but peg it down.':c.heat!=='none'?'Warm and dry - crispy in an hour.':'Fill yer boots.');return {c:'good',verdict:c.day<9?'Get it out':'Probably safe all day',meta:m};}
-    if(dry.length===0) return {c:'bad',verdict:'Leave it on the airer',meta:'Showers on and off all day - the socks will only mock you.'};
-    return {c:'warn',verdict:'Dry-ish: '+dry.join(' & '),meta:'Best in the '+dry[0]+'. Whip it in before the '+c.wettest.label.toLowerCase()+' - a shower is likely then (~'+c.wettest.peak+'%).'+(windy?' And peg it down.':'')};
+    if(c.wind==='severe') return {c:'bad',verdict:'Too wild to peg out',meta:'Gusts to '+c.gust+' mph - it will end up in next door\'s garden. Airer today.'};
+    if(!c.live.length) return {c:'warn',verdict:'Too late today',meta:'The drying day is done - check tomorrow.'};
+    if(c.tmax<=4) return {c:'warn',verdict:'Freeze-dried at best',meta:'Only '+c.tmax+'° - it will barely dry and may stiffen on the line. Airer job.'};
+    const windy=c.wind==='high';
+    const dry=c.live.filter(p=>p.wet<22&&p.any<50);
+    const slow=c.humid>=85&&c.wind==='calm'&&c.tmax<14;
+    if(dry.length===c.live.length){
+      if(slow) return {c:'warn',verdict:'Dry but slow-drying',meta:'Should stay dry, but the air is damp and still ('+c.humid+'% humidity) - it will take all day. In before dusk.'};
+      const m=(c.day<9?'Line-drying weather'+(c.live.length<3?' for the rest of the day. ':' dawn to dusk. '):'Should stay dry enough. ')+(windy?'Breezy too, so it dries fast - but peg it down.':c.heat!=='none'?'Warm and dry - crispy in an hour.':'Fill yer boots.');
+      return {c:'good',verdict:c.day<9?'Get it out':'Probably safe',meta:m};
+    }
+    if(!dry.length){const w=maxW(c.live);
+      if(w<45) return {c:'warn',verdict:'Gamble - stay close',meta:'Showers about (~'+w+'%) - if you risk it, stay near the line.'};
+      return {c:'bad',verdict:'Leave it on the airer',meta:'Rain likely (~'+w+'%) - the socks will only mock you.'};}
+    const idx=c.live.indexOf(dry[0]);
+    const laterWet=c.live.slice(idx+1).find(p=>dry.indexOf(p)<0), earlierWet=c.live.slice(0,idx).find(p=>dry.indexOf(p)<0);
+    return {c:'warn',verdict:'Dry-ish: '+dry.map(p=>p.label.toLowerCase()).join(' & '),
+      meta:'Best in the '+dry.map(p=>p.label.toLowerCase()).join(' & ')+'. '+(laterWet?'Whip it in before the '+laterWet.label.toLowerCase()+' - rain is likely then (~'+laterWet.wet+'%).':earlierWet?'Hang it out once the '+earlierWet.label.toLowerCase()+' rain has cleared.':'')+(windy?' And peg it down.':'')};
   }},
   {id:'cycle',emoji:'🚲',label:'Cycle to work?',fn:c=>{
     if(c.ice) return {c:'bad',verdict:'Icy - take the bus',meta:'Ice likely on untreated roads. Two wheels and black ice do not mix.'};
+    if(c.snow) return {c:'bad',verdict:'Snowy - take the bus',meta:'Snow on the roads - not one for two wheels.'};
     if(c.wind==='severe') return {c:'bad',verdict:'Wild in the wind',meta:'Gusts to '+c.gust+' mph - hard going and risky on exposed roads.'};
-    const p=c.m;
-    let base={c:p<18?'good':p<37?'warn':'bad',verdict:p<11?'Clear run':p<25?'Probably dry':p<40?'Pack a jacket':'You will likely get wet',meta:p<11?'Should be a dry commute.':'About '+p+'% chance of a shower on the way in'+(c.disagree?' - though the models are hedging.':'.')};
-    if(c.wind==='high'){if(base.c==='good')base.c='warn';base.meta+=' Gusty ('+c.gust+' mph) - mind the crosswinds.';}
-    if(c.thunder)base.meta+=' Storms possible - shelter if it turns.';
+    const inP=pv(c,'morning'), homeP=pv(c,'afternoon')!=null?pv(c,'afternoon'):pv(c,'evening');
+    if(inP==null&&homeP==null) return {c:'good',verdict:'Commute done',meta:'Today\'s rides are behind you - check tomorrow.'};
+    const p=inP!=null?inP:homeP, leg=inP!=null?'on the way in':'on the way home';
+    const base={c:p<18?'good':p<37?'warn':'bad',verdict:p<11?'Dry ride':p<25?'Probably dry':p<40?'Pack a jacket':'You will likely get wet',
+      meta:p<11?'Should be a dry ride '+leg+'.':'About '+p+'% chance of rain '+leg+(c.disagree?' - though the models are hedging.':'.')};
+    if(inP!=null&&homeP!=null&&homeP>=40&&inP<25)base.meta+=' Wetter for the ride home (~'+homeP+'%) - pack the waterproofs.';
+    if(c.wind==='high'){if(base.c==='good'){base.c='warn';base.verdict='Headwind work';}base.meta+=' Gusty ('+c.gust+' mph) - mind the crosswinds.';}
+    if(c.frost&&inP!=null){if(base.c==='good'){base.c='warn';base.verdict='Frosty start';}base.meta+=' Down to '+c.tmin+'° - watch for icy patches on shaded roads.';}
+    if(c.fogMorning&&inP!=null){if(base.c==='good'){base.c='warn';base.verdict='Foggy start';}base.meta+=' Fog first thing - lights on, be seen.';}
+    if(stormDuring(c,['morning','afternoon']))base.meta+=' Storms possible - shelter if it turns.';
     if(c.heat==='danger')base.meta+=' A scorcher later - carry water for the ride home.';
     return base;}},
   {id:'dog',emoji:'🐕',label:'Walkies?',fn:c=>{
-    if(c.thunder) return {c:'warn',verdict:'Quick one between storms',meta:'Thunder about - keep it short and steer clear of open fields and tall trees.'};
     if(c.heat==='danger') return {c:'warn',verdict:'Early or late only',meta:'Too hot midday - pavements can burn paws. Dawn or dusk, and take water for you both.'};
-    const d=c.driest;
-    return {c:d.peak<25?'good':d.peak<43?'warn':'bad',verdict:'Best in the '+d.label.toLowerCase(),meta:'Driest window (~'+d.peak+'% rain, about '+d.temp+'°). '+(c.ice?'Mind icy paths. ':'')+(d.peak<25?'The dog votes yes.':'Might get a bit damp, mind.')};}},
+    if(c.snow) return {c:'warn',verdict:'Snowy walk - boots on',meta:'Most dogs love it - keep it short, mind icy paths and wipe the salt off their paws after.'};
+    const ps=c.live.length?c.live:c.per, calm=ps.filter(p=>!(c.thunder&&p.icon==='thunder'));
+    const d=driestOf(calm.length?calm:ps);
+    const base={c:d.wet<25?'good':d.wet<43?'warn':'bad',verdict:d.wet<43?'Best in the '+d.label.toLowerCase():'Wet walk - waterproofs',
+      meta:d.wet<43?('Driest window (~'+d.wet+'% rain, about '+d.temp+'°). '+(d.wet<25?'The dog votes yes.':'Might get a bit damp, mind.')):('Rain likely whenever you go (~'+d.wet+'% at best). Towel by the door.')};
+    if(c.thunder&&c.stormIn.length){base.meta+=' Thunder likely in the '+stormList(c)+' - keep clear of open fields then.';if(base.c==='good'&&calm.length<ps.length&&calm.length<2)base.c='warn';}
+    if(c.wind==='severe'){if(base.c==='good')base.c='warn';base.meta+=' Very windy - avoid woods and tall trees (falling branches).';}
+    if(c.ice)base.meta+=' Mind icy paths.';
+    return base;}},
   {id:'bbq',emoji:'🍖',label:'BBQ weather?',fn:c=>{
-    if(c.thunder) return {c:'bad',verdict:'Lightning says no',meta:'Storms forecast - not the day to stand over a metal grill in the open. Plan B.'};
+    const slots=liveOf(c,['afternoon','evening']);
+    if(!slots.length) return {c:'warn',verdict:'Missed it today',meta:'Too late for a cook-up today.'};
     if(c.snow) return {c:'bad',verdict:'Grill pan job',meta:'Snowy out - the coals will not thank you. Cook indoors.'};
+    if(stormDuring(c,['afternoon','evening'])) return {c:'bad',verdict:'Lightning says no',meta:'Storms likely in the '+stormList(c)+' - not the day to stand over a metal grill in the open.'};
     if(c.wind==='severe') return {c:'bad',verdict:'Too windy to light',meta:'Gusts to '+c.gust+' mph - flames and gusts are a bad mix. Save it.'};
-    const best=Math.min(c.a,c.e),slot=c.a<=c.e?'this afternoon':'this evening';
-    let base={c:best<18?'good':best<37?'warn':'bad',verdict:best<18?('Fire up the grill '+slot):best<37?'Risky - have a plan B':'Sausages indoors',meta:best<18?'Driest slot for a cook-up. Get the coals on.':best<37?'A shower could gatecrash it (~'+best+'% chance).':'Likely too wet (~'+best+'%). Grill pan it is.'};
+    const best=driestOf(slots), slot=(c.isToday?'this ':'in the ')+best.key;
+    if(best.wet<18&&c.tmax<=8) return {c:'warn',verdict:'Hardy souls only',meta:'Dry, but only '+c.tmax+'° - coats on, coals hot, cook fast.'};
+    const base={c:best.wet<18?'good':best.wet<37?'warn':'bad',verdict:best.wet<18?('Fire up the grill '+slot):best.wet<37?'Risky - have a plan B':'Sausages indoors',
+      meta:best.wet<18?'Driest slot for a cook-up. Get the coals on.':best.wet<37?'A shower could gatecrash it (~'+best.wet+'% chance).':'Likely too wet (~'+best.wet+'%). Grill pan it is.'};
     if(base.c!=='bad'&&c.heat==='danger')base.meta+=' Scorcher - keep drinks and raw meat properly cold.';
     else if(base.c!=='bad'&&c.wind==='high')base.meta+=' A bit breezy - shelter the grill.';
     return base;}},
   {id:'beergarden',emoji:'🍺',label:'Beer garden?',fn:c=>{
+    const slots=liveOf(c,['afternoon','evening']);
+    if(!slots.length) return {c:'warn',verdict:'Inside for last orders',meta:'Most of the day has gone - grab a table inside.'};
     if(c.snow) return {c:'bad',verdict:'Inside by the fire',meta:'Snowy - the garden can wait. Grab a spot indoors.'};
-    const best=Math.min(c.a,c.e),warm=c.temp>=16;
+    if(c.wind==='severe') return {c:'bad',verdict:'Pints will fly',meta:'Gusts to '+c.gust+' mph - drinks, brollies and crisps all airborne. Inside table.'};
+    if(stormDuring(c,['afternoon','evening'])){
+      const safe=slots.filter(p=>p.icon!=='thunder'&&p.wet<25);
+      if(safe.length) return {c:'warn',verdict:'Early pint, then inside',meta:'Fine in the '+safe[0].key+', but storms are likely in the '+stormList(c)+'. Head in when it rumbles.'};
+      return {c:'bad',verdict:'Inside table today',meta:'Thunderstorms about - the beer garden is no place to be.'};}
+    const best=minW(slots), warm=c.temp>=16;
     if(best<22&&c.heat==='danger') return {c:'warn',verdict:'Bag the shady table',meta:'Cracking, but a scorcher ('+Math.round(c.feels)+'° feels-like). Shade and water between rounds.'};
-    if(best<18&&warm) return {c:'good',verdict:'Pint outside - go on',meta:'Should stay dry and '+c.temp+'°. Bag a table before everyone else does.'+(c.wind==='severe'?' Weigh the glasses down - it is gusty.':'')};
+    if(best<18&&warm) return {c:'good',verdict:'Pint outside - go on',meta:'Should stay dry and '+c.temp+'°. Bag a table before everyone else does.'+(c.wind==='high'?' Weigh the glasses down - it is gusty.':'')};
     if(best<18) return {c:'warn',verdict:'Dry but a bit nippy',meta:'Probably dry, but only '+c.temp+'° - bring a jumper for the garden.'};
     if(best<37) return {c:'warn',verdict:'Risky - showers about',meta:'A shower could land on your pint (~'+best+'%). Sit near the door.'};
     return {c:'bad',verdict:'Inside table today',meta:'Likely too wet for the garden. The bar is calling.'};}},
   {id:'gardening',emoji:'🌱',label:'Gardening?',fn:c=>{
     if(c.snow) return {c:'bad',verdict:'Nothing doing',meta:'Snow on the beds - leave it be. Sharpen the tools instead.'};
     if(c.heat==='danger') return {c:'warn',verdict:'Early birds only',meta:'Too hot to be digging midday. Before 11 or after 6, and drink up - heat plus graft is a proper strain.'};
-    if(c.cold==='hard') return {c:'warn',verdict:'Ground is like iron',meta:'Hard frost - digging is a battle. Prune or plan the borders instead.'};
-    const p=Math.max(c.m,c.a);
-    if(p<18) return {c:'good',verdict:'Crack on',meta:'Should stay dry enough to get stuck in. The weeds will not pull themselves.'+(c.thunder?' Keep an ear out for thunder.':'')};
-    if(c.day>52) return {c:'warn',verdict:'Let it water itself',meta:'Likely wet - the rain will do your watering, just not much else.'};
-    return {c:'warn',verdict:'Grab a dry gap',meta:'A bit showery (~'+p+'%). Nip out between the drops.'};}},
+    if(c.frost&&c.tmax<=3) return {c:'warn',verdict:'Ground is like iron',meta:'Frozen at '+c.tmin+'° and barely thawing - prune or plan the borders instead.'};
+    if(c.wind==='severe') return {c:'warn',verdict:'Batten down',meta:'Gusts to '+c.gust+' mph - secure pots and furniture; no ladder or hedge-trimming jobs.'};
+    const day=liveOf(c,['morning','afternoon']), ps=day.length?day:c.live;
+    if(!ps.length) return {c:'warn',verdict:'Light is going',meta:'Too late for much in the garden today.'};
+    const best=driestOf(ps), worst=maxW(ps);
+    if(worst<18) return {c:'good',verdict:'Crack on',meta:'Should stay dry enough to get stuck in. The weeds will not pull themselves.'+(c.frost?' Frosty start - keep off the lawn until it thaws.':'')+(c.thunder?' Keep an ear out for thunder.':'')};
+    if(best.wet>=52) return {c:'warn',verdict:'Let it water itself',meta:'Likely wet - the rain will do your watering, just not much else.'};
+    return {c:'warn',verdict:'Grab a dry gap',meta:'Driest in the '+best.label.toLowerCase()+' (~'+best.wet+'%). Nip out between the drops.'};}},
   {id:'run',emoji:'🏃',label:'Going for a run?',fn:c=>{
-    if(c.thunder) return {c:'bad',verdict:'Not in a storm',meta:'Thunder forecast - open ground in lightning is a no. Treadmill, or wait it out.'};
     if(c.ice) return {c:'bad',verdict:'Skiddy underfoot',meta:'Ice on the paths - a turned ankle is not worth it. Indoors today.'};
     if(c.heat==='danger') return {c:'bad',verdict:'Too hot to trot midday',meta:'Feels like '+Math.round(c.feels)+'° at the peak'+(c.humid>=55?', muggy at '+c.humid+'%':'')+' - hard on the body. Dawn or after 7pm, water, easy pace.'};
-    const p=c.driest.peak,cool=c.temp<=16;
-    let base={c:p<30?'good':p<45?'warn':'bad',verdict:'Best in the '+c.driest.label.toLowerCase(),meta:(cool?'Cool and ':'')+chancePhrase(p)+' in your best window (~'+p+'%). Good legs weather.'};
+    const ps=c.live.length?c.live:c.per, calm=ps.filter(p=>!(c.thunder&&p.icon==='thunder'));
+    if(!calm.length) return {c:'bad',verdict:'Not in a storm',meta:'Thunder forecast - open ground in lightning is a no. Treadmill, or wait it out.'};
+    const d=driestOf(calm), cool=c.temp<=16;
+    const base={c:d.wet<30?'good':d.wet<45?'warn':'bad',verdict:d.wet<45?'Best in the '+d.label.toLowerCase():'Soggy one',
+      meta:d.wet<45?((cool?'Cool and ':'')+chancePhrase(d.wet)+' in your best window (~'+d.wet+'%).'+(d.wet<30?' Good legs weather.':'')):'Rain likely all day (~'+d.wet+'% at best) - treadmill, or embrace the soak.'};
+    if(c.thunder&&c.stormIn.length)base.meta+=' Storms likely in the '+stormList(c)+' - stay off open ground then.';
+    if(c.frost)base.meta+=' Frosty start - watch for icy patches early on.';
     if(c.heat==='caution')base.meta+=' Warm out - carry water and do not go daft on the pace.';
-    if(c.wind==='high'||c.wind==='severe')base.meta+=' Windy - it will feel harder into the gusts.';
+    if(c.wind==='severe'){if(base.c==='good')base.c='warn';base.meta+=' Gale-force gusts - pick a sheltered route away from trees.';}
+    else if(c.wind==='high')base.meta+=' Windy - it will feel harder into the gusts.';
     return base;}},
   {id:'golf',emoji:'⛳',label:'Round of golf?',fn:c=>{
-    if(c.thunder) return {c:'bad',verdict:'Get off the course',meta:'Lightning risk - a raised metal club in the open is the last thing you want. Clubhouse today.'};
     if(c.snow) return {c:'bad',verdict:'Greens are shut',meta:'Snow on the course - no play. One for the simulator.'};
     if(c.wind==='severe') return {c:'bad',verdict:'Unplayable gusts',meta:'Gusts to '+c.gust+' mph - the ball will not sit. Save your scorecard.'};
-    const p=Math.max(c.m,c.a);let base={c:p<22?'good':p<40?'warn':'bad',verdict:p<22?'Tee off happy':p<40?'Pack the brolly':'One for the 19th hole',meta:p<22?'Front nine should stay dry at least.':p<40?'Showers may well find you on the back nine (~'+p+'%).':'Likely a wet round (~'+p+'%) - swimming, not swinging.'};
+    const ps=liveOf(c,['morning','afternoon']);
+    if(!ps.length) return {c:'warn',verdict:'Light is going',meta:'Too late for a round today.'};
+    const ok=ps.filter(p=>!(c.thunder&&p.icon==='thunder'));
+    if(!ok.length) return {c:'bad',verdict:'Get off the course',meta:'Lightning risk - a raised metal club in the open is the last thing you want. Clubhouse today.'};
+    const best=driestOf(ok), worst=maxW(ps);
+    let base;
+    if(worst<22) base={c:'good',verdict:'Tee off happy',meta:'Should stay dry'+(ps.length>1?' for a full round.':'.')};
+    else if(best.wet<22) base={c:'good',verdict:'Play the '+best.label.toLowerCase(),meta:'The '+best.label.toLowerCase()+' looks dry (~'+best.wet+'%); the rest is wetter.'};
+    else if(best.wet<40) base={c:'warn',verdict:'Pack the brolly',meta:'Showers may find you on the back nine (~'+best.wet+'% at best).'};
+    else base={c:'bad',verdict:'One for the 19th hole',meta:'Likely a wet round (~'+best.wet+'% at best) - swimming, not swinging.'};
+    if(c.thunder&&c.stormIn.length)base.meta+=' Storms likely in the '+stormList(c)+' - off the course before then.';
+    if(c.frost&&pv(c,'morning')!=null)base.meta+=' Frost delay likely first thing.';
     if(c.wind==='high')base.meta+=' Club up - '+c.gust+' mph gusts will move it.';
     if(c.heat==='danger')base.meta+=' And a scorcher - hat, water, shade at the turn.';
     return base;}},
   {id:'footy',emoji:'⚽',label:'Kickabout?',fn:c=>{
-    if(c.thunder) return {c:'bad',verdict:'Ref calls it off',meta:'Thunder about - players off the pitch. Not worth it.'};
     if(c.ice||c.snow) return {c:'bad',verdict:'Pitch is frozen',meta:'Frozen or snowy ground - hard as concrete and slippy. Postponed.'};
-    const p=Math.max(c.a,c.e);let base={c:p<25?'good':p<46?'warn':'bad',verdict:p<25?'Jumpers for goalposts':p<46?'Muddy but doable':'Postponed, ref',meta:p<25?'Should be dry enough for a proper game.':p<46?'Likely a bit greasy (~'+p+'%) - bring the studs.':'Pitch will probably be a paddling pool.'};
+    const ps=liveOf(c,['afternoon','evening']);
+    if(!ps.length) return {c:'warn',verdict:'Floodlights only',meta:'Too late for a kickabout today.'};
+    const ok=ps.filter(p=>p.icon!=='thunder');
+    if(!ok.length) return {c:'bad',verdict:'Ref calls it off',meta:'Thunder about - players off the pitch. Not worth it.'};
+    const p=minW(ok);
+    const base={c:p<25?'good':p<46?'warn':'bad',verdict:p<25?'Jumpers for goalposts':p<46?'Muddy but doable':'Postponed, ref',
+      meta:p<25?'Should be dry enough for a proper game.':p<46?'Likely a bit greasy (~'+p+'%) - bring the studs.':'Pitch will probably be a paddling pool.'};
+    if(c.thunder&&c.stormIn.length){if(base.c==='good'){base.c='warn';base.verdict='Early kick-off';}base.meta+=' Storms likely in the '+stormList(c)+' - off the pitch when it rumbles.';}
+    if(c.frost&&base.c!=='bad'){if(c.tmax<=4&&base.c==='good'){base.c='warn';base.verdict='Rock-hard pitch';}base.meta+=' Hard, frosty ground'+(c.tmax<=4?' that may not thaw.':' early on.');}
     if(c.heat==='danger')base.meta+=' Water breaks - it is a scorcher.';
-    else if(c.wind==='severe')base.meta+=' A gale will make a mockery of any long ball.';
+    else if(c.wind==='severe'){if(base.c==='good')base.c='warn';base.meta+=' A gale will make a mockery of any long ball.';}
     return base;}},
   {id:'schoolrun',emoji:'🎒',label:'School run?',fn:c=>{
-    const am=c.m,pm=c.a,both=Math.max(am,pm);
+    const am=pv(c,'morning'), pm=pv(c,'afternoon');
+    if(am==null&&pm==null) return {c:'good',verdict:'Done for today',meta:'Both school runs are behind you - check tomorrow.'};
+    if(c.snow) return {c:'bad',verdict:'Snowy - boots on',meta:'Snow about - wellies, warm layers and extra time.'+(c.ice?' Icy paths too.':'')};
+    const ends=[];if(am!=null)ends.push('drop-off '+am+'%');if(pm!=null)ends.push('pick-up '+pm+'%');
+    const worst=Math.max(am==null?0:am,pm==null?0:pm);
+    const chilly=c.cold!=='none'||c.frost||c.wind==='high'||c.wind==='severe';
     let base;
-    if(both<11) base={c:'good',verdict:'Coats can stay home',meta:'Dry both ends - drop-off and pick-up should stay rain-free.'};
-    else if(both<23) base={c:'good',verdict:'Probably fine',meta:'Mostly dry (drop-off '+am+'%, pick-up '+pm+'%) - maybe tuck a light coat in the bag, just in case.'};
-    else if(both<43) base={c:'warn',verdict:'Coats on',meta:'A shower is likely one end or the other (drop-off '+am+'%, pick-up '+pm+'%).'};
-    else base={c:'bad',verdict:'Full waterproofs',meta:'Probably wet both ways (drop-off '+am+'%, pick-up '+pm+'%). Wellies weather.'};
+    if(worst<11) base={c:'good',verdict:chilly?'Dry - but wrap up':'Coats can stay home',meta:'Dry '+(am!=null&&pm!=null?'both ends':am!=null?'for drop-off':'for pick-up')+'.'};
+    else if(worst<23) base={c:'good',verdict:'Probably fine',meta:'Mostly dry ('+ends.join(', ')+') - maybe tuck a light coat in the bag.'};
+    else if(worst<43) base={c:'warn',verdict:'Coats on',meta:'A shower is possible ('+ends.join(', ')+').'};
+    else{const both=am!=null&&pm!=null&&Math.min(am,pm)>=43;
+      base={c:'bad',verdict:'Full waterproofs',meta:(both?'Probably wet both ways':'Probably wet at '+(am!=null&&am>=43?'drop-off':'pick-up'))+' ('+ends.join(', ')+').'};}
     if(c.ice)base.meta+=' Icy paths - mind the little legs and allow extra time.';
+    else if(c.frost&&am!=null)base.meta+=' Frosty start - hats and gloves.';
     else if(c.cold==='hard')base.meta+=' Bitter - hats and gloves on.';
+    else if(c.wind==='high'||c.wind==='severe')base.meta+=' Blowy - zip them up.';
+    if(c.fogMorning&&am!=null)base.meta+=' Foggy first thing - bright coats.';
     if(c.heat==='danger')base.meta+=' Hot one - water bottle and a sun hat in the bag.';
-    else if(c.heat==='caution'&&both<23)base.meta+=' Warm - a water bottle is a good shout.';
+    else if(c.heat==='caution'&&worst<23)base.meta+=' Warm - a water bottle is a good shout.';
     return base;}},
   {id:'carwash',emoji:'🚗',label:'Wash the car?',fn:c=>{
     if(c.snow||c.ice) return {c:'bad',verdict:'Save it for the thaw',meta:'It will refreeze on the paintwork and the roads just resalt it. Pointless today.'};
-    if(c.day<14) return {c:'good',verdict:'Safe to shine it',meta:'Should stay dry all day - it might actually stay clean.'};
-    if(c.day<37) return {c:'warn',verdict:'Tempting fate',meta:'Wash it and you will probably summon a shower (~'+c.day+'%). You know the rules.'};
+    if(c.tmax<=3) return {c:'bad',verdict:'It will freeze on',meta:'Only '+c.tmax+'° - water will freeze on the paintwork and in the locks.'};
+    if(c.day<14) return {c:'good',verdict:'Safe to shine it',meta:'Should stay dry - it might actually stay clean.'};
+    {const df=dryFrom(c,14);if(df&&df!==c.live[0])return {c:'warn',verdict:'Wash it this '+df.key,meta:'Rain earlier, then dry from the '+df.key+' - give it a shine once the roads have dried.'};}
+    if(c.day<50) return {c:'warn',verdict:'Tempting fate',meta:'Wash it and you will probably summon a shower (~'+c.day+'%). You know the rules.'};
     return {c:'bad',verdict:'Nature is doing it',meta:'Rain is likely - let the sky rinse it for free.'};}},
   {id:'diy',emoji:'🖌',label:'Painting outdoors?',fn:c=>{
-    if(c.snow||c.cold==='hard') return {c:'bad',verdict:'Too cold to cure',meta:'Most exterior paint will not dry below about 5°. Do the indoor jobs today.'};
-    if(c.day<14){let m='Should stay dry enough for a coat to actually cure.';if(c.wind==='high'||c.wind==='severe')m+=' Gusty though - grit and leaves will stick to wet paint.';else if(c.heat==='danger')m+=' Very hot - it may skin over too fast, work in the shade.';return {c:'good',verdict:'Get the brushes out',meta:m};}
-    return {c:c.day<37?'warn':'bad',verdict:c.day<37?'Risky':'Not today',meta:c.day<37?'A shower could ruin your finish (~'+c.day+'%).':'Rain is likely and paint hates it. Do the skirting boards instead.'};}},
+    if(c.snow||c.tmax<7) return {c:'bad',verdict:'Too cold to cure',meta:'Only '+c.tmax+'° - most exterior paint needs at least 7-10° to cure. Do the indoor jobs today.'};
+    if(c.wind==='severe') return {c:'bad',verdict:'Not in a gale',meta:'Gusts to '+c.gust+' mph - ladders are risky and grit will stick to wet paint.'};
+    if(c.day<14){let m='Should stay dry enough for a coat to actually cure.';if(c.wind==='high')m+=' Gusty though - grit and leaves will stick to wet paint.';else if(c.heat==='danger')m+=' Very hot - it may skin over too fast, work in the shade.';if(c.humid>=85)m+=' Damp air will slow drying.';return {c:'good',verdict:'Get the brushes out',meta:m};}
+    return {c:c.day<50?'warn':'bad',verdict:c.day<50?'Risky':'Not today',meta:c.day<50?'A shower could ruin your finish (~'+c.day+'%).':'Rain is likely and paint hates it. Do the skirting boards instead.'};}},
   {id:'picnic',emoji:'🥪',label:'Picnic?',fn:c=>{
-    if(c.thunder) return {c:'bad',verdict:'Storms brewing',meta:'Thunder about - not a day for an open field. Rain check.'};
-    const best=Math.min(c.a,c.e);
+    const slots=liveOf(c,['afternoon','evening']);
+    if(!slots.length) return {c:'warn',verdict:'Too late today',meta:'The picnic window has closed for today.'};
+    if(stormDuring(c,['afternoon'])||(stormDuring(c,['evening'])&&!liveOf(c,['afternoon']).length)) return {c:'bad',verdict:'Storms brewing',meta:'Thunder about - not a day for an open field. Rain check.'};
+    if(c.wind==='severe') return {c:'bad',verdict:'Blanket will fly',meta:'Gusts to '+c.gust+' mph - sandwiches, plates and the rug will all take off.'};
+    const ok=slots.filter(p=>p.icon!=='thunder'), best=minW(ok.length?ok:slots);
     if(best<22&&c.heat==='danger') return {c:'warn',verdict:'Shady spot only',meta:'Dry but a scorcher - pick a tree, pack water and suncream, keep the food cool. Mind the wasps.'};
-    let base={c:(best<18&&c.temp>=15)?'good':best<35?'warn':'bad',verdict:(best<18&&c.temp>=15)?'Rug out, go':best<35?'Have a plan B':'Sarnies indoors',meta:(best<18&&c.temp>=15)?('Should stay dry and '+c.temp+'°. Mind the wasps.'):best<35?'A shower could crash it (~'+best+'%) - soggy scotch egg risk.':'Likely too wet (~'+best+'%). The sandwiches would drown.'};
-    // A dry afternoon after a wet morning is still picnic-able, but the grass remembers.
+    if(best<18&&c.temp<15) return {c:'warn',verdict:'Dry but chilly',meta:'Should stay dry, but only '+c.temp+'° - flasks and layers.'};
+    const base={c:best<18?'good':best<35?'warn':'bad',verdict:best<18?'Rug out, go':best<35?'Have a plan B':'Sarnies indoors',
+      meta:best<18?('Should stay dry and '+c.temp+'°. Mind the wasps.'):best<35?'A shower could crash it (~'+best+'%) - soggy scotch egg risk.':'Likely too wet (~'+best+'%). The sandwiches would drown.'};
     if(base.c==='good'&&c.m>=50)base.meta+=' Ground may still be damp from the morning rain - take something waterproof to sit on.';
-    if(base.c!=='bad'&&(c.wind==='high'||c.wind==='severe'))base.meta+=' Weigh the blanket down - it is breezy.';
+    if(stormDuring(c,['evening']))base.meta+=' Pack up before the evening storms.';
+    if(base.c!=='bad'&&c.wind==='high')base.meta+=' Weigh the blanket down - it is breezy.';
     return base;}},
   {id:'beach',emoji:'🏖',label:'Beach day?',fn:c=>{
-    const warm=c.temp>=18,best=Math.min(c.a,c.e);
-    if(warm&&best<18){let m=c.temp+'° and probably dry. Proper beach weather - rare, seize it.';if(c.uv>=6||c.heat==='danger')m+=' UV is strong - suncream, hat, shade at midday.';if(c.wind==='high'||c.wind==='severe')m+=' Windy - the windbreak earns its keep.';return {c:'good',verdict:'Sea, sun, go',meta:m};}
-    if(best<25) return {c:'warn',verdict:c.temp>=18?'Go, but pack a brolly':'Dry-ish, bring layers',meta:(c.temp>=18?'Warm enough, ':'Only '+c.temp+'°. ')+'British beach special: coat on, ice cream in hand.'+(c.wind==='high'||c.wind==='severe'?' Windy - windbreak up.':'')};
+    if(c.thunder&&c.stormIn.length) return {c:'bad',verdict:'Storms on the way',meta:'Thunder likely in the '+stormList(c)+' - a beach is the most exposed place to be.'};
+    if(c.wind==='severe') return {c:'bad',verdict:'Sandblasted',meta:'Gusts to '+c.gust+' mph - you will be exfoliated. Another day.'};
+    const slots=liveOf(c,['afternoon','evening']), ps=slots.length?slots:c.live;
+    if(!ps.length) return {c:'warn',verdict:'Sunset stroll only',meta:'The beach day is done for today.'};
+    const warm=c.temp>=18, best=minW(ps);
+    if(warm&&best<18){let m=c.temp+'° and probably dry. Proper beach weather - rare, seize it.';if(c.uv>=6||c.heat==='danger')m+=' UV is strong - suncream, hat, shade at midday.';if(c.wind==='high')m+=' Windy - the windbreak earns its keep.';return {c:'good',verdict:'Sea, sun, go',meta:m};}
+    if(best<25) return {c:'warn',verdict:warm?'Go, but pack a brolly':'Dry-ish, bring layers',meta:(warm?'Warm enough, ':'Only '+c.temp+'°. ')+'British beach special: coat on, ice cream in hand.'+(c.wind==='high'?' Windy - windbreak up.':'')};
+    if(best<45) return {c:'warn',verdict:'Showery - brolly and windbreak',meta:'Showers about (~'+best+'%) - British beach special, sit it out in the car if one lands.'};
     return {c:'bad',verdict:'Arcade day',meta:'Likely too wet for the sand (~'+best+'%). 2p machines it is.'};}},
   {id:'camping',emoji:'⛺',label:'Camping / festival?',fn:c=>{
     if(c.wind==='severe') return {c:'bad',verdict:'Tent will take off',meta:'Gusts to '+c.gust+' mph - pitching is a nightmare and risky. Sit this one out.'};
     if(c.thunder) return {c:'bad',verdict:'Exposed in a storm',meta:'Thunder forecast - a tent in an open field is no place to be. Postpone.'};
-    if(c.day<20){let m='Should stay dry - the tent might too. Wellies just in case.';if(c.wind==='high')m+=' A bit breezy - double-peg the guy ropes.';if(c.cold==='hard'||c.cold==='cold')m+=' Cold night ahead - pack a proper sleeping bag.';return {c:'good',verdict:'Pitch up',meta:m};}
+    if(c.snow) return {c:'bad',verdict:'Snowed in',meta:'Snow forecast - winter camping only, with proper kit.'};
+    if(c.day<20){
+      if(c.tmin<=2) return {c:'warn',verdict:'Winter kit only',meta:'Dry, but down to '+c.tmin+'° overnight - four-season bag and a proper mat, or skip it.'};
+      let m='Should stay dry - the tent might too. Wellies just in case.';if(c.wind==='high')m+=' A bit breezy - double-peg the guy ropes.';if(c.cold==='cold')m+=' Cold night ahead - pack a proper sleeping bag.';return {c:'good',verdict:'Pitch up',meta:m};}
     return {c:c.day<43?'warn':'bad',verdict:c.day<43?'Pack the wellies':'Mud bath incoming',meta:c.day<43?'Showery spells likely (~'+c.day+'%) - guy ropes tight, groundsheet down.':'Probably a swamp (~'+c.day+'%). Bin bags for the feet.'};}},
   {id:'hair',emoji:'💇',label:'Good hair day?',fn:c=>{
-    const frizz=c.day>=40||c.humid>=72;
-    let base={c:(!frizz&&c.day<18)?'good':(!frizz?'warn':'bad'),verdict:(!frizz&&c.day<18)?'Frizz-free':(!frizz?'Bring product':'Frizz alert'),meta:frizz?('Humid at '+c.humid+'% - it is probably coming for your barnet. Hat backup advised.'):(c.day<18?'Dry air - the hair should behave.':'A bit damp about - tame it before you leave.')};
+    // Frizz follows the dew point (the moisture actually in the air), not relative humidity -
+    // UK humidity sits at 75-90% on most days, which made this card a permanent "Frizz alert".
+    const dew=c.dew, humidAir=dew!=null?dew>=15:c.humid>=85, dryAir=dew!=null?dew<10:c.humid<60;
+    const frizz=c.day>=40||humidAir;
+    const fine=!frizz&&c.day<18&&dryAir;
+    const base={c:fine?'good':(!frizz?'warn':'bad'),verdict:fine?'Frizz-free':(!frizz?'Bring product':'Frizz alert'),
+      meta:frizz?(c.day>=40?'Rain likely (~'+c.day+'%) - hood up or a hat on standby.':'Sticky, humid air (dew point '+dew+'°) - it is coming for your barnet.'):(fine?'Dry air - the hair should behave.':'A touch of moisture about - tame it before you leave.')};
     if(base.c==='good'&&(c.wind==='high'||c.wind==='severe')){base.c='warn';base.verdict='Windswept incoming';base.meta='Dry, but '+c.gust+' mph gusts will undo any styling. Tie it back.';}
     return base;}},
   {id:'window',emoji:'🪟',label:'Clean the windows?',fn:c=>{
-    if(c.snow||c.ice) return {c:'bad',verdict:'It will freeze on the glass',meta:'Below freezing - the water turns to ice as you go. Wait for a milder day.'};
+    if(c.snow||c.ice||c.tmax<=3) return {c:'bad',verdict:'It will freeze on the glass',meta:'Too cold - the water turns to ice as you go. Wait for a milder day.'};
+    if(c.wind==='severe') return {c:'bad',verdict:'Not up a ladder today',meta:'Gusts to '+c.gust+' mph - ladders and gales do not mix.'};
     if(c.day<14) return {c:'good',verdict:'Sparkle time',meta:'Should stay dry - they might keep their streak-free shine for a day.'};
-    if(c.day<33) return {c:'warn',verdict:'Might be wasted effort',meta:'A shower could spot them (~'+c.day+'%). Your call.'};
+    {const df=dryFrom(c,14);if(df&&df!==c.live[0])return {c:'warn',verdict:'Leave it till the '+df.key,meta:'Rain first, then dry from the '+df.key+' - clean them once it has passed.'};}
+    if(c.day<45) return {c:'warn',verdict:'Might be wasted effort',meta:'A shower could spot them (~'+c.day+'%). Your call.'};
     return {c:'bad',verdict:'Save your elbow grease',meta:'Rain is likely - they will spot within the hour. Put the cloth down.'};}},
   {id:'stargaze',emoji:'✨',label:'Stargazing tonight?',fn:c=>{
-    if(c.thunder) return {c:'bad',verdict:'Cloudy and stormy',meta:'Storms tonight - nothing to see but cloud. Another night.'};
-    const e=c.eAny; // clear-sky odds track the WIDER rain risk (any cloud/spit), not just proper rain
-    let base={c:e<25?'good':e<50?'warn':'bad',verdict:e<25?'Clear-ish skies':e<50?'Patchy cloud':'Cloud blanket',meta:(e<25?'Evening looking clear enough for a proper look up.':e<50?'Cloud coming and going - you might catch a gap.':'Probably too much cloud tonight. Save it for another night.')+((e<50&&(c.cold==='hard'||c.cold==='cold'))?' Bitter out - wrap up warm.':'')};
-    // The moon is half the story of a stargazing night.
+    // Judged on the night's CLOUD COVER (9pm-2am), not the rain chance: an overcast dry evening
+    // used to read "Clear-ish skies".
+    const when=c.isToday?'tonight':'that night';
+    if(c.thunder&&c.stormIn.indexOf('evening')>=0) return {c:'bad',verdict:'Cloudy and stormy',meta:'Storms '+when+' - nothing to see but cloud. Another night.'};
+    const cl=c.nightCloud, wet=c.tonight||0;
+    let base;
+    if(cl==null) base={c:'warn',verdict:'Hard to say',meta:'No cloud forecast for '+when+' yet.'};
+    else if(wet>=50||cl>=75) base={c:'bad',verdict:'Cloud blanket',meta:'Probably too much cloud '+when+' (about '+cl+'%)'+(wet>=50?' and some rain about':'')+'. Save it for another night.'};
+    else if(cl>=40) base={c:'warn',verdict:'Patchy cloud',meta:'Cloud coming and going '+when+' (about '+cl+'% cover) - you might catch a gap.'};
+    else base={c:'good',verdict:'Clear-ish skies',meta:'Looking clear enough '+when+' (about '+cl+'% cloud) for a proper look up.'};
+    if(base.c!=='bad'&&(c.cold==='hard'||c.cold==='cold'||c.frost))base.meta+=' Bitter out - wrap up warm.';
     if(base.c!=='bad'&&c.date){const mp=moonPhaseFor(c.date);
       if(mp.full)base.meta+=' '+mp.emoji+' Near-full moon though - it will wash out the fainter stars.';
       else if(mp.dark)base.meta+=' '+mp.emoji+' New moon - properly dark skies away from the streetlights.';}
     return base;}},
   {id:'fishing',emoji:'🎣',label:'Off fishing?',fn:c=>{
-    if(c.thunder) return {c:'bad',verdict:'Reel it in',meta:'Thunder forecast - a carbon rod is basically a lightning rod. Off the water until it passes.'};
-    let base={c:c.day<33?'good':c.day<52?'warn':'bad',verdict:c.day<33?'Cast away':c.day<52?'Waterproofs on':'One for the shed',meta:c.day<22?'Settled enough for a sit by the water.':c.day<33?'Mostly dry, the odd shower possible.':c.day<52?'Showery spells likely (~'+c.day+'%) - the brolly earns its keep.':'Probably wetter than the fish (~'+c.day+'%).'};
-    if(c.wind==='severe')base.meta+=' Very windy - casting will be a battle.';
-    else if(c.cold==='hard')base.meta+=' Bitter - a flask of tea is essential.';
+    if(c.wind==='severe') return {c:'bad',verdict:'Blown off the bank',meta:'Gusts to '+c.gust+' mph - casting is hopeless and banks and boats are risky.'};
+    const calm=c.live.filter(p=>!(c.thunder&&p.icon==='thunder'));
+    if(c.thunder&&c.stormIn.length&&calm.length<2) return {c:'bad',verdict:'Reel it in',meta:'Thunder forecast - a carbon rod is basically a lightning rod. Off the water until it passes.'};
+    const calmDry=calm.filter(p=>p.wet<22);
+    if(c.day>=33&&calmDry.length){const b=driestOf(calmDry);return {c:'warn',verdict:'Go in the '+b.key,meta:'The '+b.key+' looks dry (~'+b.wet+'%); the rest of the day is wetter'+(c.thunder&&c.stormIn.length?', with storms in the '+stormList(c):'')+'.'};}
+    const base={c:c.day<33?'good':c.day<52?'warn':'bad',verdict:c.day<33?'Cast away':c.day<52?'Waterproofs on':'One for the shed',
+      meta:c.day<22?'Settled enough for a sit by the water.':c.day<33?'Mostly dry, the odd shower possible.':c.day<52?'Showery spells likely (~'+c.day+'%) - the brolly earns its keep.':'Probably wetter than the fish (~'+c.day+'%).'};
+    if(c.thunder&&c.stormIn.length){if(base.c==='good')base.c='warn';base.meta+=' Off the water if it rumbles in the '+stormList(c)+'.';}
+    if(c.wind==='high')base.meta+=' Windy - casting will be a battle.';
+    else if(c.cold==='hard'||c.frost)base.meta+=' Bitter - a flask of tea is essential.';
     return base;}},
   {id:'drive',emoji:'🛣',label:'Long drive?',fn:c=>{
     if(c.ice||c.snow) return {c:'bad',verdict:'Only if you must',meta:'Ice or snow on the roads - slow right down, pack a blanket and a charged phone, and give yourself twice the time.'};
     if(c.wind==='severe') return {c:'bad',verdict:'Grip the wheel',meta:'Gusts to '+c.gust+' mph - hairy on exposed stretches and bridges, worse with a roof box or towing. Only if you must.'};
-    if(c.day>=43||c.precipSum>=6) return {c:'warn',verdict:'Spray and standing water',meta:'Rain likely (~'+c.day+'%) - lights on, ease off, and watch for aquaplaning on the fast lane.'};
-    if(c.fog) return {c:'warn',verdict:'Fog about',meta:'Patchy fog - fog lights on, ease off the speed and leave a big gap.'};
+    if(c.day>=43||c.precipSum>=6) return {c:'warn',verdict:'Spray and standing water',meta:'Rain likely (~'+c.day+'%) - lights on, ease off, and watch for aquaplaning on the fast lane.'+(c.precipSum>=20?' Heavy totals - watch for flooding on low roads.':'')};
+    if(c.fog) return {c:'warn',verdict:c.fogMorning?'Foggy start':'Fog about',meta:c.fogMorning?'Fog first thing - dipped headlights, ease off and leave a big gap. Clearing later.':'Patchy fog - fog lights on, ease off the speed and leave a big gap.'};
+    if(c.frost) return {c:'warn',verdict:'Frosty start',meta:'Down to '+c.tmin+'° - clear the windscreen properly and watch for icy patches early on.'};
     if(c.wind==='high') return {c:'warn',verdict:'Buffety out there',meta:'Gusts to '+c.gust+' mph - a proper shove on open roads and bridges. Two hands on the wheel.'};
     if(c.heat==='danger') return {c:'warn',verdict:'Keep it cool',meta:'A hot one ('+c.temp+'°, feels like '+Math.round(c.feels)+'°) - hydrate, watch for tiredness on the long stretches, and check coolant and tyre pressures before a big run.'};
     if(c.day>=22) return {c:'good',verdict:'Watch for showers',meta:'The odd shower possible (~'+c.day+'%) - wet patches and a bit of spray, nothing dramatic.'};
@@ -2189,7 +2515,7 @@ function setLoading(name){
   const tl0=$('terraline');if(tl0)tl0.hidden=true;
   const dw0=$('dayrainwrap');if(dw0)dw0.hidden=true;
   const nr0=$('nextrain');if(nr0)nr0.hidden=true;
-  for(const id of ['radcard','aqline','lastyear','sunline','riverline']){const e=$(id);if(e)e.hidden=true;}
+  for(const id of ['radcard','aqline','lastyear','sunline','riverline','mixBtn']){const e=$(id);if(e)e.hidden=true;}
   const we=$('wordday');if(we){we.textContent='...';we.style.color='var(--muted)';}
   ['week','periods','decisions','advisories'].forEach(id=>$(id).innerHTML='');
   $('dayhead').textContent='';const cp=$('confpill');cp.textContent='';cp.style.background='transparent';
@@ -2197,35 +2523,51 @@ function setLoading(name){
 }
 // Progressive load: paint from the two fast Open-Meteo calls first, then enhance with the
 // heavier ensemble (better rain%/confidence) and the slower EA floods, without blocking.
-async function loadForecast(loc,isGeo){
-  const seq=++loadSeq;
-  current=loc;currentIsGeo=!!isGeo;selDay=0;
+let lastLoadStart=0;
+async function loadForecast(loc,isGeo,opts){
+  const seq=++loadSeq;lastLoadStart=Date.now();
+  const keepDay=!!(opts&&opts.keepDay);
+  current=loc;currentIsGeo=!!isGeo;if(!keepDay)selDay=0;
   storeLast(loc);
+  // Panels that belong to a PLACE (radar, river, air quality, last year) must never linger under a
+  // new place while its own data loads.
+  if(!keepDay)for(const id of ['radcard','riverline','aqline','lastyear']){const el=$(id);if(el)el.hidden=true;}
   const k=ckey(loc.lat,loc.lon);const cached=CACHE.get(k);
-  if(cached&&cached.full&&Date.now()-cached.t<=TTL){
-    render({...cached.v,place:loc.name,floods:cached.floods||[]},isGeo);
-    renderSaved();updateSaveToggle();return;
+  // In-memory cache: only for the same calendar day (a 23:50 copy must not show yesterday as Today).
+  if(cached&&cached.full&&Date.now()-cached.t<=TTL&&cached.v&&cached.v.days&&cached.v.days[0].date===localDate()){
+    try{render({...cached.v,place:loc.name,floods:cached.floods||[]},isGeo,keepDay);}catch(e){}
+    renderSaved();updateSaveToggle();
+    loadExtras(loc,seq,k);
+    return;
   }
   // Open instantly from the last complete forecast for this spot, clearly labelled, while the
   // fresh one loads. The crude first-paint stage is then skipped so it never replaces a better one.
   const saved=loadLastForecast(k);
-  if(saved)render({...saved.v,place:loc.name,floods:saved.floods||[],staleAt:saved.t},isGeo);
-  else setLoading(loc.name);
+  let shownSaved=false;
+  if(saved){try{render({...saved.v,place:loc.name,floods:saved.floods||[],staleAt:saved.t},isGeo,keepDay);shownSaved=true;}catch(e){}}
+  if(!shownSaved)setLoading(loc.name);
+  loadExtras(loc,seq,k);
   renderSaved();updateSaveToggle();
   let det,rich;
   try{[det,rich]=await Promise.all([fetchDeterministic(loc.lat,loc.lon),fetchRich(loc.lat,loc.lon)]);}
   catch(e){
     if(seq!==loadSeq)return;
-    if(saved){const ntt=$('nowtagTxt');if(ntt)ntt.textContent='Offline · your forecast from '+new Date(saved.t).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});return;}
+    if(shownSaved){const ntt=$('nowtagTxt');if(ntt)ntt.textContent='Offline · your forecast from '+new Date(saved.t).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});return;}
     $('place').textContent='Could not load '+loc.name;$('herotemp').innerHTML='&middot;';$('herocond').textContent='Check your connection and try again.';return;
   }
   if(seq!==loadSeq)return; // a newer request superseded this one
   // Terrain profile is location-static and cached forever, so a repeat visit gets valley/hilltop
   // adjustments from the very first paint; a first visit picks them up with the enhancement pass.
   const terr0=terrCacheGet(loc.lat,loc.lon);
-  const v1=synthesize(det,rich,null,loc.name,null,null,null,terr0); // first paint, 5-run fallback for rain
-  CACHE.set(k,{t:Date.now(),v:v1,floods:[],full:false});
-  if(!saved){render({...v1,place:loc.name,floods:[]},isGeo);renderSaved();updateSaveToggle();}
+  let v1;
+  try{
+    v1=synthesize(det,rich,null,loc.name,null,null,null,terr0); // first paint, 5-run fallback for rain
+    CACHE.set(k,{t:Date.now(),v:v1,floods:[],full:false});
+    if(!shownSaved){render({...v1,place:loc.name,floods:[]},isGeo,keepDay);renderSaved();updateSaveToggle();}
+  }catch(e){
+    if(shownSaved)return;
+    $('place').textContent='Could not load '+loc.name;$('herotemp').innerHTML='&middot;';$('herocond').textContent='The forecast came back incomplete - try again in a moment.';return;
+  }
   // Enhance 1: 156-member ensemble -> sharper rain%, previous runs -> churn, terrain -> local shape.
   Promise.all([
     fetchEnsemble(loc.lat,loc.lon).catch(()=>null),
@@ -2234,7 +2576,7 @@ async function loadForecast(loc,isGeo){
     fetchRegional(loc.lat,loc.lon).catch(()=>null)
   ]).then(([ens,prev,terr,regional])=>{
     if(seq!==loadSeq)return;
-    if(!ens&&!prev&&!terr){if(saved){render({...v1,place:loc.name,floods:[]},isGeo,true);renderSaved();updateSaveToggle();}return;}
+    if(!ens&&!prev&&!terr){if(shownSaved){render({...v1,place:loc.name,floods:[]},isGeo,true);renderSaved();updateSaveToggle();}return;}
     if(ens&&regional)ens.regional=regional;
     const v2=synthesize(det,rich,ens,loc.name,prev,null,null,terr||terr0);
     const c=CACHE.get(k)||{};CACHE.set(k,{t:Date.now(),v:v2,floods:c.floods||[],full:!!ens});
@@ -2262,6 +2604,12 @@ async function loadForecast(loc,isGeo){
       if(ens)storeLastForecast(k,v3,c2.floods);
     }).catch(()=>{});
   }).catch(()=>{});
+}
+
+// Floods, radar, river, air quality and this-day-last-year: per-place extras, all independent and
+// off the critical path. Every result checks it still belongs to the current load; a missing result
+// hides its panel instead of leaving the previous place's text behind.
+function loadExtras(loc,seq,k){
   // Enhance 3: official EA flood alerts (slow endpoint, so never on the critical path).
   fetchFloods(loc.lat,loc.lon).then(floods=>{
     if(seq!==loadSeq)return;
@@ -2270,20 +2618,20 @@ async function loadForecast(loc,isGeo){
   }).catch(()=>{});
   // Enhance 4: radar pixel over the exact spot, air quality + pollen, and this-day-last-year.
   // All independent, all off the critical path, all quietly absent if their source is down.
-  fetchRadar(loc.lat,loc.lon).then(r=>{if(seq!==loadSeq)return;renderRadar(r);}).catch(()=>{const c=$('radcard');if(c)c.hidden=true;});
+  fetchRadar(loc.lat,loc.lon).then(r=>{if(seq!==loadSeq)return;renderRadar(r);}).catch(()=>{if(seq!==loadSeq)return;const c=$('radcard');if(c)c.hidden=true;});
   fetchRiver(loc.lat,loc.lon).then(rv=>{
     const el=$('riverline');if(!el||seq!==loadSeq)return;
     if(!rv){el.hidden=true;return;}
     const col=rv.state==='high'?'var(--warn)':rv.state==='low'?'var(--muted)':'var(--good)';
     const word=rv.state==='high'?'high - above its usual range':rv.state==='low'?'low for this spot':'normal for this spot';
-    const name=(rv.river&&rv.label?rv.river+' at '+rv.label:(rv.label||rv.river)).replace(/</g,'&lt;');
-    el.innerHTML='River nearby: '+name+' ('+rv.km.toFixed(1)+' km) is <b style="color:'+col+'">'+word+'</b>'+
+    const name=(rv.river&&rv.label?rv.river+' at '+rv.label:(rv.label||rv.river));
+    el.innerHTML='River nearby: '+esc(name)+' ('+rv.km.toFixed(1)+' km) is <b style="color:'+col+'">'+word+'</b>'+
       ' - '+rv.v.toFixed(2)+' m, usually '+rv.lo.toFixed(2)+'-'+rv.hi.toFixed(2)+' m'+(rv.trend?', '+rv.trend:'')+'.';
     el.hidden=false;
   }).catch(()=>{});
   fetchAQ(loc.lat,loc.lon).then(aq=>{
-    if(seq!==loadSeq||!aq)return;
-    const el=$('aqline'); if(!el)return;
+    const el=$('aqline'); if(!el||seq!==loadSeq)return;
+    if(!aq){el.hidden=true;return;}
     let t='Air quality today: <b>'+aq.band+'</b> (European AQI '+aq.aqi+')';
     if(aq.pollenSev>=1&&aq.pollenKind)t+=' &middot; '+aq.pollenKind+' pollen <b>'+aq.pollenTxt+'</b>';
     else if(aq.pollenSev===0)t+=' &middot; pollen low';
@@ -2291,10 +2639,9 @@ async function loadForecast(loc,isGeo){
   }).catch(()=>{});
   (async()=>{
     try{
-      const today=new Date(Date.now()+((rich&&rich.utcOffsetSeconds)||0)*1000).toISOString().slice(0,10);
-      const ly=await fetchLastYear(loc.lat,loc.lon,today);
-      if(seq!==loadSeq||!ly)return;
-      const el=$('lastyear'); if(!el)return;
+      const ly=await fetchLastYear(loc.lat,loc.lon,localDate());
+      const el=$('lastyear'); if(!el||seq!==loadSeq)return;
+      if(!ly){el.hidden=true;return;}
       el.innerHTML='This day last year here: <b>'+ly.t+'&deg;</b> and '+(ly.mm>=0.5?('<b>'+ly.mm+'mm</b> of rain'):'<b>dry</b>')+'.';
       el.hidden=false;
     }catch(e){}
@@ -2333,8 +2680,9 @@ function render(j,isGeo,keepSel){
   curData=j;
   const ntt=$('nowtagTxt');
   if(ntt)ntt.textContent=j.staleAt?('Your forecast from '+new Date(j.staleAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+' · refreshing…'):'Live · conditions right now';
+  renderMixMini();
   if(j.now&&j.now.icon)updateBrand(j.now.icon);
-  $('place').innerHTML=j.place+(isGeo?' <span class="cur">Your location</span>':'');
+  $('place').innerHTML=esc(j.place)+(isGeo?' <span class="cur">Your location</span>':'');
   $('placesBtnLabel').textContent=j.place;
   // hero (now)
   $('herotemp').innerHTML=j.now.temp+'&deg;';
@@ -2367,7 +2715,7 @@ function render(j,isGeo,keepSel){
   $('nowlede').textContent=dt.nowLede;
   const tl=$('timeline');tl.innerHTML='';
   if(Math.max.apply(null,dt.tl)<10){
-    tl.innerHTML='<div class="drybar">Looking dry - nothing on the radar for the next 6 hours.</div>';
+    tl.innerHTML='<div class="drybar">Looking dry - the forecasts show no rain worth noticing for the next 6 hours.</div>';
   } else {
     dt.tl.forEach((v,i)=>{const slot=document.createElement('div');slot.className='slot';
       const col=document.createElement('div');col.className='col';
@@ -2470,6 +2818,8 @@ function renderWeek(){
       '<div class="wr" style="color:'+rv.color+'" title="'+(i===0&&d.periods&&d.periods.some(p=>p.done)?'Chance of noticeable rain in the rest of today':'Chance of noticeable rain')+'">'+shownWet+'%<span class="wl">'+(i===0&&d.periods&&d.periods.some(p=>p.done)?' later':' rain')+'</span></div>'+
       '<div class="wc"><i style="background:'+d.dayConfidence.color+'"></i>'+d.dayConfidence.value+'%<span class="wl"> sure</span></div>';
     el.onclick=()=>selectDay(i);
+    el.tabIndex=0;el.setAttribute('role','button');el.setAttribute('aria-label',dayLabel(d.date,i)+': '+wordForDay(d).word+', '+d.tmax+' degrees, '+(i===0&&d.pWetRest!=null?d.pWetRest:d.pWet)+'% rain');
+    el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectDay(i);}};
     w.appendChild(el);
   });
 }
@@ -2491,7 +2841,7 @@ function selectDay(i){
     curData.floods.forEach(f=>{
       const sev=f.level<=2?'official':'official';const cls=f.level<=2?'bad':'official';
       const el=document.createElement('div');el.className='adv '+(f.level<=2?'bad':'official');
-      el.innerHTML='<div class="aic">🌊</div><div class="abody"><div class="at">'+f.severity+(f.area?' - '+f.area:'')+'</div><div class="ax">'+(f.desc||'A flood alert is in force for your area.')+'</div><div class="src">Environment Agency - official (England). Check the flood service for details.</div></div>';
+      el.innerHTML='<div class="aic">🌊</div><div class="abody"><div class="at">'+esc(f.severity)+(f.area?' - '+esc(f.area):'')+'</div><div class="ax">'+(f.desc?esc(f.desc):'A flood alert is in force for your area.')+'</div><div class="src">Environment Agency - official (England). Check the flood service for details.</div></div>';
       av.appendChild(el);
     });
   }
@@ -2505,7 +2855,7 @@ function selectDay(i){
   const pr=$('periods');pr.innerHTML='';
   d.periods.forEach(p=>{const el=document.createElement('div');el.className='period'+(p.done?' done':'');
     el.title=(p.done?'This part of the day has passed. ':'')+amtHint(p);
-    el.innerHTML='<div class="plbl">'+p.label+(p.done?' &middot; gone':'')+'</div><div class="pic">'+WICONS[p.icon]+'</div><div class="ptemp">'+p.temp+'&deg;</div><div class="prain" style="color:'+p.verdict.color+'">'+p.peak+'% rain</div><div class="pverd">'+p.verdict.word+'</div>';
+    el.innerHTML='<div class="plbl">'+p.label+(p.done?' &middot; gone':'')+'</div><div class="pic">'+WICONS[p.icon]+'</div><div class="ptemp">'+p.temp+'&deg;</div><div class="prain" style="color:'+p.verdict.color+'">'+p.peak+'% rain</div><div class="pverd">'+p.verdict.word+(p.peak>=25&&p.amt&&p.amt.med>=0.5?' &middot; ~'+(p.amt.med<1.5?1:Math.round(p.amt.med))+' mm':'')+'</div>';
     pr.appendChild(el);});
   // Sun and moon for the selected day.
   const sl=$('sunline');
@@ -2533,12 +2883,22 @@ function selectDay(i){
   // activity context for this day. m/a/e and day are the chance of PROPER rain (what activities
   // should react to); mAny/aAny/eAny/dayAny keep the trace figure for the few things that care about
   // any dampness at all (e.g. stargazing keys cloud-risk off the wider figure).
+  // Activity context. Today, periods that have passed are marked done and excluded by the cards;
+  // rain, amounts and storms describe the rest of the day.
   const P=d.periods;
-  lastCtx={m:P[0].peak,a:P[1].peak,e:P[2].peak,day:d.pWet,
-    mAny:P[0].any,aAny:P[1].any,eAny:P[2].any,dayAny:d.pAny,conf:d.dayConfidence.value,
-    temp:P[1].temp,feels:d.feelsMax,humid:d.humid,gust:d.gustMph,snow:d.snowCm>0,ice:d.hazards.ice,
-    heat:d.hazards.heat,wind:d.hazards.wind,cold:d.hazards.cold,uv:d.uv,thunder:d.hazards.thunder,fog:d.hazards.fog,precipSum:d.precipSum,
-    driest:d.driest,wettest:d.wettest,disagree:Math.abs(d.pWet-50)<12,isToday:i===0,label:dayLabel(d.date,i),date:d.date};
+  const per=P.map(p=>({key:p.key,label:p.label,wet:p.peak,any:p.any,temp:p.temp,icon:p.icon,done:!!p.done}));
+  const live=per.filter(p=>!p.done), anyDone=live.length<3;
+  const tempP=live.find(p=>p.key==='afternoon')||live[live.length-1]||per[1];
+  lastCtx={per,live,m:P[0].peak,a:P[1].peak,e:P[2].peak,
+    day:anyDone&&d.pWetRest!=null?d.pWetRest:d.pWet,conf:d.dayConfidence.value,
+    temp:tempP.temp,tmax:d.tmax,tmin:d.tmin,feels:d.feelsMax,humid:d.humid,dew:d.dewMax,gust:d.gustMph,
+    snow:d.hazards.snow,ice:d.hazards.ice,frost:d.hazards.frost,
+    heat:d.hazards.heat,wind:d.hazards.wind,cold:d.hazards.cold,uv:d.uv,
+    thunder:d.hazards.thunder,stormIn:live.filter(p=>p.icon==='thunder').map(p=>p.key),
+    fog:d.hazards.fog,fogMorning:!!d.fogMorning&&!per[0].done,
+    precipSum:anyDone?(d.restAmt&&d.restAmt.med!=null?d.restAmt.med:0):d.precipSum,
+    nightCloud:d.nightCloud,tonight:d.tonight,
+    disagree:Math.abs(d.pWet-50)<12,isToday:i===0,label:dayLabel(d.date,i),date:d.date};
   renderDecisions();
 }
 
@@ -2563,29 +2923,38 @@ function updateSaveToggle(){
 
 // ---- search ----
 const searchEl=$('search'),resultsEl=$('results');
-let searchTimer=null,lastResults=[];
+let searchTimer=null,lastResults=[],searchTok=0;
+// Each search takes a ticket; a slower, older answer never overwrites a newer one.
 async function runSearch(q){
-  q=q.trim();if(!q){resultsEl.classList.remove('show');resultsEl.innerHTML='';return;}
+  const tok=++searchTok;
+  q=q.trim();if(!q){lastResults=[];resultsEl.classList.remove('show');resultsEl.innerHTML='';return;}
   try{
-    const res=await geoSearch(q);lastResults=res;resultsEl.innerHTML='';
+    const res=await geoSearch(q);if(tok!==searchTok)return;lastResults=res;resultsEl.innerHTML='';
     if(!res.length){resultsEl.innerHTML='<div><span>No UK match</span><span class="sub">try another name</span></div>';resultsEl.classList.add('show');return;}
     res.slice(0,7).forEach((r,i)=>{const row=document.createElement('div');row.className='rrow'+(i===0?' hi':'');
       // The dropdown row stays compact (bare postcode / place name); loading and saving use the
       // fuller "District - Postcode" name so the homepage and saved chips carry the area context.
       const loc={name:r.fullName||r.name,lat:r.lat,lon:r.lon};
       const info=document.createElement('span');info.className='rinfo';
-      info.innerHTML='<span class="rn">'+r.name+'</span><span class="ra">'+(r.admin1||'')+'</span>';
-      info.onmousedown=e=>{e.preventDefault();pick(r);};
+      info.innerHTML='<span class="rn">'+esc(r.name)+'</span><span class="ra">'+esc(r.admin1||'')+'</span>';
+      info.tabIndex=0;info.setAttribute('role','button');
+      info.onmousedown=e=>e.preventDefault();info.onclick=()=>pick(r);
+      info.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(r);}};
       const sv=document.createElement('button');sv.className='rsave';
       const setSv=()=>{const on=isSaved(loc);sv.textContent=on?'Saved':'+ Save';sv.classList.toggle('on',on);};setSv();
-      sv.onmousedown=e=>{e.preventDefault();e.stopPropagation();toggleSave(loc);setSv();};
+      sv.onmousedown=e=>e.preventDefault();sv.onclick=e=>{e.stopPropagation();toggleSave(loc);setSv();};
       row.appendChild(info);row.appendChild(sv);resultsEl.appendChild(row);});
     resultsEl.classList.add('show');
   }catch(e){}
 }
 function pick(r){loadForecast({name:r.fullName||r.name,lat:r.lat,lon:r.lon},false);closePlaces();}
 searchEl.addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>runSearch(searchEl.value),250);});
-searchEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&lastResults[0])pick(lastResults[0]);else if(e.key==='Escape'){resultsEl.classList.remove('show');searchEl.blur();}});
+// Enter searches what is typed NOW (not the previous debounced query); Escape closes the results
+// list first, and only closes the Places window when there is no list open.
+searchEl.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();clearTimeout(searchTimer);runSearch(searchEl.value).then(()=>{if(lastResults[0])pick(lastResults[0]);});}
+  else if(e.key==='Escape'&&resultsEl.classList.contains('show')){e.stopPropagation();resultsEl.classList.remove('show');}
+});
 searchEl.addEventListener('blur',()=>setTimeout(()=>resultsEl.classList.remove('show'),150));
 
 // ---- geolocation ----
@@ -2594,8 +2963,12 @@ $('geoclose').onclick=()=>$('geonote').style.display='none';
 function useMyLocation(auto){
   if(!navigator.geolocation){if(!auto)showGeoNote("This browser can't provide your location. Search for your city instead.");return;}
   showGeoNote('Getting your location...');
+  const seqAtStart=loadSeq;
   navigator.geolocation.getCurrentPosition(
-    async pos=>{const lat=+pos.coords.latitude.toFixed(3),lon=+pos.coords.longitude.toFixed(3);const name=await geoReverse(lat,lon);loadForecast({name,lat,lon},true);closePlaces();showGeoNote('Showing your area: '+name+'.');},
+    async pos=>{const lat=+pos.coords.latitude.toFixed(3),lon=+pos.coords.longitude.toFixed(3);const name=await geoReverse(lat,lon);
+      // An automatic locate never overrides a place the user picked while it was working.
+      if(auto&&loadSeq!==seqAtStart){showGeoNote('Found your area ('+name+') - press Locate me to switch to it.');return;}
+      loadForecast({name,lat,lon},true);closePlaces();showGeoNote('Showing your area: '+name+'.');},
     err=>{const why=err.code===1?'Location permission was denied':err.code===3?'Location timed out':"Location isn't available here";showGeoNote(why+(auto?'. Showing saved places - search or press Locate me to change.':'. Search for your city instead.'));},
     {enableHighAccuracy:false,timeout:8000,maximumAge:600000}
   );
@@ -2623,6 +2996,85 @@ window.addEventListener('appinstalled',()=>{$('install').hidden=true;});
 // browser to re-check sw.js; (2) when a new version has installed, a small toast invites a
 // one-tap reload (the page itself is network-first, so the reload fetches fresh code); (3) a
 // visible version stamp in the footer so anyone can tell at a glance what they are running.
+// ---- Today's weather mix: donut in the hero corner, detail in a pop-up ----
+// Fixed category order and colours (weather-meaning colours, checked for colour-blind separation
+// between neighbours on this dark surface; every slice also carries a text label, so colour is
+// never the only cue). At most six slices are drawn: anything beyond the top five folds into Other.
+const MIX_CATS=[
+  {k:'clear',  n:'Clear / sunny',        c:'#f5c542',m:'Sunny or clear skies, under 30% cloud.'},
+  {k:'heat',   n:'Hot',                  c:'#ee6a2f',m:'Feels like 27°C or more - dry but hot.'},
+  {k:'windy',  n:'Windy',                c:'#1fae86',m:'Dry, with gusts of 33 mph or more.'},
+  {k:'fog',    n:'Fog / mist',           c:'#c98ac0',m:'Visibility under 1 km.'},
+  {k:'partly', n:'Partly cloudy',        c:'#d9c58c',m:'A mix of sun and cloud (30-70% cover), dry.'},
+  {k:'cloudy', n:'Cloudy',               c:'#7a879f',m:'Mostly grey (over 70% cloud), but dry.'},
+  {k:'heavy',  n:'Heavy rain',           c:'#4163e8',m:'Rain of 4 mm an hour or more.'},
+  {k:'showers',n:'Showers / light rain', c:'#45b0f5',m:'Noticeable rain, under 4 mm an hour.'},
+  {k:'snow',   n:'Snow / sleet',         c:'#eef4fb',m:'Wintry precipitation, or rain at 1°C or colder.'},
+  {k:'thunder',n:'Thunder',              c:'#b35cf0',m:'Rain that comes with a risk of thunderstorms.'},
+  {k:'frost',  n:'Frost / icy',          c:'#57d0e0',m:'Dry, at or below freezing.'}
+];
+const MIX_OTHER={k:'other',n:'Other',c:'#5b6578',m:'Smaller slices grouped together.'};
+function mixSegments(total){
+  const all=MIX_CATS.map(c=>({...c,v:total[c.k]||0})).filter(s=>s.v>0.001);
+  if(all.length<=6)return all;
+  const keep=new Set([...all].sort((a,b)=>b.v-a.v).slice(0,5).map(s=>s.k));
+  const segs=all.filter(s=>keep.has(s.k));
+  segs.push({...MIX_OTHER,v:all.filter(s=>!keep.has(s.k)).reduce((a,s)=>a+s.v,0)});
+  return segs;
+}
+function donutSVG(total,size,thick,center){
+  const segs=mixSegments(total),sum=segs.reduce((a,s)=>a+s.v,0);
+  const r=(size-thick)/2,cx=size/2,C=2*Math.PI*r,gap=segs.length>1?2:0;
+  let out='<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" role="img" aria-label="'+
+    segs.map(s=>s.n+' '+Math.round(100*s.v/(sum||1))+'%').join(', ')+'">';
+  out+='<circle cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="'+thick+'"/>';
+  let off=0;
+  if(sum>0)segs.forEach(s=>{
+    const len=C*s.v/sum,draw=Math.max(0.5,len-gap),pct=Math.round(100*s.v/sum);
+    out+='<circle class="mixseg" cx="'+cx+'" cy="'+cx+'" r="'+r+'" fill="none" stroke="'+s.c+'" stroke-width="'+thick+
+      '" stroke-dasharray="'+draw.toFixed(2)+' '+(C-draw).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 '+cx+' '+cx+')"><title>'+s.n+': '+pct+'%</title></circle>';
+    off+=len;
+  });
+  if(center)out+='<text x="'+cx+'" y="'+(cx-4)+'" text-anchor="middle" style="fill:var(--text);font:700 '+center.big+'px var(--font)">'+center.a+'</text>'+
+    '<text x="'+cx+'" y="'+(cx+center.big*0.75)+'" text-anchor="middle" style="fill:var(--muted);font:400 '+center.small+'px var(--font)">'+center.b+'</text>';
+  return out+'</svg>';
+}
+const mixTop=total=>{const segs=MIX_CATS.map(c=>({...c,v:total[c.k]||0})).sort((a,b)=>b.v-a.v);const sum=segs.reduce((a,s)=>a+s.v,0)||1;return {seg:segs[0],pct:Math.round(100*segs[0].v/sum)};};
+function renderMixMini(){
+  const btn=$('mixBtn'),mini=$('mixMini');if(!btn||!mini)return;
+  const mix=curData&&curData.days&&curData.days[0]&&curData.days[0].mix;
+  if(!mix||!mix.hours){btn.hidden=true;return;}
+  mini.innerHTML=donutSVG(mix.total,56,11);
+  const top=mixTop(mix.total);
+  btn.setAttribute('aria-label','Today\'s weather mix: mostly '+top.seg.n.toLowerCase()+' ('+top.pct+'%). Open details');
+  btn.title='Today\'s weather mix - tap for details';
+  btn.hidden=false;
+  if(!$('mixModal').hidden)fillMix();
+}
+function fillMix(){
+  const d=curData&&curData.days&&curData.days[0],mix=d&&d.mix;if(!mix)return;
+  const sum=Object.values(mix.total).reduce((a,v)=>a+v,0)||1,top=mixTop(mix.total);
+  $('mixSub').textContent=shortPlace(curData.place)+' · '+dayLabel(d.date,0)+', 6am to midnight';
+  $('mixBig').innerHTML=donutSVG(mix.total,200,30,{a:top.pct+'%',b:top.seg.n,big:26,small:12});
+  const rows=MIX_CATS.map(c=>({...c,v:mix.total[c.k]||0})).filter(s=>s.v>0.001).sort((a,b)=>b.v-a.v);
+  $('mixLegend').innerHTML=rows.map(s=>{const pct=Math.round(100*s.v/sum),h=Math.round(s.v*2)/2;
+    return '<li><span class="sw" style="background:'+s.c+'"></span><span class="nm">'+s.n+'</span><span class="pc">'+(pct<1?'<1':pct)+'%</span>'+
+      '<span class="mn">'+s.m+' About '+(h<0.5?'a few minutes':h+(h===1?' hour':' hours'))+' of the day.</span></li>';}).join('');
+  $('mixParts').innerHTML=mix.periods.map((p,i)=>{
+    const done=d.periods&&d.periods[i]&&d.periods[i].done;
+    if(!p.hours)return '<div class="mixpart"><div class="pl">'+p.label+'</div><div class="pt">No data</div></div>';
+    const t=mixTop(p.total);
+    return '<div class="mixpart'+(done?' done':'')+'"><div class="pl">'+p.label+(done?' (passed)':'')+'</div>'+donutSVG(p.total,84,15)+
+      '<div class="pt">Mostly '+t.seg.n.toLowerCase()+' ('+t.pct+'%)</div></div>';}).join('');
+}
+const shortPlace=n=>String(n||'').split(' - ')[0];
+let mixReturnFocus=null;
+function openMix(){if(!curData)return;fillMix();mixReturnFocus=document.activeElement;$('mixModal').hidden=false;$('mixClose').focus();}
+function closeMix(){$('mixModal').hidden=true;if(mixReturnFocus&&mixReturnFocus.focus)mixReturnFocus.focus();}
+$('mixBtn').addEventListener('click',openMix);
+$('mixClose').addEventListener('click',closeMix);
+$('mixModal').addEventListener('click',e=>{if(e.target===$('mixModal'))closeMix();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('mixModal').hidden)closeMix();});
 // ---- Share the app: one tap opens the phone's own share sheet (WhatsApp, Messages, email...)
 // with a short invitation and the link; the link preview comes from the page's og: tags.
 // Computers without a share sheet get the same text copied to the clipboard.
@@ -2641,10 +3093,15 @@ async function copyText(t){
     document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();if(ok)return true;}catch(e){}
   try{await Promise.race([navigator.clipboard.writeText(t),new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),1500))]);return true;}catch(e){return false;}
 }
+// The link travels INSIDE the text. Share sheets treat a separate `url` field inconsistently:
+// several apps (some WhatsApp and Messages builds among them) keep the text and silently drop
+// the url, which left friends with a description and no way to open the app. A bare URL in the
+// text is turned into a tappable link (with preview) by every messaging app.
+const SHARE_MSG=SHARE_TEXT+'\n'+APP_URL;
 function shareApp(){
-  const copyFallback=()=>copyText(SHARE_TEXT+' '+APP_URL).then(ok=>toast(ok?'Link copied - paste it to a friend':'Copy this link: '+APP_URL));
+  const copyFallback=()=>copyText(SHARE_MSG).then(ok=>toast(ok?'Link copied - paste it to a friend':'Copy this link: '+APP_URL));
   if(navigator.share){
-    navigator.share({title:'HowsDaWeather',text:SHARE_TEXT,url:APP_URL}).catch(err=>{if(!err||err.name!=='AbortError')copyFallback();});
+    navigator.share({title:'HowsDaWeather',text:SHARE_MSG}).catch(err=>{if(!err||err.name!=='AbortError')copyFallback();});
     return;
   }
   copyFallback();
@@ -2658,6 +3115,9 @@ function showUpdateToast(){
   document.body.appendChild(t);
 }
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{
+  // Only an UPDATE gets the toast: a first-time visitor's worker also activates with a controller
+  // present (skipWaiting + clients.claim), so the check is whether one existed before registering.
+  const hadController=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register('./sw.js').then(reg=>{
     const check=()=>{try{reg.update().catch(()=>{});}catch(e){}};
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)check();});
@@ -2666,7 +3126,7 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>{
       const nw=reg.installing; if(!nw)return;
       nw.addEventListener('statechange',()=>{
         // only toast on a genuine UPDATE (a controller already exists), not on first install
-        if(nw.state==='activated'&&navigator.serviceWorker.controller)showUpdateToast();
+        if(nw.state==='activated'&&hadController)showUpdateToast();
       });
     });
   }).catch(()=>{});
@@ -2675,6 +3135,17 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>{
 // ---- release notes (pops once per update, dismissible, gone 24h after you first see it) ----
 // Newest first. Add a new entry (bump v) each release; only the latest ever pops.
 const RELEASES=[
+  {v:'1.11', date:'10 Oct 2026', title:'We gave the whole app a proper MOT',
+   notes:[
+     'Sharing now includes the actual link. On some phones the share sheet kept our description and quietly dropped the web address - a share button that does not let anyone open the app is just a compliment. Sorry. Fixed.',
+     'New: "Today\'s mix" - a little ring in the corner of the top card showing how today splits between sun, cloud, showers, heavy rain, wind, heat, fog, frost, snow and thunder. Tap it for a bigger chart, what each slice means, and separate rings for the morning, afternoon and evening. It weighs each hour by its chance of rain, so a 40% shower hour counts as 40% showery, not 100%.',
+     'The big one: every rain time in the app was an hour late. Our data source stamps each hour\'s rain at the END of the hour; we read it as the start. The morning forecast was really 5-11am and "raining now" described the hour just gone. Fixed at the root.',
+     'We ran the app through 17 kinds of British weather and fixed what came out silly. Highlights: a wet morning followed by sunshine no longer reads BIBLICAL; all-day heavy rain no longer says "showery on and off" (and now gets a heavy-rain warning); a snow day no longer tells you to keep the brolly handy; fog that burns off is now a "foggy start" with a warning for the drive, not a murky day; and a storm at 9pm no longer cancels your morning round of golf.',
+     'The "Can I...?" cards got smarter: they ignore parts of today that have already gone, judge storms by when they are due, and finally respect gales (no more "Get it out" for the washing in 56 mph gusts), frost (no more "coats can stay home" at minus three) and snow. Stargazing now reads the night\'s cloud forecast instead of the rain chance, so an overcast evening is no longer "clear-ish skies". The hair card uses the dew point, so ordinary British humidity no longer means a permanent frizz alert.',
+     'After dark the evening slot now shows a moon rather than a sun - from autumn to spring most of 6pm-midnight is night. A June evening, with sunset near 9:30pm, keeps its sun.',
+     'Scotland\'s rain gauges are back. SEPA moved their data to a new service and our gauge checks for Scottish postcodes had quietly stopped; they now use the new one.',
+     'Behind the scenes: place names from map searches are now displayed safely, auto-refresh recovers after a dropped connection instead of giving up, a place picked by hand is never overridden by a slow "Locate me", and the 7-day cards, search results and pop-ups work properly with a keyboard.'
+   ]},
   {v:'1.10', date:'9 Oct 2026', title:'Sharper eyes, a radar that looks ahead, and an app that opens instantly',
    notes:[
      'Five more forecasters joined the vote. Alongside the big global models we now ask five high-resolution regional ones (the Met Office\'s 2 km UK model, two Dutch and Danish 2.5 km models, Meteo-France\'s AROME and Germany\'s ICON-EU) about the next three days. They see showers and hills the global models blur over. Before switching them on we scored 21 months of their past forecasts against real rain gauges at towns from Cornwall to Cumbria: rain predictions came out about 12% more accurate on days the test had never seen.',
@@ -2840,16 +3311,22 @@ setTimeout(maybeShowRelease,800);
 // A phone that resumes the app hours later was still showing the morning's forecast - the morning
 // run's view of the afternoon can be long dead by then. If the loaded forecast is older than
 // ~25 minutes when the app returns to the foreground (or on a half-hourly tick), refetch it.
+// A load started in the last minute counts as in flight. A screen still showing the saved copy
+// (staleAt) retries after that minute, so one failed refresh (e.g. resuming before the network is
+// back) no longer stops auto-refresh for the rest of the session. The day being read is kept.
 function maybeRefreshData(){
   try{
-    if(!current||!curData||!curData.issued||curData.staleAt)return;
-    if(Date.now()-new Date(curData.issued).getTime()>25*60*1000){
+    if(!current||!curData)return;
+    if(Date.now()-lastLoadStart<60*1000)return;
+    const age=curData.staleAt||!curData.issued?Infinity:Date.now()-new Date(curData.issued).getTime();
+    if(age>25*60*1000){
       CACHE.delete(ckey(current.lat,current.lon));
-      loadForecast(current,currentIsGeo);
+      loadForecast(current,currentIsGeo,{keepDay:true});
     }
   }catch(e){}
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)maybeRefreshData();});
+window.addEventListener('online',maybeRefreshData);
 setInterval(maybeRefreshData,10*60*1000);
 </script>
 </body>
