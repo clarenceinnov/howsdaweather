@@ -165,6 +165,8 @@
   .mixpart .pt{font-size:12px;color:var(--text)}
   .mixpart.done{opacity:.55}
   .mixnote{margin:0;font-size:12px;color:var(--dim);line-height:1.5}
+  .mixword{font-size:13px;color:var(--muted);line-height:1.45}
+  .mixword b{font-family:var(--brand);font-weight:600;letter-spacing:.5px}
   @media (prefers-reduced-motion:reduce){.mixseg{transition:none}}
   .sharebtn:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
   .cur{display:inline-block;font-size:11px;color:#9beecb;background:rgba(61,220,151,.14);border:1px solid rgba(61,220,151,.35);padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;font-weight:600}
@@ -535,10 +537,11 @@
       </div>
       <div class="modal-body">
         <div class="relmeta" id="mixSub"></div>
+        <div class="mixword" id="mixWord"></div>
         <div class="mixbig" id="mixBig"></div>
         <ul class="mixlegend" id="mixLegend"></ul>
         <div class="mixparts" id="mixParts"></div>
-        <p class="mixnote">How it is worked out: each hour from 6am to midnight is split by its forecast. The chance of rain in that hour goes to the rain types (heavy if 4 mm an hour or more), and the rest of the hour goes to its dry-weather type, picked in this order: windy, hot, fog, frost, then by cloud cover. So the slices are the share of the day you can expect each kind of weather.</p>
+        <p class="mixnote">How it is worked out: each hour from 6am to midnight is split by its forecast. The chance of rain in that hour goes to the rain types (heavy if 4 mm an hour or more; light drizzle gets its own slice when that part of the day looks wet), and the rest of the hour goes to its dry-weather type, picked in this order: windy, hot, fog, frost, then by cloud cover. So the slices are the share of the day you can expect each kind of weather.</p>
       </div>
     </div>
   </div>
@@ -1541,11 +1544,54 @@ function wordForDay(d){
   // Volume comes from the same ensemble median the icon uses (the single-model daily total used to
   // say SOAKED under a showers icon); the model total only decides when no ensemble is loaded.
   const med=amtObj&&amtObj.med!=null?amtObj.med:null;
-  const soaked=med!=null?med>=4:sum>=8;
+  // SOAKED needs real volume AND rain being likely: with half the forecasts at ~6 mm and half dry,
+  // the median sits right on the line, which made a 40% afternoon read BIBLICAL.
+  const soaked=(med!=null?med>=4:sum>=8)&&rain>=55;
   if(rain>=70||soaked){
     if(soaked) return pick(['SOAKED','DRENCHED','WASHOUT','BIBLICAL'],C.sky);
     return pick(['DRIZZLY','SPLASHY','DAMP','SPITTING'],C.sky);
   }
+  // ---- The day's CHARACTER, from its weather mix (the same split the "Today's mix" donut shows) ----
+  // Everything above has already had its say: hazards (storms, snow, ice, heat, gales), timing
+  // stories (comes good), genuine model disagreement and real volume. What remains is "what kind of
+  // day is it", answered by the expected share of the day each kind of weather takes - each hour's
+  // rain chance counted as that fraction of the hour. Evening hours count 60%, as above; today
+  // counts only the hours still to come. The mix alone would confuse chance with duration and
+  // ignore impact and timing, which is exactly why it comes after those checks rather than first.
+  const hpAll=d.mix&&d.mix.hourParts;
+  if(hpAll&&hpAll.length){
+    const hpLive=(anyDone&&d.nowHour!=null)?hpAll.filter(x=>x.h>=d.nowHour):hpAll;
+    const hp=hpLive.length?hpLive:hpAll;
+    const S={};let W=0;
+    for(const x of hp){const w=x.h>=18?0.6:1;W+=w;for(const k in x.parts)S[k]=(S[k]||0)+w*x.parts[k];}
+    const sh=k=>W?(S[k]||0)/W:0;
+    const wetS=sh('showers')+sh('heavy')+sh('thunder')+sh('snow');
+    // Hot hours are dry, sunny hours that crossed the heat line, so they count as bright here.
+    // Partly cloudy counts half towards "sunny", but not towards "grey": a sunny-spells day is not dull.
+    const sunS=sh('clear')+0.5*sh('partly')+sh('heat'), cloudS=sh('cloudy')+sh('fog')+sh('drizzle');
+    // Likely wet over the periods but light in any single hour = drizzle, not showers.
+    if((rain>=45&&wetS<0.2)||sh('drizzle')>=0.3) return pick(['DRIZZLY','DAMP','SPITTING','MIZZLY'],C.sky);
+    if(wetS>=0.45) return pick(['RAINY','DREICH','SOGGY','DAMP'],C.sky);
+    if(wetS>=0.2||rain>=26) return pick(['SHOWERY','HIT-AND-MISS','ON-OFF','CATCHY'],C.sky);
+    if(spit>=80&&sunS<0.5) return pick(['DRIZZLY','DAMP','SPITTING','MIZZLY'],C.sky);
+    if(sh('windy')>=0.35) return pick(['BLUSTERY','GUSTY','BLOWY'],C.warn);
+    if(h.heat==='caution'&&d.dewMax!=null&&d.dewMax>=16) return pick(['MUGGY','CLAMMY','STICKY'],C.warn);
+    if(sh('fog')>=0.35&&!d.fogMorning) return pick(['MURKY','FOGGY','MISTY'],C.warn);
+    if(sh('frost')>=0.3) return pick(['FROSTY','ICY','NIPPY','FROZEN'],C.ice);
+    if(coldMin<=-2) return pick(['BITTER','BALTIC','PARKY','FREEZING'],C.ice);
+    if(sunS>=0.55){
+      if(t>=22) return pick(['GLORIOUS','CRACKING','STUNNER','LUSH','A BEAUT'],C.sun);
+      if(t>=16) return pick(['LOVELY','GRAND','PLEASANT','DECENT','TIDY'],C.good);
+      if(t<=10) return pick(['CRISP','FRESH','BRIGHT','NIPPY'],C.sky);
+      return pick(['FAIR','FINE','PLEASANT','BRIGHT'],C.good);
+    }
+    if(sh('heat')>=0.3) return pick(['BALMY','TOASTY','WARM','BASKING'],C.sun);
+    if(sh('clear')+sh('partly')+sh('heat')>=0.6&&t>=16) return pick(['PLEASANT','DECENT','TIDY','FAIR'],C.good);
+    if(gust>=28) return pick(['BREEZY','FRESH','BRISK','BLOWY'],C.sky);
+    if(cloudS>=0.6) return pick(['GREY','DULL','DREICH','CLAGGY','MEH'],C.warn);
+    return pick(['MIXED','PATCHY','CHANGEABLE','SO-SO'],C.mix);
+  }
+  // No mix available (should not happen once the hourly forecast has loaded): icon-based fallback.
   if(rain>=26) return pick(['SHOWERY','HIT-AND-MISS','ON-OFF','CATCHY'],C.sky);
   // Drizzle words never sit under a bright icon (long-range trace odds are noisy).
   const brightIc=['sunny','partly','hot','scorch'].indexOf((anyDone&&d.restIcon)?d.restIcon:d.icon)>=0;
@@ -1830,7 +1876,7 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
   // same order the day icon uses (windy, hot, fog, frost, then cloud cover). Summed, the slices are
   // the expected share of the day for each kind of weather. Uses the same weighted ensemble rain
   // share as the hourly strip and graph (PoP x 0.7 before the ensemble lands), so they all agree.
-  function weatherMix(date,hourly,wF){
+  function weatherMix(date,hourly,wF,periods){
     const byH={};(hourly||[]).forEach(x=>{byH[x.h]=x;});
     const hours=[];
     for(const i of (rGroups[date]||[])){
@@ -1842,15 +1888,20 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
       if(byH[h]){w=byH[h].p/100;hv=Math.min(w,(byH[h].ph||0)/100);}
       else{w=Math.min(1,0.7*(rH.precipitation_probability?(rH.precipitation_probability[i]||0):0)/100);hv=mm>=4?w:0;}
       const parts={},add=(k,v)=>{if(v>0.001)parts[k]=(parts[k]||0)+v;};
+      // Drizzle: only where its part of the day is likely to be wet (>=45% chance of 0.5 mm+), so
+      // stray trace members never paint a drizzle slice on a dry day.
+      const per=periods&&periods[h<12?0:h<18?1:2];
+      const dz=(byH[h]&&per&&per.wet>=45)?Math.min(1-w,(byH[h].pd||0)/100):0;
+      const snowy=(code>=71&&code<=77)||code===85||code===86||(t!=null&&t<=1);
       if(code>=95)add('thunder',w);
-      else if((code>=71&&code<=77)||code===85||code===86||(t!=null&&t<=1))add('snow',w);
-      else{add('heavy',hv);add('showers',w-hv);}
+      else if(snowy)add('snow',w+dz);
+      else{add('heavy',hv);add('showers',w-hv);add('drizzle',dz);}
       add(gust>=WIND_STRONG?'windy':(fl!=null&&fl>=HEAT_WARM)?'heat':(code===45||code===48||(vis!=null&&vis<1000))?'fog':
-        (t!=null&&t<=0)?'frost':cc<30?'clear':cc<70?'partly':'cloudy',1-w);
+        (t!=null&&t<=0)?'frost':cc<30?'clear':cc<70?'partly':'cloudy',1-w-dz);
       hours.push({h,parts});
     }
     const sum=hs=>{const o={};hs.forEach(x=>{for(const k in x.parts)o[k]=(o[k]||0)+x.parts[k];});return o;};
-    return {hours:hours.length,total:sum(hours),
+    return {hours:hours.length,hourParts:hours,total:sum(hours),
       periods:PERIODS.map(P=>{const hs=hours.filter(x=>x.h>=P.s&&x.h<P.e);return {key:P.key,label:P.label,hours:hs.length,total:sum(hs)};})};
   }
   const nowIdxR=findNowIdx(rTime,off);
@@ -1924,13 +1975,15 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
       const idxs=eGroups[date]||[];
       hourlyRain=[];
       for(const i of idxs){
-        const h=hourOf(eTime[i]); let w=0,aw=0,wh=0;
+        const h=hourOf(eTime[i]); let w=0,aw=0,wh=0,wd=0;
         // 0.2mm/h = rain you would notice if out in it for the hour. The first release of this
         // graph counted 0.1mm traces and quietly re-created the app's most famous old bug: bars
         // (and the "Rain most likely X to Y" windows built on them) read 2-3x the honest chance.
         // ph = chance of HEAVY rain that hour (>=4 mm/h, the Met Office's "heavy"), for the day mix.
-        for(let k=0;k<members.length;k++){const wt=weights?weights[k]:1;aw+=wt;const v=members[k][i];if(v!=null&&v>=0.2){w+=wt;if(v>=4)wh+=wt;}}
-        if(aw)hourlyRain.push({h,p:regionalBlend(Math.round(100*w/aw),[i],0.2),ph:regionalBlend(Math.round(100*wh/aw),[i],4)});
+        // pd = drizzle (0.1-0.2 mm/h): below "noticeable" in any one hour, but it adds up - used by the
+        // day mix only where that part of the day is genuinely likely to be wet.
+        for(let k=0;k<members.length;k++){const wt=weights?weights[k]:1;aw+=wt;const v=members[k][i];if(v!=null&&v>=0.2){w+=wt;if(v>=4)wh+=wt;}else if(v!=null&&v>=0.1)wd+=wt;}
+        if(aw)hourlyRain.push({h,p:regionalBlend(Math.round(100*w/aw),[i],0.2),ph:regionalBlend(Math.round(100*wh/aw),[i],4),pd:Math.round(100*wd/aw)});
       }
       hourlyRain.sort((a,b)=>a.h-b.h);
       // 30% on the noticeable-rain series ~= the old 40% on the trace series this replaced.
@@ -2039,8 +2092,10 @@ function synthesize(det,rich,ens,place,prev,obs,srcSkill,terrain,calib){
         d.thunder=ri.some(i=>rH.weather_code[i]!=null&&rH.weather_code[i]>=95);
         if(nh>=11&&d.fogMorning&&fogN<Math.max(2,Math.ceil(dayCodes.length*0.4)))d.fog=false;
       }
-      d.mix=weatherMix(date,hourlyRain,wF);
     }
+    // The weather mix for EVERY day: the donut shows today's, and the Word for the Day reads each
+    // day's character from it.
+    d.mix=weatherMix(date,hourlyRain,wF,periods);
     d.hazards=assessHazards(d);
     d.headline=makeHeadline(periods,tonight,d);
     // driest/wettest keyed on the honest wet number (period.peak is aliased to wet)
@@ -3003,12 +3058,13 @@ window.addEventListener('appinstalled',()=>{$('install').hidden=true;});
 const MIX_CATS=[
   {k:'clear',  n:'Clear / sunny',        c:'#f5c542',m:'Sunny or clear skies, under 30% cloud.'},
   {k:'heat',   n:'Hot',                  c:'#ee6a2f',m:'Feels like 27°C or more - dry but hot.'},
+  {k:'drizzle',n:'Drizzle',              c:'#a9c4e4',m:'Light, persistent drizzle - under 0.2 mm an hour, but it adds up.'},
   {k:'windy',  n:'Windy',                c:'#1fae86',m:'Dry, with gusts of 33 mph or more.'},
   {k:'fog',    n:'Fog / mist',           c:'#c98ac0',m:'Visibility under 1 km.'},
   {k:'partly', n:'Partly cloudy',        c:'#d9c58c',m:'A mix of sun and cloud (30-70% cover), dry.'},
   {k:'cloudy', n:'Cloudy',               c:'#7a879f',m:'Mostly grey (over 70% cloud), but dry.'},
   {k:'heavy',  n:'Heavy rain',           c:'#4163e8',m:'Rain of 4 mm an hour or more.'},
-  {k:'showers',n:'Showers / light rain', c:'#45b0f5',m:'Noticeable rain, under 4 mm an hour.'},
+  {k:'showers',n:'Rain / showers',       c:'#45b0f5',m:'Noticeable rain or showers, under 4 mm an hour.'},
   {k:'snow',   n:'Snow / sleet',         c:'#eef4fb',m:'Wintry precipitation, or rain at 1°C or colder.'},
   {k:'thunder',n:'Thunder',              c:'#b35cf0',m:'Rain that comes with a risk of thunderstorms.'},
   {k:'frost',  n:'Frost / icy',          c:'#57d0e0',m:'Dry, at or below freezing.'}
@@ -3055,6 +3111,8 @@ function fillMix(){
   const d=curData&&curData.days&&curData.days[0],mix=d&&d.mix;if(!mix)return;
   const sum=Object.values(mix.total).reduce((a,v)=>a+v,0)||1,top=mixTop(mix.total);
   $('mixSub').textContent=shortPlace(curData.place)+' · '+dayLabel(d.date,0)+', 6am to midnight';
+  const wd=wordForDay(d);
+  $('mixWord').innerHTML='Word for the day: <b style="color:'+wd.color+'">'+esc(wd.word)+'</b> - its character comes from this mix, once storms, snow, gales, heat and the timing of any rain have had their say.';
   $('mixBig').innerHTML=donutSVG(mix.total,200,30,{a:top.pct+'%',b:top.seg.n,big:26,small:12});
   const rows=MIX_CATS.map(c=>({...c,v:mix.total[c.k]||0})).filter(s=>s.v>0.001).sort((a,b)=>b.v-a.v);
   $('mixLegend').innerHTML=rows.map(s=>{const pct=Math.round(100*s.v/sum),h=Math.round(s.v*2)/2;
@@ -3142,6 +3200,7 @@ const RELEASES=[
      'The big one: every rain time in the app was an hour late. Our data source stamps each hour\'s rain at the END of the hour; we read it as the start. The morning forecast was really 5-11am and "raining now" described the hour just gone. Fixed at the root.',
      'We ran the app through 17 kinds of British weather and fixed what came out silly. Highlights: a wet morning followed by sunshine no longer reads BIBLICAL; all-day heavy rain no longer says "showery on and off" (and now gets a heavy-rain warning); a snow day no longer tells you to keep the brolly handy; fog that burns off is now a "foggy start" with a warning for the drive, not a murky day; and a storm at 9pm no longer cancels your morning round of golf.',
      'The "Can I...?" cards got smarter: they ignore parts of today that have already gone, judge storms by when they are due, and finally respect gales (no more "Get it out" for the washing in 56 mph gusts), frost (no more "coats can stay home" at minus three) and snow. Stargazing now reads the night\'s cloud forecast instead of the rain chance, so an overcast evening is no longer "clear-ish skies". The hair card uses the dew point, so ordinary British humidity no longer means a permanent frizz alert.',
+     'The Word for the Day now reads the mix too. Storms, snow, gales, heat and the timing of rain still come first (a one-hour thunderstorm matters more than its thin slice), but once those have had their say, the day\'s character - sunny, grey, showery, blustery, frosty - comes from the same split the ring shows, so the word and the chart always tell the same story.',
      'After dark the evening slot now shows a moon rather than a sun - from autumn to spring most of 6pm-midnight is night. A June evening, with sunset near 9:30pm, keeps its sun.',
      'Scotland\'s rain gauges are back. SEPA moved their data to a new service and our gauge checks for Scottish postcodes had quietly stopped; they now use the new one.',
      'Behind the scenes: place names from map searches are now displayed safely, auto-refresh recovers after a dropped connection instead of giving up, a place picked by hand is never overridden by a slow "Locate me", and the 7-day cards, search results and pop-ups work properly with a keyboard.'
